@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas | InfraView</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Arquivo CSS Externo -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-dark mb-4 py-3 border-bottom border-secondary border-opacity-25">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn-menu-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+                <a href="dashboard.html" class="navbar-brand mb-0 h1 fs-5 text-decoration-none">
+                    <i class="bi bi-hdd-network me-2"></i>InfraView
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <a href="alertas.html" class="text-light me-4 position-relative text-decoration-none">
+                    <i class="bi bi-bell-fill fs-5"></i>
+                    <span class="notif-dot has-alert position-absolute top-0 start-100 translate-middle"></span>
+                </a>
+                <span class="text-custom me-4 d-none d-sm-inline"><i class="bi bi-person-circle me-1"></i> Admin: logado</span>
+                <a href="index.html" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-box-arrow-right me-1"></i> Sair
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar Offcanvas -->
+    <div class="offcanvas offcanvas-start offcanvas-dark text-light" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+        <div class="offcanvas-header">
+            <span class="offcanvas-title fw-bold" id="sidebarMenuLabel"><i class="bi bi-hdd-network me-2"></i>InfraView</span>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <nav class="sidebar-nav flex-grow-1">
+                <a href="dashboard.html" class="nav-link">
+                    <span><i class="bi bi-speedometer2 nav-icon"></i>Dashboard</span>
+                </a>
+                <a href="alertas.html" class="nav-link active">
+                    <span><i class="bi bi-bell nav-icon"></i>Alertas</span>
+                    <span class="badge bg-danger rounded-pill badge-count">5</span>
+                </a>
+                <a href="rede.html" class="nav-link">
+                    <span><i class="bi bi-diagram-3 nav-icon"></i>Rede</span>
+                </a>
+                <a href="relatorios.html" class="nav-link">
+                    <span><i class="bi bi-file-earmark-bar-graph nav-icon"></i>Relatórios e Logs</span>
+                </a>
+                <div class="nav-divider"></div>
+                <a href="index.html" class="nav-link text-danger">
+                    <span><i class="bi bi-box-arrow-right nav-icon"></i>Sair</span>
+                </a>
+            </nav>
+            <div class="text-custom small pt-3 border-top border-secondary border-opacity-25">
+                Rede monitorada: <span class="text-light">LAN-Residencial-01</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="container-fluid px-4">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h4 class="text-light mb-1"><i class="bi bi-bell me-2 text-custom"></i>Alertas</h4>
+                <span class="text-custom small">Histórico de eventos e ocorrências da rede</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-danger px-3 py-2">5 ativos</span>
+                <span class="badge bg-success px-3 py-2">6 resolvidos</span>
+                <span class="badge bg-info text-dark px-3 py-2">1 informativo</span>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="d-flex flex-wrap gap-2 mb-2">
+            <a href="#" class="filter-pill active" data-filter="todos">Todos</a>
+            <a href="#" class="filter-pill" data-filter="ativo">Ativos</a>
+            <a href="#" class="filter-pill" data-filter="resolvido">Resolvidos</a>
+            <a href="#" class="filter-pill" data-severity="critical">Críticos</a>
+            <a href="#" class="filter-pill" data-severity="warning">Avisos</a>
+        </div>
+        <div class="results-count mb-4" id="resultsCount">Exibindo 12 de 12 eventos</div>
+
+        <!-- Lista de Alertas -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-transparent py-3">
+                <h6 class="mb-0 text-light"><i class="bi bi-list-ul me-2 text-custom"></i>Todos os Eventos</h6>
+            </div>
+            <div class="card-body p-0" id="alertList">
+
+                <div class="alert-item" data-status="ativo" data-severity="critical">
+                    <div class="alert-icon severity-critical"><i class="bi bi-wifi-off"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">AP-VARANDA está offline</div>
+                            <span class="badge bg-danger">Ativo</span>
+                        </div>
+                        <div class="text-custom small">TP-Link Deco M4R &middot; 192.168.1.5 &middot; sem resposta desde 27/08 15:38</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="ativo" data-severity="critical">
+                    <div class="alert-icon severity-critical"><i class="bi bi-camera-video-off"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">CAM-GARAGEM está offline</div>
+                            <span class="badge bg-danger">Ativo</span>
+                        </div>
+                        <div class="text-custom small">Câmera IP Intelbras Mibo &middot; 192.168.1.23 &middot; sem resposta desde 27/08 15:52</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="ativo" data-severity="warning">
+                    <div class="alert-icon severity-warning"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">Pico de latência no INVERSOR-SOLAR</div>
+                            <span class="badge bg-danger">Ativo</span>
+                        </div>
+                        <div class="text-custom small">Growatt MIN 5000TL-X &middot; 192.168.1.30 &middot; 218 ms registrados às 14:32 (limite: 100 ms)</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="ativo" data-severity="warning">
+                    <div class="alert-icon severity-warning"><i class="bi bi-battery-charging"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">NOBREAK-SERVIDOR operando em modo bateria</div>
+                            <span class="badge bg-danger">Ativo</span>
+                        </div>
+                        <div class="text-custom small">APC Back-UPS 1200VA &middot; 192.168.1.31 &middot; queda de rede elétrica detectada às 15:44</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="ativo" data-severity="warning">
+                    <div class="alert-icon severity-warning"><i class="bi bi-printer"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">IMPRESSORA-WIFI está offline</div>
+                            <span class="badge bg-danger">Ativo</span>
+                        </div>
+                        <div class="text-custom small">192.168.1.45 &middot; sem resposta desde 27/08 14:20</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="resolvido" data-severity="warning">
+                    <div class="alert-icon severity-resolved"><i class="bi bi-check-circle"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">CAM-ENTRADA reconectou à rede</div>
+                            <span class="badge bg-success">Resolvido</span>
+                        </div>
+                        <div class="text-custom small">Ficou offline por 4 min &middot; reconectada às 11:07</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="resolvido" data-severity="warning">
+                    <div class="alert-icon severity-resolved"><i class="bi bi-check-circle"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">AP-QUARTO2 reconectou à rede</div>
+                            <span class="badge bg-success">Resolvido</span>
+                        </div>
+                        <div class="text-custom small">Ficou offline por 12 min &middot; reconectada às 09:15</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="resolvido" data-severity="warning">
+                    <div class="alert-icon severity-resolved"><i class="bi bi-check-circle"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">DVR-PRINCIPAL com latência elevada</div>
+                            <span class="badge bg-success">Resolvido</span>
+                        </div>
+                        <div class="text-custom small">Pico de 87 ms às 08:41, normalizado em seguida</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="resolvido" data-severity="warning">
+                    <div class="alert-icon severity-resolved"><i class="bi bi-check-circle"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">NB-VINICIUS com latência elevada</div>
+                            <span class="badge bg-success">Resolvido</span>
+                        </div>
+                        <div class="text-custom small">Pico de 95 ms às 20:10, normalizado após reconexão ao AP-SALA</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="resolvido" data-severity="critical">
+                    <div class="alert-icon severity-resolved"><i class="bi bi-check-circle"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">SM-ADMIN reconectou após instabilidade</div>
+                            <span class="badge bg-success">Resolvido</span>
+                        </div>
+                        <div class="text-custom small">Ficou offline por 3 min &middot; reconectado às 07:52</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="resolvido" data-severity="warning">
+                    <div class="alert-icon severity-resolved"><i class="bi bi-check-circle"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">ROBO-ASPIRADOR atualizado e reconectado</div>
+                            <span class="badge bg-success">Resolvido</span>
+                        </div>
+                        <div class="text-custom small">Atualização de firmware OTA concluída às 03:12, dispositivo voltou a responder normalmente</div>
+                    </div>
+                </div>
+
+                <div class="alert-item" data-status="info" data-severity="info">
+                    <div class="alert-icon severity-info"><i class="bi bi-info-circle"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div class="text-light fw-bold">Novo dispositivo detectado: CHROMECAST-TV</div>
+                            <span class="badge bg-info text-dark">Info</span>
+                        </div>
+                        <div class="text-custom small">Adicionado automaticamente à categoria "Outros Dispositivos" &middot; IP 192.168.1.50 atribuído via DHCP</div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="empty-state d-none" id="emptyState">
+                <i class="bi bi-inbox"></i>
+                Nenhum evento encontrado para esse filtro.
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Filtros (100% client-side, dados estáticos) -->
+    <script>
+        (function () {
+            const filterPills = document.querySelectorAll('.filter-pill');
+            const items = document.querySelectorAll('.alert-item');
+            const resultsCount = document.getElementById('resultsCount');
+            const emptyState = document.getElementById('emptyState');
+            const total = items.length;
+
+            function applyFilter(pill) {
+                filterPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+
+                const status = pill.getAttribute('data-filter');
+                const severity = pill.getAttribute('data-severity');
+                let visibleCount = 0;
+
+                items.forEach(item => {
+                    let visible = true;
+
+                    if (status && status !== 'todos') {
+                        visible = item.getAttribute('data-status') === status;
+                    } else if (severity) {
+                        visible = item.getAttribute('data-severity') === severity;
+                    }
+
+                    item.classList.toggle('d-none', !visible);
+                    if (visible) visibleCount++;
+                });
+
+                resultsCount.textContent = `Exibindo ${visibleCount} de ${total} eventos`;
+                emptyState.classList.toggle('d-none', visibleCount !== 0);
+            }
+
+            filterPills.forEach(pill => {
+                pill.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    applyFilter(this);
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

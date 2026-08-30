@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios e Logs | InfraView</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Arquivo CSS Externo -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-dark mb-4 py-3 border-bottom border-secondary border-opacity-25">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn-menu-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+                <a href="dashboard.html" class="navbar-brand mb-0 h1 fs-5 text-decoration-none">
+                    <i class="bi bi-hdd-network me-2"></i>InfraView
+                </a>
+            </div>
+            <div class="d-flex align-items-center">
+                <a href="alertas.html" class="text-light me-4 position-relative text-decoration-none">
+                    <i class="bi bi-bell fs-5"></i>
+                    <span class="notif-dot has-alert position-absolute top-0 start-100 translate-middle"></span>
+                </a>
+                <span class="text-custom me-4 d-none d-sm-inline"><i class="bi bi-person-circle me-1"></i> Admin: logado</span>
+                <a href="index.html" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-box-arrow-right me-1"></i> Sair
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar Offcanvas -->
+    <div class="offcanvas offcanvas-start offcanvas-dark text-light" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+        <div class="offcanvas-header">
+            <span class="offcanvas-title fw-bold" id="sidebarMenuLabel"><i class="bi bi-hdd-network me-2"></i>InfraView</span>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <nav class="sidebar-nav flex-grow-1">
+                <a href="dashboard.html" class="nav-link">
+                    <span><i class="bi bi-speedometer2 nav-icon"></i>Dashboard</span>
+                </a>
+                <a href="alertas.html" class="nav-link">
+                    <span><i class="bi bi-bell nav-icon"></i>Alertas</span>
+                    <span class="badge bg-danger rounded-pill badge-count">5</span>
+                </a>
+                <a href="rede.html" class="nav-link">
+                    <span><i class="bi bi-diagram-3 nav-icon"></i>Rede</span>
+                </a>
+                <a href="relatorios.html" class="nav-link active">
+                    <span><i class="bi bi-file-earmark-bar-graph nav-icon"></i>Relatórios e Logs</span>
+                </a>
+                <div class="nav-divider"></div>
+                <a href="index.html" class="nav-link text-danger">
+                    <span><i class="bi bi-box-arrow-right nav-icon"></i>Sair</span>
+                </a>
+            </nav>
+            <div class="text-custom small pt-3 border-top border-secondary border-opacity-25">
+                Rede monitorada: <span class="text-light">LAN-Residencial-01</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="container-fluid px-4">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h4 class="text-light mb-1"><i class="bi bi-file-earmark-bar-graph me-2 text-custom"></i>Relatórios e Logs</h4>
+                <span class="text-custom small">Histórico de quedas, picos de latência e exportação de dados</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" disabled title="Exportação simulada — habilitada quando o backend estiver integrado">
+                    <i class="bi bi-filetype-csv me-1"></i> Exportar CSV
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" disabled title="Exportação simulada — habilitada quando o backend estiver integrado">
+                    <i class="bi bi-filetype-pdf me-1"></i> Exportar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body py-3">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-3">
+                        <label class="tunnel-info-label d-block mb-1">Período</label>
+                        <select id="filterPeriodo" class="form-select form-select-sm bg-dark text-light border-secondary">
+                            <option value="0">Últimas 24 horas</option>
+                            <option value="7" selected>Últimos 7 dias</option>
+                            <option value="30">Últimos 30 dias</option>
+                            <option value="all">Personalizado (tudo)</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="tunnel-info-label d-block mb-1">Dispositivo</label>
+                        <select id="filterDispositivo" class="form-select form-select-sm bg-dark text-light border-secondary">
+                            <option value="todos" selected>Todos os dispositivos</option>
+                            <optgroup label="Rede Wi-Fi · Access Points">
+                                <option>GW-PRINCIPAL</option>
+                                <option>AP-SALA</option>
+                                <option>AP-QUARTO1</option>
+                                <option>AP-QUARTO2</option>
+                                <option>AP-VARANDA</option>
+                            </optgroup>
+                            <optgroup label="Segurança · CFTV / Alarme">
+                                <option>DVR-PRINCIPAL</option>
+                                <option>CAM-ENTRADA</option>
+                                <option>CAM-QUINTAL</option>
+                                <option>CAM-GARAGEM</option>
+                                <option>CAM-SALA</option>
+                                <option>CAM-FUNDOS</option>
+                                <option>ALARME-CENTRAL</option>
+                            </optgroup>
+                            <optgroup label="Energia">
+                                <option>INVERSOR-SOLAR</option>
+                                <option>NOBREAK-SERVIDOR</option>
+                                <option>TOMADA-AR-CONDICIONADO</option>
+                            </optgroup>
+                            <optgroup label="Outros Dispositivos">
+                                <option>NAS-BACKUP</option>
+                                <option>SMART-TV-SALA</option>
+                                <option>NB-ESCRITORIO</option>
+                                <option>PC-DESKTOP</option>
+                                <option>SM-ADMIN</option>
+                                <option>IMPRESSORA-WIFI</option>
+                                <option>NB-VINICIUS</option>
+                                <option>PC-ARTHUR</option>
+                                <option>ROBO-ASPIRADOR</option>
+                                <option>SMART-SPEAKER-SALA</option>
+                                <option>CHROMECAST-TV</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="tunnel-info-label d-block mb-1">Tipo de Evento</label>
+                        <select id="filterTipo" class="form-select form-select-sm bg-dark text-light border-secondary">
+                            <option value="todos" selected>Todos</option>
+                            <option value="downtime">Quedas (Downtime)</option>
+                            <option value="latencia">Picos de Latência</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <button type="button" id="btnFiltrar" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-funnel me-1"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+                <div class="results-count mt-3" id="resultsCount">Exibindo 12 quedas e 9 picos de latência</div>
+            </div>
+        </div>
+
+        <!-- Histórico de Quedas -->
+        <div class="card shadow-sm mb-4" id="downtimeCard">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 text-light"><i class="bi bi-wifi-off me-2 text-custom"></i>Histórico de Quedas (Downtime)</h6>
+                <span class="badge bg-secondary" id="downtimeBadge">12 registros</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-devices table-hover mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Dispositivo</th>
+                                <th>Início</th>
+                                <th>Fim</th>
+                                <th>Duração</th>
+                                <th class="pe-4">Motivo Provável</th>
+                            </tr>
+                        </thead>
+                        <tbody id="downtimeBody">
+                            <tr class="report-row" data-device="AP-VARANDA" data-days="0">
+                                <td class="ps-4 text-light">AP-VARANDA</td>
+                                <td class="text-custom">27/08 15:38</td>
+                                <td class="text-danger">Em andamento</td>
+                                <td class="text-custom">22 min</td>
+                                <td class="pe-4 text-custom">Sem resposta ao ping</td>
+                            </tr>
+                            <tr class="report-row" data-device="CAM-GARAGEM" data-days="0">
+                                <td class="ps-4 text-light">CAM-GARAGEM</td>
+                                <td class="text-custom">27/08 15:52</td>
+                                <td class="text-danger">Em andamento</td>
+                                <td class="text-custom">8 min</td>
+                                <td class="pe-4 text-custom">Sem resposta ao ping</td>
+                            </tr>
+                            <tr class="report-row" data-device="NOBREAK-SERVIDOR" data-days="0">
+                                <td class="ps-4 text-light">NOBREAK-SERVIDOR</td>
+                                <td class="text-custom">27/08 15:44</td>
+                                <td class="text-danger">Em andamento</td>
+                                <td class="text-custom">18 min</td>
+                                <td class="pe-4 text-custom">Queda de energia da concessionária</td>
+                            </tr>
+                            <tr class="report-row" data-device="IMPRESSORA-WIFI" data-days="0">
+                                <td class="ps-4 text-light">IMPRESSORA-WIFI</td>
+                                <td class="text-custom">27/08 14:20</td>
+                                <td class="text-danger">Em andamento</td>
+                                <td class="text-custom">1h 40m</td>
+                                <td class="pe-4 text-custom">Dispositivo em modo de economia</td>
+                            </tr>
+                            <tr class="report-row" data-device="CAM-ENTRADA" data-days="0">
+                                <td class="ps-4 text-light">CAM-ENTRADA</td>
+                                <td class="text-custom">27/08 11:03</td>
+                                <td class="text-custom">27/08 11:07</td>
+                                <td class="text-custom">4 min</td>
+                                <td class="pe-4 text-custom">Instabilidade momentânea de sinal</td>
+                            </tr>
+                            <tr class="report-row" data-device="AP-QUARTO2" data-days="0">
+                                <td class="ps-4 text-light">AP-QUARTO2</td>
+                                <td class="text-custom">27/08 09:03</td>
+                                <td class="text-custom">27/08 09:15</td>
+                                <td class="text-custom">12 min</td>
+                                <td class="pe-4 text-custom">Reinicialização automática (firmware)</td>
+                            </tr>
+                            <tr class="report-row" data-device="SM-ADMIN" data-days="1">
+                                <td class="ps-4 text-light">SM-ADMIN</td>
+                                <td class="text-custom">26/08 07:49</td>
+                                <td class="text-custom">26/08 07:52</td>
+                                <td class="text-custom">3 min</td>
+                                <td class="pe-4 text-custom">Instabilidade momentânea de sinal</td>
+                            </tr>
+                            <tr class="report-row" data-device="SMART-TV-SALA" data-days="1">
+                                <td class="ps-4 text-light">SMART-TV-SALA</td>
+                                <td class="text-custom">26/08 23:50</td>
+                                <td class="text-custom">27/08 06:00</td>
+                                <td class="text-custom">6h 10m</td>
+                                <td class="pe-4 text-custom">Dispositivo desligado (stand-by)</td>
+                            </tr>
+                            <tr class="report-row" data-device="ROBO-ASPIRADOR" data-days="5">
+                                <td class="ps-4 text-light">ROBO-ASPIRADOR</td>
+                                <td class="text-custom">22/08 03:05</td>
+                                <td class="text-custom">22/08 03:12</td>
+                                <td class="text-custom">7 min</td>
+                                <td class="pe-4 text-custom">Atualização de firmware OTA</td>
+                            </tr>
+                            <tr class="report-row" data-device="AP-QUARTO1" data-days="3">
+                                <td class="ps-4 text-light">AP-QUARTO1</td>
+                                <td class="text-custom">24/08 02:15</td>
+                                <td class="text-custom">24/08 02:19</td>
+                                <td class="text-custom">4 min</td>
+                                <td class="pe-4 text-custom">Queda de energia breve</td>
+                            </tr>
+                            <tr class="report-row" data-device="CAM-QUINTAL" data-days="9">
+                                <td class="ps-4 text-light">CAM-QUINTAL</td>
+                                <td class="text-custom">18/08 04:00</td>
+                                <td class="text-custom">18/08 04:03</td>
+                                <td class="text-custom">3 min</td>
+                                <td class="pe-4 text-custom">Reinicialização automática (firmware)</td>
+                            </tr>
+                            <tr class="report-row" data-device="GW-PRINCIPAL" data-days="12">
+                                <td class="ps-4 text-light">GW-PRINCIPAL</td>
+                                <td class="text-custom">15/08 01:00</td>
+                                <td class="text-custom">15/08 01:02</td>
+                                <td class="text-custom">2 min</td>
+                                <td class="pe-4 text-custom">Instabilidade da operadora de internet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty-state d-none" id="downtimeEmpty">
+                    <i class="bi bi-inbox"></i>
+                    Nenhuma queda registrada para esse filtro.
+                </div>
+            </div>
+        </div>
+
+        <!-- Picos de Latência -->
+        <div class="card shadow-sm mb-4" id="latencyCard">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 text-light"><i class="bi bi-graph-up-arrow me-2 text-custom"></i>Picos de Latência</h6>
+                <span class="badge bg-secondary" id="latencyBadge">9 registros</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-devices table-hover mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Dispositivo</th>
+                                <th>Data/Hora</th>
+                                <th>Latência Registrada</th>
+                                <th>Limite Configurado</th>
+                                <th class="pe-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="latencyBody">
+                            <tr class="report-row" data-device="INVERSOR-SOLAR" data-days="0">
+                                <td class="ps-4 text-light">INVERSOR-SOLAR</td>
+                                <td class="text-custom">27/08 14:32</td>
+                                <td class="text-danger fw-bold">218 ms</td>
+                                <td class="text-custom">100 ms</td>
+                                <td class="pe-4"><span class="badge bg-danger">Ativo</span></td>
+                            </tr>
+                            <tr class="report-row" data-device="DVR-PRINCIPAL" data-days="0">
+                                <td class="ps-4 text-light">DVR-PRINCIPAL</td>
+                                <td class="text-custom">27/08 08:41</td>
+                                <td class="text-warning fw-bold">87 ms</td>
+                                <td class="text-custom">80 ms</td>
+                                <td class="pe-4"><span class="badge bg-success">Normalizado</span></td>
+                            </tr>
+                            <tr class="report-row" data-device="NB-VINICIUS" data-days="1">
+                                <td class="ps-4 text-light">NB-VINICIUS</td>
+                                <td class="text-custom">26/08 20:10</td>
+                                <td class="text-warning fw-bold">95 ms</td>
+                                <td class="text-custom">80 ms</td>
+                                <td class="pe-4"><span class="badge bg-success">Normalizado</span></td>
+                            </tr>
+                            <tr class="report-row" data-device="INVERSOR-SOLAR" data-days="2">
+                                <td class="ps-4 text-light">INVERSOR-SOLAR</td>
+                                <td class="text-custom">25/08 13:58</td>
+                                <td class="text-warning fw-bold">142 ms</td>
+                                <td class="text-custom">100 ms</td>
+                                <td class="pe-4"><span class="badge bg-success">Normalizado</span></td>
+                            </tr>
+                            <tr class="report-row" data-device="CAM-FUNDOS" data-days="3">
+                                <td class="ps-4 text-light">CAM-FUNDOS</td>
+                                <td class="text-custom">24/08 12:15</td>
+                                <td class="text-warning fw-bold">91 ms</td>
+                                <td class="text-custom">80 ms</td>
+                                <td class="pe-4"><span class="badge bg-success">Normalizado</span></td>
+                            </tr>
+                            <tr class="report-row" data-device="SM-ADMIN" data-days="4">
+                                <td class="ps-4 text-light">SM-ADMIN</td>
+                                <td class="text-custom">23/08 20:10</td>
+                                <td class="text-warning fw-bold">95 ms</td>
+                                <td class="text-custom">80 ms</td>
+                                <td class="pe-4"><span class="badge bg-success">Normalizado</span></td>
+                            </tr>
+                            <tr class="report-row" data-device="ALARME-CENTRAL" data-days="7">
+                                <td class="ps-4 text-light">ALARME-CENTRAL</td>
+                                <td class="text-custom">20/08 22:40</td>
+                                <td class="text-warning fw-bold">88 ms</td>
+                                <td class="text-custom">80 ms</td>
+                                <td class="pe-4"><span class="badge bg-success">Normalizado</span></td>
+                            </tr>
+                            <tr class="report-row" data-device="TOMADA-AR-CONDICIONADO" data-days="8">
+                                <td class="ps-4 text-light">TOMADA-AR-CONDICIONADO</td>
+                                <td class="text-custom">19/08 16:05</td>
+                                <td class="text-warning fw-bold">84 ms</td>
+                                <td class="text-custom">80 ms</td>
+                                <td class="pe-4"><span class="badge bg-success">Normalizado</span></td>
+                            </tr>
+                            <tr class="report-row" data-device="INVERSOR-SOLAR" data-days="13">
+                                <td class="ps-4 text-light">INVERSOR-SOLAR</td>
+                                <td class="text-custom">14/08 09:12</td>
+                                <td class="text-warning fw-bold">156 ms</td>
+                                <td class="text-custom">100 ms</td>
+                                <td class="pe-4"><span class="badge bg-success">Normalizado</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="empty-state d-none" id="latencyEmpty">
+                    <i class="bi bi-inbox"></i>
+                    Nenhum pico de latência registrado para esse filtro.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Filtros de relatório (100% client-side, dados estáticos) -->
+    <script>
+        (function () {
+            const periodoSelect = document.getElementById('filterPeriodo');
+            const dispositivoSelect = document.getElementById('filterDispositivo');
+            const tipoSelect = document.getElementById('filterTipo');
+            const btnFiltrar = document.getElementById('btnFiltrar');
+
+            const downtimeCard = document.getElementById('downtimeCard');
+            const latencyCard = document.getElementById('latencyCard');
+            const downtimeRows = document.querySelectorAll('#downtimeBody .report-row');
+            const latencyRows = document.querySelectorAll('#latencyBody .report-row');
+            const downtimeBadge = document.getElementById('downtimeBadge');
+            const latencyBadge = document.getElementById('latencyBadge');
+            const downtimeEmpty = document.getElementById('downtimeEmpty');
+            const latencyEmpty = document.getElementById('latencyEmpty');
+            const resultsCount = document.getElementById('resultsCount');
+
+            function filterRows(rows, maxDays, device) {
+                let visible = 0;
+                rows.forEach(row => {
+                    const days = parseInt(row.getAttribute('data-days'), 10);
+                    const dev = row.getAttribute('data-device');
+                    const matchesPeriod = maxDays === Infinity || days <= maxDays;
+                    const matchesDevice = device === 'todos' || dev === device;
+                    const isVisible = matchesPeriod && matchesDevice;
+                    row.classList.toggle('d-none', !isVisible);
+                    if (isVisible) visible++;
+                });
+                return visible;
+            }
+
+            function applyFilters() {
+                const periodoValue = periodoSelect.value;
+                const maxDays = periodoValue === 'all' ? Infinity : parseInt(periodoValue, 10);
+                const device = dispositivoSelect.value;
+                const tipo = tipoSelect.value;
+
+                const showDowntime = tipo === 'todos' || tipo === 'downtime';
+                const showLatency = tipo === 'todos' || tipo === 'latencia';
+
+                downtimeCard.classList.toggle('d-none', !showDowntime);
+                latencyCard.classList.toggle('d-none', !showLatency);
+
+                let downtimeVisible = 0;
+                let latencyVisible = 0;
+
+                if (showDowntime) {
+                    downtimeVisible = filterRows(downtimeRows, maxDays, device);
+                    downtimeBadge.textContent = `${downtimeVisible} registro${downtimeVisible === 1 ? '' : 's'}`;
+                    downtimeEmpty.classList.toggle('d-none', downtimeVisible !== 0);
+                }
+
+                if (showLatency) {
+                    latencyVisible = filterRows(latencyRows, maxDays, device);
+                    latencyBadge.textContent = `${latencyVisible} registro${latencyVisible === 1 ? '' : 's'}`;
+                    latencyEmpty.classList.toggle('d-none', latencyVisible !== 0);
+                }
+
+                if (showDowntime && showLatency) {
+                    resultsCount.textContent = `Exibindo ${downtimeVisible} quedas e ${latencyVisible} picos de latência`;
+                } else if (showDowntime) {
+                    resultsCount.textContent = `Exibindo ${downtimeVisible} quedas`;
+                } else {
+                    resultsCount.textContent = `Exibindo ${latencyVisible} picos de latência`;
+                }
+            }
+
+            btnFiltrar.addEventListener('click', applyFilters);
+            // também aplica ao trocar qualquer select, pra não depender só do clique no botão
+            [periodoSelect, dispositivoSelect, tipoSelect].forEach(el => el.addEventListener('change', applyFilters));
+
+            // Estado inicial: período de 7 dias já vem selecionado no <select>
+            applyFilters();
+        })();
+    </script>
+</body>
+</html>
