@@ -1,0 +1,272 @@
+{
+    "filtros": {
+      "periodo": {
+        "valor_padrao": "7",
+        "opcoes": [
+          {
+            "valor": "0",
+            "descricao": "Últimas 24 horas"
+          },
+          {
+            "valor": "7",
+            "descricao": "Últimos 7 dias"
+          },
+          {
+            "valor": "30",
+            "descricao": "Últimos 30 dias"
+          },
+          {
+            "valor": "all",
+            "descricao": "Personalizado (tudo)"
+          }
+        ]
+      },
+      "dispositivos": [
+        {
+          "categoria": "Rede Wi-Fi · Access Points",
+          "itens": [
+            "GW-PRINCIPAL",
+            "AP-SALA",
+            "AP-QUARTO1",
+            "AP-QUARTO2",
+            "AP-VARANDA"
+          ]
+        },
+        {
+          "categoria": "Segurança · CFTV / Alarme",
+          "itens": [
+            "DVR-PRINCIPAL",
+            "CAM-ENTRADA",
+            "CAM-QUINTAL",
+            "CAM-GARAGEM",
+            "CAM-SALA",
+            "CAM-FUNDOS",
+            "ALARME-CENTRAL"
+          ]
+        },
+        {
+          "categoria": "Energia",
+          "itens": [
+            "INVERSOR-SOLAR",
+            "NOBREAK-SERVIDOR",
+            "TOMADA-AR-CONDICIONADO"
+          ]
+        },
+        {
+          "categoria": "Outros Dispositivos",
+          "itens": [
+            "NAS-BACKUP",
+            "SMART-TV-SALA",
+            "NB-ESCRITORIO",
+            "PC-DESKTOP",
+            "SM-ADMIN",
+            "IMPRESSORA-WIFI",
+            "NB-VINICIUS",
+            "PC-ARTHUR",
+            "ROBO-ASPIRADOR",
+            "SMART-SPEAKER-SALA",
+            "CHROMECAST-TV"
+          ]
+        }
+      ],
+      "tipos_evento": [
+        {
+          "valor": "todos",
+          "descricao": "Todos"
+        },
+        {
+          "valor": "downtime",
+          "descricao": "Quedas (Downtime)"
+        },
+        {
+          "valor": "latencia",
+          "descricao": "Picos de Latência"
+        }
+      ]
+    },
+    "downtime": [
+      {
+        "dispositivo": "AP-VARANDA",
+        "inicio": "27/08 15:38",
+        "fim": null,
+        "status": "Em andamento",
+        "duracao": "22 min",
+        "motivo_provavel": "Sem resposta ao ping",
+        "dias_atras": 0
+      },
+      {
+        "dispositivo": "CAM-GARAGEM",
+        "inicio": "27/08 15:52",
+        "fim": null,
+        "status": "Em andamento",
+        "duracao": "8 min",
+        "motivo_provavel": "Sem resposta ao ping",
+        "dias_atras": 0
+      },
+      {
+        "dispositivo": "NOBREAK-SERVIDOR",
+        "inicio": "27/08 15:44",
+        "fim": null,
+        "status": "Em andamento",
+        "duracao": "18 min",
+        "motivo_provavel": "Queda de energia da concessionária",
+        "dias_atras": 0
+      },
+      {
+        "dispositivo": "IMPRESSORA-WIFI",
+        "inicio": "27/08 14:20",
+        "fim": null,
+        "status": "Em andamento",
+        "duracao": "1h 40m",
+        "motivo_provavel": "Dispositivo em modo de economia",
+        "dias_atras": 0
+      },
+      {
+        "dispositivo": "CAM-ENTRADA",
+        "inicio": "27/08 11:03",
+        "fim": "27/08 11:07",
+        "status": "Normalizado",
+        "duracao": "4 min",
+        "motivo_provavel": "Instabilidade momentânea de sinal",
+        "dias_atras": 0
+      },
+      {
+        "dispositivo": "AP-QUARTO2",
+        "inicio": "27/08 09:03",
+        "fim": "27/08 09:15",
+        "status": "Normalizado",
+        "duracao": "12 min",
+        "motivo_provavel": "Reinicialização automática (firmware)",
+        "dias_atras": 0
+      },
+      {
+        "dispositivo": "SM-ADMIN",
+        "inicio": "26/08 07:49",
+        "fim": "26/08 07:52",
+        "status": "Normalizado",
+        "duracao": "3 min",
+        "motivo_provavel": "Instabilidade momentânea de sinal",
+        "dias_atras": 1
+      },
+      {
+        "dispositivo": "SMART-TV-SALA",
+        "inicio": "26/08 23:50",
+        "fim": "27/08 06:00",
+        "status": "Normalizado",
+        "duracao": "6h 10m",
+        "motivo_provavel": "Dispositivo desligado (stand-by)",
+        "dias_atras": 1
+      },
+      {
+        "dispositivo": "ROBO-ASPIRADOR",
+        "inicio": "22/08 03:05",
+        "fim": "22/08 03:12",
+        "status": "Normalizado",
+        "duracao": "7 min",
+        "motivo_provavel": "Atualização de firmware OTA",
+        "dias_atras": 5
+      },
+      {
+        "dispositivo": "AP-QUARTO1",
+        "inicio": "24/08 02:15",
+        "fim": "24/08 02:19",
+        "status": "Normalizado",
+        "duracao": "4 min",
+        "motivo_provavel": "Queda de energia breve",
+        "dias_atras": 3
+      },
+      {
+        "dispositivo": "CAM-QUINTAL",
+        "inicio": "18/08 04:00",
+        "fim": "18/08 04:03",
+        "status": "Normalizado",
+        "duracao": "3 min",
+        "motivo_provavel": "Reinicialização automática (firmware)",
+        "dias_atras": 9
+      },
+      {
+        "dispositivo": "GW-PRINCIPAL",
+        "inicio": "15/08 01:00",
+        "fim": "15/08 01:02",
+        "status": "Normalizado",
+        "duracao": "2 min",
+        "motivo_provavel": "Instabilidade da operadora de internet",
+        "dias_atras": 12
+      }
+    ],
+    "latencia": [
+      {
+        "dispositivo": "INVERSOR-SOLAR",
+        "data_hora": "27/08 14:32",
+        "latencia_ms": 218,
+        "limite_ms": 100,
+        "status": "Ativo",
+        "dias_atras": 0
+      },
+      {
+        "dispositivo": "DVR-PRINCIPAL",
+        "data_hora": "27/08 08:41",
+        "latencia_ms": 87,
+        "limite_ms": 80,
+        "status": "Normalizado",
+        "dias_atras": 0
+      },
+      {
+        "dispositivo": "NB-VINICIUS",
+        "data_hora": "26/08 20:10",
+        "latencia_ms": 95,
+        "limite_ms": 80,
+        "status": "Normalizado",
+        "dias_atras": 1
+      },
+      {
+        "dispositivo": "INVERSOR-SOLAR",
+        "data_hora": "25/08 13:58",
+        "latencia_ms": 142,
+        "limite_ms": 100,
+        "status": "Normalizado",
+        "dias_atras": 2
+      },
+      {
+        "dispositivo": "CAM-FUNDOS",
+        "data_hora": "24/08 12:15",
+        "latencia_ms": 91,
+        "limite_ms": 80,
+        "status": "Normalizado",
+        "dias_atras": 3
+      },
+      {
+        "dispositivo": "SM-ADMIN",
+        "data_hora": "23/08 20:10",
+        "latencia_ms": 95,
+        "limite_ms": 80,
+        "status": "Normalizado",
+        "dias_atras": 4
+      },
+      {
+        "dispositivo": "ALARME-CENTRAL",
+        "data_hora": "20/08 22:40",
+        "latencia_ms": 88,
+        "limite_ms": 80,
+        "status": "Normalizado",
+        "dias_atras": 7
+      },
+      {
+        "dispositivo": "TOMADA-AR-CONDICIONADO",
+        "data_hora": "19/08 16:05",
+        "latencia_ms": 84,
+        "limite_ms": 80,
+        "status": "Normalizado",
+        "dias_atras": 8
+      },
+      {
+        "dispositivo": "INVERSOR-SOLAR",
+        "data_hora": "14/08 09:12",
+        "latencia_ms": 156,
+        "limite_ms": 100,
+        "status": "Normalizado",
+        "dias_atras": 13
+      }
+    ]
+  }
+  
