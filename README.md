@@ -1,8 +1,10 @@
 🌐 InfraView
 📋 Descrição
+
 O InfraView é um sistema web voltado para a área de Redes de Computadores, focado no monitoramento de infraestrutura e dispositivos IoT em uma rede local (LAN). O projeto centraliza, em um único painel estilo NOC (Centro de Operações de Rede), a visualização do status de conectividade, latência e disponibilidade de dispositivos como access points, câmeras de segurança, DVR, alarme e inversor solar, entre outros equipamentos conectados à rede.
 
 Projeto acadêmico desenvolvido para a disciplina de Desenvolvimento Web. O escopo foi redefinido a partir de uma proposta inicial de monitoramento de túneis VPN Site-to-Site (inviável de testar em ambiente doméstico) para o monitoramento de uma LAN real, de forma que a aplicação possa futuramente ser conectada a um backend que colete dados reais dos dispositivos da rede.
+
 ✨ Funcionalidades
 Tela de login para acesso ao painel
 Dashboard com visão geral da rede: total de dispositivos, quantidade online/offline, alertas ativos, latência média e uptime do gateway
