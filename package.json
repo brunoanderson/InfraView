@@ -1,5 +1,21 @@
 {
+  "name": "infraview",
+  "version": "1.0.0",
+  "description": "InfraView - dashboard de NOC para monitoramento de disponibilidade (UP/DOWN) de dispositivos de rede.",
+  "private": true,
+  "scripts": {
+    "start": "node scripts/dev.mjs",
+    "api": "json-server db.json --port 3000",
+    "web": "http-server . -p 8080 -c-1",
+    "reset": "node scripts/reset.mjs"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "dependencies": {
     "json-server": "^1.0.0-beta.15"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
   }
 }

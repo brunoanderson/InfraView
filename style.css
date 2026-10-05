@@ -20,77 +20,12 @@ body {
     color: #a0a6ab;
 }
 
-.activity-wave {
-    display: flex;
-    align-items: flex-end;
-    height: 14px;
-    gap: 2px;
-}
-
-.activity-wave .bar {
-    width: 3px;
-    border-radius: 1px;
-}
-
-.activity-wave .bar:nth-child(1) {
-    height: 8px;
-}
-
-.activity-wave .bar:nth-child(2) {
-    height: 14px;
-}
-
-.activity-wave .bar:nth-child(3) {
-    height: 6px;
-}
-
-.activity-wave .bar:nth-child(4) {
-    height: 12px;
-}
-
-.activity-wave .bar:nth-child(5) {
-    height: 10px;
-}
-
-.activity-wave.offline .bar {
-    height: 3px;
-    background-color: #dc3545;
-}
-
-.status-indicator {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 6px;
-}
-
 .bg-success {
     background-color: #10b981 !important;
 }
 
 .bg-danger {
     background-color: #ef4444 !important;
-}
-
-.border-start {
-    border-radius: 6px;
-}
-
-/* ===== Cards clicáveis do Dashboard ===== */
-.card-clickable {
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    border: 1px solid transparent;
-}
-
-.card-clickable:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.35) !important;
-    border-color: #3f444a;
-}
-
-.card-clickable .stretched-link:hover {
-    text-decoration: none;
 }
 
 .details-link {
@@ -101,31 +36,22 @@ body {
     gap: 4px;
 }
 
-.card-clickable:hover .details-link {
+.details-link:hover {
     color: #6ea8fe;
-}
-
-/* ===== Breadcrumb ===== */
-.breadcrumb {
-    --bs-breadcrumb-divider-color: #565c63;
-    margin-bottom: 0;
-}
-
-.breadcrumb-item a {
-    color: #a0a6ab;
-    text-decoration: none;
-}
-
-.breadcrumb-item a:hover {
-    color: #6ea8fe;
-    text-decoration: underline;
-}
-
-.breadcrumb-item.active {
-    color: #e9ecef;
 }
 
 /* ===== Cards de estatística (telas de detalhe) ===== */
+/* .bg-success / .bg-danger acima usam !important e anulavam o bg-opacity-25 dos ícones */
+.stat-icon.bg-success {
+    background-color: rgba(16, 185, 129, 0.18) !important;
+    color: #10b981;
+}
+
+.stat-icon.bg-danger {
+    background-color: rgba(239, 68, 68, 0.18) !important;
+    color: #ef4444;
+}
+
 .stat-icon {
     width: 46px;
     height: 46px;
@@ -138,15 +64,6 @@ body {
 }
 
 /* ===== Informações do túnel ===== */
-.tunnel-info-item {
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #3f444a;
-}
-
-.tunnel-info-item:last-child {
-    border-bottom: none;
-}
-
 .tunnel-info-label {
     color: #a0a6ab;
     font-size: 0.78rem;
@@ -156,18 +73,6 @@ body {
 }
 
 /* ===== Tabela de dispositivos ===== */
-.device-type-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(160, 166, 171, 0.12);
-    color: #a0a6ab;
-    font-size: 1rem;
-}
-
 .table-devices thead th {
     color: #a0a6ab;
     font-size: 0.75rem;
@@ -281,6 +186,10 @@ body {
     overflow: hidden;
 }
 
+.category-progress.tem-offline {
+    background-color: rgba(239, 68, 68, 0.45);
+}
+
 .category-progress .fill {
     height: 100%;
     border-radius: 3px;
@@ -317,56 +226,9 @@ body {
     color: #ef4444;
 }
 
-.severity-warning {
-    background-color: rgba(245, 158, 11, 0.18);
-    color: #f59e0b;
-}
-
-.severity-info {
-    background-color: rgba(110, 168, 254, 0.18);
-    color: #6ea8fe;
-}
-
 .severity-resolved {
     background-color: rgba(16, 185, 129, 0.18);
     color: #10b981;
-}
-
-/* ======================================================
-   Latência — barra horizontal
-   ====================================================== */
-.latency-row {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid #3f444a;
-}
-
-.latency-row:last-child {
-    border-bottom: none;
-}
-
-.latency-track {
-    flex: 1;
-    height: 8px;
-    background-color: #3f444a;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.latency-fill {
-    height: 100%;
-    border-radius: 4px;
-    background-color: #10b981;
-}
-
-.latency-fill.warn {
-    background-color: #f59e0b;
-}
-
-.latency-fill.crit {
-    background-color: #ef4444;
 }
 
 /* ======================================================
@@ -393,6 +255,14 @@ body {
 /* ======================================================
    Página de Login (InfraView)
    ====================================================== */
+.login-page {
+    min-height: 100vh;
+}
+
+.login-card {
+    max-width: 400px;
+}
+
 .login-brand-icon {
     width: 64px;
     height: 64px;
@@ -452,8 +322,7 @@ body {
     .stagger-row > *:nth-child(5) { animation-delay: 0.26s; }
     .stagger-row > *:nth-child(6) { animation-delay: 0.32s; }
 
-    .alert-item,
-    .device-row-anim {
+    .alert-item {
         animation: fadeIn 0.4s ease both;
     }
 
@@ -470,8 +339,7 @@ body {
     .alert-item:nth-child(11) { animation-delay: 0.42s; }
     .alert-item:nth-child(12) { animation-delay: 0.46s; }
 
-    .category-progress .fill,
-    .latency-fill {
+    .category-progress .fill {
         animation: growBar 1s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
@@ -519,7 +387,7 @@ body {
 /* ===== Campo de busca (Rede) ===== */
 .search-box {
     position: relative;
-    max-width: 320px;
+    max-width: 360px;
 }
 
 .search-box i {
@@ -532,4 +400,15 @@ body {
 
 .search-box input {
     padding-left: 36px;
+}
+
+/* ===== Linha de dispositivo OFFLINE (tema escuro) =====
+   O .table-danger padrão do Bootstrap é rosa claro e deixava o nome do
+   dispositivo ilegível sobre o fundo escuro. */
+.table-devices tr.table-danger {
+    --bs-table-bg: rgba(239, 68, 68, 0.14);
+    --bs-table-hover-bg: rgba(239, 68, 68, 0.22);
+    --bs-table-color: #e9ecef;
+    --bs-table-hover-color: #ffffff;
+    --bs-table-border-color: #3f444a;
 }
