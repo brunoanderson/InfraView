@@ -1,0 +1,21 @@
+# Dependências
+node_modules/
+
+# Variáveis de ambiente (segredos) — só o .env.example vai para o Git
+.env
+.env.*
+!.env.example
+
+# Banco SQLite local (gerado por npm run db:reset)
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+
+# Logs e sistema
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Configurações locais do editor (não fazem parte do projeto)
+.vscode/
