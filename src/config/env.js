@@ -39,6 +39,14 @@ const envSchema = z.object({
         .trim()
         .min(1, 'informe ao menos uma origem')
         .transform((value) => value.split(',').map((origin) => origin.trim()).filter(Boolean)),
+
+    // ---- Monitoramento ----
+    // z.stringbool aceita "true"/"false" (z.coerce.boolean("false") daria true!)
+    MONITOR_ENABLED: z.stringbool().default(true),
+    MONITOR_INTERVAL_SECONDS: z.coerce.number({ error: 'precisa ser um número' }).int().min(5).max(3600).default(30),
+    MONITOR_TIMEOUT_MS: z.coerce.number({ error: 'precisa ser um número' }).int().min(200).max(10_000).default(2000),
+    // quantas falhas SEGUIDAS até considerar o dispositivo offline (evita alarme falso)
+    MONITOR_FAILURE_THRESHOLD: z.coerce.number({ error: 'precisa ser um número' }).int().min(1).max(10).default(3),
 });
 
 const parsed = envSchema.safeParse(process.env);
