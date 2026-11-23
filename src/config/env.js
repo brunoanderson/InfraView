@@ -17,16 +17,19 @@ export const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)
 // Variáveis já definidas no ambiente (ex.: pelos testes) têm prioridade sobre o .env.
 dotenv.config({ path: path.join(ROOT_DIR, '.env'), quiet: true });
 
+// Mensagem para variável obrigatória que não foi definida (sem isto, o zod responde em inglês).
+const MISSING = 'variável obrigatória não definida';
+
 const envSchema = z.object({
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    NODE_ENV: z.enum(['development', 'production', 'test'], { error: 'use development, production ou test' }).default('development'),
     PORT: z.coerce
         .number({ error: 'precisa ser um número' })
         .int()
         .min(1)
         .max(65535, 'precisa estar entre 1 e 65535')
         .default(3000),
-    DATABASE_URL: z.string().trim().min(1, 'informe o caminho do arquivo SQLite'),
-    JWT_SECRET: z.string().min(32, 'precisa ter pelo menos 32 caracteres'),
+    DATABASE_URL: z.string({ error: MISSING }).trim().min(1, 'informe o caminho do arquivo SQLite'),
+    JWT_SECRET: z.string({ error: MISSING }).min(32, 'precisa ter pelo menos 32 caracteres'),
     // Formato aceito pelo jsonwebtoken: número + unidade (30m, 8h, 7d)
     JWT_EXPIRES_IN: z
         .string()
@@ -35,7 +38,7 @@ const envSchema = z.object({
         .default('8h'),
     // "http://a,http://b" -> ['http://a', 'http://b']
     CORS_ORIGIN: z
-        .string()
+        .string({ error: MISSING })
         .trim()
         .min(1, 'informe ao menos uma origem')
         .transform((value) => value.split(',').map((origin) => origin.trim()).filter(Boolean)),

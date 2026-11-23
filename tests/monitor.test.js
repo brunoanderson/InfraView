@@ -9,6 +9,7 @@ import { before, test } from 'node:test';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = ':memory:';
 process.env.JWT_SECRET = 'segredo-somente-para-testes-automatizados-123';
+process.env.CORS_ORIGIN = 'http://localhost:3000';
 process.env.MONITOR_ENABLED = 'false';
 process.env.MONITOR_FAILURE_THRESHOLD = '3';
 
