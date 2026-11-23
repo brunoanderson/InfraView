@@ -1,5 +1,37 @@
 {
+  "name": "infraview",
+  "version": "2.0.0",
+  "description": "Painel NOC para monitoramento de dispositivos de uma LAN (Express + SQLite)",
+  "type": "module",
+  "main": "src/server.js",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "nodemon --watch src --ext js src/server.js",
+    "start": "node src/server.js",
+    "db:migrate": "node db/migrate.js",
+    "db:seed": "node db/seed.js",
+    "db:seed:demo": "node db/seed.js --demo",
+    "db:reset": "node db/reset.js",
+    "db:reset:demo": "node db/reset.js --demo",
+    "demo:alvo": "node demo/alvo.js",
+    "test": "node --test"
+  },
   "dependencies": {
-    "json-server": "^1.0.0-beta.15"
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.2.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.5",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "supertest": "^7.3.2"
   }
 }
