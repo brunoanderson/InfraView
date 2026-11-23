@@ -56,13 +56,28 @@ export function migrate(db, { log = console.log } = {}) {
     // e faz ROLLBACK automaticamente se algo lançar exceção.
     const applyOne = db.transaction((name, sql) => {
         db.exec(sql);
+        // Como as FKs estão desligadas (veja abaixo), confere na mão se a migration
+        // deixou alguma referência quebrada. Se deixou, o throw desfaz tudo.
+        const broken = db.pragma('foreign_key_check');
+        if (broken.length > 0) {
+            throw new Error(`${name} deixou ${broken.length} referência(s) inválida(s), ex.: ${JSON.stringify(broken[0])}`);
+        }
         register.run(name);
     });
 
-    for (const name of pending) {
-        const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, name), 'utf8');
-        applyOne(name, sql);
-        log(`[migrate] Aplicada: ${name}`);
+    // Para recriar uma tabela (o SQLite não tem ALTER para tirar UNIQUE/CHECK), o
+    // procedimento oficial é desligar as chaves estrangeiras durante a mudança:
+    // com elas ligadas, o DROP TABLE da tabela antiga apagaria em CASCADE os
+    // eventos e alertas. O PRAGMA só funciona fora de transação, por isso fica aqui.
+    db.pragma('foreign_keys = OFF');
+    try {
+        for (const name of pending) {
+            const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, name), 'utf8');
+            applyOne(name, sql);
+            log(`[migrate] Aplicada: ${name}`);
+        }
+    } finally {
+        db.pragma('foreign_keys = ON');
     }
 
     return pending;
