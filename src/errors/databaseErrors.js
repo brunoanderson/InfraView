@@ -7,7 +7,8 @@
 //   SQLITE_CONSTRAINT_UNIQUE      -> 409 (ex.: e-mail ou nome já cadastrado)
 //   SQLITE_CONSTRAINT_FOREIGNKEY  -> 409 (registro relacionado impede a operação)
 //   SQLITE_CONSTRAINT_CHECK/NOTNULL -> 400 (valor fora do permitido)
-//   banco ausente, bloqueado ou corrompido -> 503
+//   banco travado por outra conexão (SQLITE_BUSY) -> 503, "tente de novo"
+//   banco ausente, sem tabelas ou corrompido       -> 503, "rode npm run db:reset"
 // =============================================================================
 import { AppError } from './AppError.js';
 
@@ -28,7 +29,7 @@ const UNIQUE_MESSAGES = {
 
 /** Códigos que indicam banco inacessível (não é culpa da requisição). */
 const UNAVAILABLE_CODES = new Set([
-    'SQLITE_CANTOPEN', 'SQLITE_BUSY', 'SQLITE_LOCKED', 'SQLITE_IOERR',
+    'SQLITE_CANTOPEN', 'SQLITE_LOCKED', 'SQLITE_IOERR',
     'SQLITE_CORRUPT', 'SQLITE_NOTADB', 'SQLITE_FULL', 'SQLITE_READONLY',
 ]);
 
@@ -62,6 +63,15 @@ export function fromDatabaseError(err) {
         return AppError.badRequest('Um dos valores enviados não é permitido.');
     }
 
+    // Travado por outra conexão (ex.: alguém com o arquivo aberto gravando):
+    // é passageiro, então a dica do db:reset não serve aqui.
+    if (code.startsWith('SQLITE_BUSY')) {
+        return AppError.serviceUnavailable(
+            'Banco de dados temporariamente indisponível. Tente novamente em instantes.',
+            'DATABASE_UNAVAILABLE',
+        );
+    }
+
     // "no such table": o banco existe mas as migrations não foram aplicadas.
     if (UNAVAILABLE_CODES.has(code.split('_').slice(0, 2).join('_')) || /no such table/i.test(err.message)) {
         return databaseUnavailable();
@@ -70,7 +80,7 @@ export function fromDatabaseError(err) {
     return null; // outros erros do SQLite são bugs: viram 500 no errorHandler
 }
 
-/** 503 padrão para banco fora do ar. */
+/** 503 para banco ausente ou sem tabelas: a solução é recriá-lo. */
 export function databaseUnavailable() {
     return AppError.serviceUnavailable(
         'Banco de dados indisponível. Verifique se ele foi criado (npm run db:reset).',

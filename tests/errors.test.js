@@ -7,7 +7,11 @@
 // =============================================================================
 import './helpers/env.js'; // primeiro: define o ambiente de teste
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { after, before, describe, test } from 'node:test';
+import Database from 'better-sqlite3';
 import express from 'express';
 import request from 'supertest';
 
@@ -86,6 +90,40 @@ describe('erros convertidos em respostas HTTP', () => {
 });
 
 describe('banco fora do ar', () => {
+    test('banco travado (SQLITE_BUSY) -> 503 com mensagem genérica, sem a dica do db:reset', async () => {
+        // Travamento de verdade: uma conexão segura o arquivo e a outra tenta gravar.
+        const file = path.join(os.tmpdir(), `infraview-busy-test-${process.pid}.db`);
+        const holder = new Database(file);
+        const writer = new Database(file, { timeout: 0 }); // não espera: falha na hora
+        let busyError;
+        try {
+            holder.exec('CREATE TABLE t (x)');
+            holder.exec('BEGIN EXCLUSIVE');
+            try { writer.exec('INSERT INTO t VALUES (1)'); } catch (err) { busyError = err; }
+        } finally {
+            writer.close();
+            holder.close(); // fechar desfaz a transação aberta
+            fs.rmSync(file, { force: true });
+        }
+        assert.match(String(busyError?.code), /^SQLITE_BUSY/);
+
+        const probe = express();
+        probe.get('/busy', () => { throw busyError; });
+        probe.use(errorHandler);
+        const originalError = console.error;
+        console.error = () => {}; // 5xx vai para o log; aqui não interessa
+        try {
+            const res = await request(probe).get('/busy');
+            assert.equal(res.status, 503);
+            assert.equal(res.body.error.code, 'DATABASE_UNAVAILABLE');
+            assert.match(res.body.error.message, /temporariamente indisponível/);
+            assert.doesNotMatch(res.body.error.message, /db:reset/);
+            assertClean(res);
+        } finally {
+            console.error = originalError;
+        }
+    });
+
     test('sem as tabelas (banco vazio) -> 503 DATABASE_UNAVAILABLE com a dica do db:reset', async () => {
         // Fecha o banco: a próxima requisição reabre um banco em memória VAZIO,
         // como se o arquivo existisse mas as migrations não tivessem rodado.
