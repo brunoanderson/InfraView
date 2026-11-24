@@ -3,7 +3,7 @@
 //
 //   npm run db:seed        -> uso real: só o admin e as 4 categorias. Os
 //                             dispositivos você cadastra pela tela.
-//   npm run db:seed:demo   -> o mesmo + 5 alvos locais que respondem DE VERDADE,
+//   npm run db:seed:demo   -> o mesmo + 6 alvos locais que respondem DE VERDADE,
 //                             para a apresentação (nada aqui é inventado: status,
 //                             latência, quedas e alertas são todos medidos pelo monitor).
 //
@@ -26,6 +26,7 @@ const CATEGORIES = [
  *  que o Windows costuma reservar para o Hyper-V (veja: netsh interface ipv4 show excludedportrange protocol=tcp). */
 export const DEMO_FAST_PORT = 7010;
 export const DEMO_SLOW_PORT = 7011;
+export const DEMO_FLAKY_PORT = 7012;
 
 /**
  * Alvos da demonstração. Todos rodam no próprio computador, então funcionam em
@@ -37,6 +38,8 @@ export const DEMO_SLOW_PORT = 7011;
  *   INVERSOR-DEMO  http 127.0.0.1:7011           -> o alvo responde em ~350 ms, acima do
  *                                                   limite de 200 ms: fica em "atenção"
  *   NAS-FORA       tcp 127.0.0.1:9               -> porta fechada: cai e gera alerta sozinho
+ *   REDE-INSTAVEL-DEMO http 127.0.0.1:7012       -> o alvo derruba 2 de cada 5 requisições (40%),
+ *                                                   acima do limite de perda de 20%: fica em "atenção"
  */
 function demoDevices(apiPort) {
     return [
@@ -45,6 +48,7 @@ function demoDevices(apiPort) {
         { name: 'CAM-DEMO', model: 'Alvo de demonstração (npm run demo:alvo)', host: '127.0.0.1', checkType: 'tcp', port: DEMO_FAST_PORT, threshold: 100, gateway: 0, icon: 'bi-camera-video', category: 'seguranca' },
         { name: 'INVERSOR-DEMO', model: 'Alvo lento de demonstração (~350 ms)', host: '127.0.0.1', checkType: 'http', port: DEMO_SLOW_PORT, threshold: 200, gateway: 0, icon: 'bi-brightness-high', category: 'energia' },
         { name: 'NAS-FORA', model: 'Porta fechada (sempre offline)', host: '127.0.0.1', checkType: 'tcp', port: 9, threshold: 100, gateway: 0, icon: 'bi-hdd-stack', category: 'outros' },
+        { name: 'REDE-INSTAVEL-DEMO', model: 'Alvo instável de demonstração (perde 40%)', host: '127.0.0.1', checkType: 'http', port: DEMO_FLAKY_PORT, threshold: 100, lossThreshold: 20, gateway: 0, icon: 'bi-wifi', category: 'wifi' },
     ];
 }
 
@@ -83,14 +87,15 @@ export async function seed(db, admin, { demo = false, apiPort = 3000 } = {}) {
 
     const insertCategory = db.prepare('INSERT INTO categories (name, slug, icon) VALUES (?, ?, ?)');
     const insertDevice = db.prepare(`
-        INSERT INTO devices (name, model, host, check_type, port, latency_threshold_ms, is_gateway, icon, category_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO devices
+            (name, model, host, check_type, port, latency_threshold_ms, loss_threshold_pct, is_gateway, icon, category_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     db.transaction(() => {
         // Filhos antes dos pais, para não violar as chaves estrangeiras.
         // (Nomes de tabela fixos no código, nunca vindos do usuário.)
-        for (const table of ['checks', 'alerts', 'latency_events', 'downtime_events', 'devices', 'categories', 'users']) {
+        for (const table of ['checks', 'alerts', 'loss_events', 'latency_events', 'downtime_events', 'devices', 'categories', 'users']) {
             db.prepare(`DELETE FROM ${table}`).run();
         }
 
@@ -104,7 +109,8 @@ export async function seed(db, admin, { demo = false, apiPort = 3000 } = {}) {
 
         if (demo) {
             for (const d of demoDevices(apiPort)) {
-                insertDevice.run(d.name, d.model, d.host, d.checkType, d.port, d.threshold, d.gateway, d.icon, categoryIds[d.category]);
+                insertDevice.run(d.name, d.model, d.host, d.checkType, d.port, d.threshold, d.lossThreshold ?? 20, d.gateway, d.icon,
+                    categoryIds[d.category]);
             }
         }
     })();
@@ -114,7 +120,7 @@ export async function seed(db, admin, { demo = false, apiPort = 3000 } = {}) {
 
 /** Quantidade de linhas em cada tabela. */
 export function countRows(db) {
-    const tables = ['users', 'categories', 'devices', 'checks', 'downtime_events', 'latency_events', 'alerts'];
+    const tables = ['users', 'categories', 'devices', 'checks', 'downtime_events', 'latency_events', 'loss_events', 'alerts'];
     return Object.fromEntries(tables.map((t) => [t, db.prepare(`SELECT COUNT(*) FROM ${t}`).pluck().get()]));
 }
 
@@ -123,7 +129,7 @@ export function printSummary(db, admin, demo) {
     console.log(`[seed] Concluído (${demo ? 'modo demonstração' : 'uso real'}):`);
     console.table(countRows(db));
     console.log(`[seed] Admin: ${admin.email} (senha definida em SEED_ADMIN_PASSWORD no .env)`);
-    if (demo) console.log('[seed] Rode "npm run demo:alvo" em outro terminal para o CAM-DEMO e o INVERSOR-DEMO responderem.');
+    if (demo) console.log('[seed] Rode "npm run demo:alvo" em outro terminal para o CAM-DEMO, o INVERSOR-DEMO e o REDE-INSTAVEL-DEMO responderem.');
 }
 
 // ---------------------------------------------------------------------------
