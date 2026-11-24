@@ -124,6 +124,16 @@ export function showErrorState(container, err, onRetry) {
     );
 }
 
+/** Botão só com ícone (o texto vai no aria-label e no title). onClick recebe o botão. */
+export function iconButton(icon, label, onClick, { danger = false } = {}) {
+    const button = el('button', {
+        className: `btn btn-sm btn-ghost btn-icon${danger ? ' is-danger' : ''}`,
+        attrs: { type: 'button', title: label, 'aria-label': label },
+    }, [el('i', { className: `bi ${icon}`, attrs: { 'aria-hidden': 'true' } })]);
+    button.addEventListener('click', () => onClick(button));
+    return button;
+}
+
 /** Botão "ocupado" durante um envio: desabilita e mostra um spinner. */
 export function setBusy(button, busy, busyText = 'Enviando...') {
     if (busy) {

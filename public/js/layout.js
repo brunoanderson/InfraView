@@ -16,6 +16,7 @@ const PAGES = [
     { key: 'alertas', href: 'alertas.html', icon: 'bi-bell', label: 'Alertas' },
     { key: 'rede', href: 'rede.html', icon: 'bi-diagram-3', label: 'Rede' },
     { key: 'relatorios', href: 'relatorios.html', icon: 'bi-file-earmark-bar-graph', label: 'Relatórios e Logs' },
+    { key: 'usuarios', href: 'usuarios.html', icon: 'bi-people', label: 'Usuários', adminOnly: true },
 ];
 
 const ROLE_LABELS = { admin: 'Admin', viewer: 'Visualizador' };
@@ -23,16 +24,23 @@ const ROLE_LABELS = { admin: 'Admin', viewer: 'Visualizador' };
 /**
  * Prepara uma página protegida: exige login, monta o layout e mostra o conteúdo.
  * Se o servidor estiver fora do ar, mostra o erro com um botão para tentar de novo.
- * @param {string} pageKey  dashboard | alertas | rede | relatorios
+ * @param {string} pageKey  dashboard | alertas | rede | relatorios | usuarios
+ * @param {object} [options]
+ * @param {boolean} [options.adminOnly] viewer vai para o dashboard sem ver a página
+ *        (a interface só esconde; quem recusa de verdade é o back-end, com 403)
  * @returns o usuário logado
  */
-export async function initPage(pageKey) {
+export async function initPage(pageKey, { adminOnly = false } = {}) {
     let user;
     try {
         user = await requireAuth();
     } catch (err) {
         showBootError(err);
         throw err; // interrompe o script da página
+    }
+    if (adminOnly && !isAdmin(user)) {
+        window.location.replace('/dashboard.html');
+        return new Promise(() => {}); // a página para aqui enquanto sai
     }
     renderLayout(user, pageKey);
     applyRoleVisibility(user);
@@ -152,7 +160,7 @@ function renderLayout(user, pageKey) {
         ]),
     ]);
 
-    const links = PAGES.map((page) =>
+    const links = PAGES.filter((page) => !page.adminOnly || isAdmin(user)).map((page) =>
         el('a', {
             className: `nav-link${page.key === pageKey ? ' active' : ''}`,
             attrs: { href: page.href, 'aria-current': page.key === pageKey ? 'page' : null },

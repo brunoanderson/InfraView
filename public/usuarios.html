@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <title>Usuários | InfraView</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-page">
+
+    <!-- O cabeçalho e o menu lateral são montados pelo js/layout.js, com o usuário logado.
+         Até a sessão ser confirmada, aparece só este "Carregando...". Só admin chega a ver esta página. -->
+    <div class="page-loader" role="status">
+        <div class="spinner-border text-primary mb-2" aria-hidden="true"></div>
+        <div>Carregando...</div>
+    </div>
+
+    <main class="container-fluid px-4">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title"><i class="bi bi-people me-2 text-custom" aria-hidden="true"></i>Usuários</h1>
+                <p class="page-subtitle mb-0">Perfis de acesso, redefinição de senha e exclusão de contas</p>
+            </div>
+            <div id="roleBadges" class="d-flex flex-wrap gap-2"></div>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
+            <div class="results-count">O sistema sempre mantém pelo menos um administrador.</div>
+            <div class="results-count" id="updateStatus" aria-live="polite"></div>
+        </div>
+
+        <section class="card mb-4" aria-labelledby="userListTitle">
+            <div class="card-header">
+                <h2 class="section-title" id="userListTitle"><i class="bi bi-person-badge me-2 text-custom" aria-hidden="true"></i>Contas</h2>
+                <span class="count-badge" id="userCount"></span>
+            </div>
+            <!-- esqueleto e erro da primeira carga -->
+            <div id="userState"></div>
+            <div class="card-body p-0" id="userList"></div>
+        </section>
+    </main>
+
+    <!-- Modal de redefinição de senha -->
+    <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalTitle" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content" id="passwordForm" novalidate>
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="passwordModalTitle">Redefinir senha</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="passwordFormMessage" class="alert d-none" role="alert"></div>
+                    <div class="mb-3">
+                        <label for="fPassword" class="form-label">Nova senha</label>
+                        <input type="password" class="form-control" id="fPassword" name="password" maxlength="72" autocomplete="new-password" required aria-describedby="fPasswordHelp">
+                        <div id="fPasswordHelp" class="form-text">De 8 a 72 caracteres, com pelo menos uma letra e um número.</div>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div>
+                        <label for="fConfirmPassword" class="form-label">Repita a nova senha</label>
+                        <input type="password" class="form-control" id="fConfirmPassword" name="confirmPassword" maxlength="72" autocomplete="new-password" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="passwordSaveButton">Redefinir senha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="js/usuarios.js"></script>
+</body>
+</html>

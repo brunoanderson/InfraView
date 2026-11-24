@@ -2,7 +2,7 @@
 // Todas as rotas da API, sob /api.
 //   Públicas: /health, /auth/register, /auth/login
 //   Daqui para baixo, TUDO exige token (authenticate). Leitura: admin e viewer.
-//   Escrita (dispositivos, "verificar agora", reconhecer alerta): só admin.
+//   Escrita (dispositivos, "verificar agora", reconhecer alerta) e usuários: só admin.
 // =============================================================================
 import { Router } from 'express';
 import { health } from '../controllers/health.controller.js';
@@ -16,6 +16,7 @@ import { idParamSchema } from '../validators/common.validators.js';
 import { alertQuerySchema, eventQuerySchema } from '../validators/report.validators.js';
 import authRoutes from './auth.routes.js';
 import deviceRoutes from './device.routes.js';
+import userRoutes from './user.routes.js';
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.use('/auth', authRoutes); // /auth/me exige token: está dentro de auth.r
 router.use(authenticate);
 
 router.use('/devices', deviceRoutes);
+router.use('/users', userRoutes);
 router.get('/categories', categoryController.list);
 router.get('/events', validate({ query: eventQuerySchema }), eventController.list);
 router.get('/alerts', validate({ query: alertQuerySchema }), alertController.list);

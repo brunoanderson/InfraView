@@ -206,12 +206,23 @@ Para elas, use a `tcp`.
 
 ## Usuários e perfis
 
-- **admin**: vê tudo, cadastra, edita, pausa e exclui dispositivos, pede "verificar agora" e reconhece
-  alertas. O administrador é criado pelo `db:reset` (ou `db:seed`) com o `SEED_ADMIN_EMAIL` e a
-  `SEED_ADMIN_PASSWORD` do `.env`. No modelo: `admin@infraview.local` / `Admin@123`.
+- **admin**: vê tudo, cadastra, edita, pausa e exclui dispositivos, pede "verificar agora", reconhece
+  alertas e gerencia os usuários na tela **Usuários** (menu lateral). O administrador é criado pelo
+  `db:reset` (ou `db:seed`) com o `SEED_ADMIN_EMAIL` e a `SEED_ADMIN_PASSWORD` do `.env`. No modelo:
+  `admin@infraview.local` / `Admin@123`.
 - **viewer**: só visualiza. Para criar um, abra **http://localhost:3000/cadastro.html** (ou clique
   em "Cadastre-se" na tela de login) e crie a conta. Todo cadastro feito por essa tela nasce como viewer:
   mesmo que alguém envie `"role": "admin"` para a API, o campo é ignorado.
+
+Na tela **Usuários**, o admin promove um viewer a admin (ou o contrário), redefine a senha de qualquer
+conta e exclui contas. Duas regras valem sempre, e a API responde `409` se forem quebradas:
+
+- o sistema nunca fica sem administrador: o único admin não pode ser rebaixado nem excluído;
+- um admin não rebaixa nem exclui a própria conta (para isso, outro admin precisa fazer).
+
+As mudanças valem na hora: a cada requisição a API relê o usuário no banco, então quem foi excluído
+recebe `401` e quem foi rebaixado passa a receber `403` nas ações de admin, mesmo com o token antigo.
+Os alertas reconhecidos por um usuário excluído continuam registrados, como "usuário removido".
 
 A senha precisa ter de 8 a 72 caracteres, com pelo menos uma letra e um número. O login e o cadastro
 aceitam no máximo 10 tentativas a cada 15 minutos por IP. A partir daí, a API responde `429`.
@@ -243,6 +254,9 @@ Authorization: Bearer <token>
 | `PATCH /api/alerts/:id/ack` | admin | Reconhece um alerta ativo |
 | `GET /api/events` | logado | Quedas, picos de latência e perdas. Filtros: `?type=todos\|downtime\|latencia\|perda&period=0\|7\|30\|all&device=<id>` |
 | `GET /api/monitor/status` | logado | Situação do monitor (última e próxima rodada) |
+| `GET /api/users` | admin | Lista os usuários (`id`, `name`, `email`, `role`, `createdAt`; nunca a senha) |
+| `PATCH /api/users/:id` | admin | Troca o perfil e/ou a senha: `{ role?, password? }` (pelo menos um). `409` se tirar o último admin ou se for a própria conta |
+| `DELETE /api/users/:id` | admin | Exclui a conta → `204`. `409` se for o último admin ou a própria conta |
 
 O corpo de `POST` e `PUT /api/devices` tem os campos `name`, `model`, `host`, `checkType` (`ping`,
 `tcp` ou `http`), `port`, `latencyThresholdMs`, `lossThresholdPct`, `categoryId`, `isGateway`, `icon`
@@ -266,7 +280,7 @@ O campo `details` só aparece nos erros de validação e em alguns conflitos.
 | 401 | `UNAUTHORIZED`, `INVALID_CREDENTIALS`, `TOKEN_EXPIRED`, `INVALID_TOKEN` |
 | 403 | `FORBIDDEN` (um viewer tentou uma ação de admin) |
 | 404 | `NOT_FOUND` |
-| 409 | `CONFLICT` (e-mail ou nome repetido, alerta já reconhecido...) |
+| 409 | `CONFLICT` (e-mail ou nome repetido, alerta já reconhecido, último admin...) |
 | 413 | `PAYLOAD_TOO_LARGE` (o corpo passou de 10 KB) |
 | 429 | `TOO_MANY_REQUESTS` |
 | 500 | `INTERNAL_ERROR` |

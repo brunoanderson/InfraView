@@ -8,6 +8,28 @@ import { getDb } from '../lib/db.js';
 /** Campos que podem sair na API (nunca o password_hash). */
 const PUBLIC_COLUMNS = 'id, name, email, role, created_at AS createdAt';
 
+/** Todos os usuários, por nome. */
+export function list() {
+    return getDb().prepare(`SELECT ${PUBLIC_COLUMNS} FROM users ORDER BY name COLLATE NOCASE, id`).all();
+}
+
+export function countAdmins() {
+    return getDb().prepare(`SELECT COUNT(*) FROM users WHERE role = 'admin'`).pluck().get();
+}
+
+export function updateRole(id, role) {
+    getDb().prepare('UPDATE users SET role = ? WHERE id = ?').run(role, id);
+}
+
+export function updatePasswordHash(id, passwordHash) {
+    getDb().prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, id);
+}
+
+/** Apaga o usuário. Os alertas que ele reconheceu ficam sem autor (FK com ON DELETE SET NULL). */
+export function remove(id) {
+    getDb().prepare('DELETE FROM users WHERE id = ?').run(id);
+}
+
 /** Usuário público pelo id, ou undefined. */
 export function findById(id) {
     return getDb().prepare(`SELECT ${PUBLIC_COLUMNS} FROM users WHERE id = ?`).get(id);

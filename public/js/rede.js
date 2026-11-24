@@ -14,7 +14,7 @@ import {
 } from './devices.js';
 import { initPage, startAutoRefresh } from './layout.js';
 import {
-    clearFieldErrors, closeModal, confirmDialog, el, filterPills, hideFormMessage, meter, relativeTime, setBusy,
+    clearFieldErrors, closeModal, confirmDialog, el, filterPills, hideFormMessage, iconButton, meter, relativeTime, setBusy,
     setFieldError, setText, showEmpty, showError, showFieldErrors, showFormMessage, sparkline, statusBadge, statusLabel, syncBadges,
     statusTone, syncChildren, tableShell, toast,
 } from './ui.js';
@@ -135,15 +135,6 @@ function deviceRow(d, row) {
     return row(cells, `stripe tone-${statusTone(situationOf(d))}${offline ? ' is-down' : ''}`);
 }
 
-function iconButton(icon, label, onClick, danger = false) {
-    const button = el('button', {
-        className: `btn btn-sm btn-ghost btn-icon${danger ? ' is-danger' : ''}`,
-        attrs: { type: 'button', title: label, 'aria-label': label },
-    }, [el('i', { className: `bi ${icon}`, attrs: { 'aria-hidden': 'true' } })]);
-    button.addEventListener('click', () => onClick(button));
-    return button;
-}
-
 function actionButtons(d) {
     return el('div', { className: 'row-actions', attrs: { role: 'group', 'aria-label': `Ações de ${d.name}` } }, [
         iconButton('bi-arrow-repeat', `Verificar ${d.name} agora`, (b) => checkNow(d, b)),
@@ -151,7 +142,7 @@ function actionButtons(d) {
             ? iconButton('bi-pause-fill', `Pausar ${d.name}`, (b) => toggleMonitoring(d, b))
             : iconButton('bi-play-fill', `Retomar ${d.name}`, (b) => toggleMonitoring(d, b)),
         iconButton('bi-pencil', `Editar ${d.name}`, () => openForm(d)),
-        iconButton('bi-trash', `Excluir ${d.name}`, (b) => removeDevice(d, b), true),
+        iconButton('bi-trash', `Excluir ${d.name}`, (b) => removeDevice(d, b), { danger: true }),
     ]);
 }
 
