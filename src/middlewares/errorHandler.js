@@ -7,9 +7,9 @@
 //
 // Toda resposta de erro tem o mesmo formato:
 //     { "error": { "code": "...", "message": "...", "details": ... } }
-// O stack trace só é incluído com NODE_ENV=development, e apenas em erros inesperados (500).
+// Detalhes internos (stack trace, mensagem do SQLite) nunca vão na resposta, em
+// nenhum ambiente: ficam só no log do servidor.
 // =============================================================================
-import { env } from '../config/env.js';
 import { AppError } from '../errors/AppError.js';
 import { fromDatabaseError } from '../errors/databaseErrors.js';
 
@@ -36,20 +36,14 @@ function normalize(err) {
 export function errorHandler(err, req, res, next) {
     const appError = normalize(err);
 
-    // 5xx é problema do servidor: registra o erro original para investigação.
-    // (O corpo da requisição não é registrado, porque pode conter senha.)
+    // 5xx é problema do servidor: registra o erro original (com o stack) no log,
+    // para investigação. (O corpo da requisição não é registrado: pode ter senha.)
     if (appError.status >= 500) {
         console.error(`[erro] ${req.method} ${req.originalUrl}:`, err);
     }
 
     const body = { code: appError.code, message: appError.message };
     if (appError.details !== undefined) body.details = appError.details;
-    // Stack trace ajuda a depurar falhas inesperadas, mas expõe detalhes internos:
-    // só em desenvolvimento e só para falhas inesperadas (500 que não é AppError).
-    // Nos erros previstos (4xx, 503) a causa já está na mensagem.
-    if (env.isDev && appError.status >= 500 && !(err instanceof AppError) && err?.stack) {
-        body.stack = err.stack;
-    }
 
     // Se a resposta já começou a ser enviada, só resta encerrar a conexão.
     if (res.headersSent) return req.socket.destroy();

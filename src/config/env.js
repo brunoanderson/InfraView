@@ -66,6 +66,5 @@ if (!parsed.success) {
 /** Configuração validada e tipada. Congelada para ninguém alterar em tempo de execução. */
 export const env = Object.freeze({
     ...parsed.data,
-    isDev: parsed.data.NODE_ENV === 'development',
     isTest: parsed.data.NODE_ENV === 'test',
 });
