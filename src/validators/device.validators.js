@@ -1,8 +1,8 @@
 // =============================================================================
 // Validação de dispositivos (cadastro e edição) e dos filtros da listagem.
 //
-// O cliente só envia CONFIGURAÇÃO. status, latência, contagem de falhas e datas
-// são medidos pelo monitor: se vierem no corpo, o z.object os descarta.
+// O cliente só envia CONFIGURAÇÃO. status, latência, perda, contagem de falhas e
+// datas são medidos pelo monitor: se vierem no corpo, o z.object os descarta.
 // =============================================================================
 import { isIP } from 'node:net';
 import { z } from 'zod';
@@ -64,6 +64,13 @@ export const deviceBodySchema = z
             .min(1, 'O limite de latência precisa ser de pelo menos 1 ms.')
             .max(10_000, 'O limite de latência pode ser de no máximo 10000 ms.')
             .default(100),
+        // % de tentativas sem resposta (nas últimas verificações) a partir da qual fica em atenção
+        lossThresholdPct: z
+            .number({ error: 'O limite de perda precisa ser um número.' })
+            .int('O limite de perda precisa ser um número inteiro.')
+            .min(1, 'O limite de perda vai de 1% a 100%.')
+            .max(100, 'O limite de perda vai de 1% a 100%.')
+            .default(20),
         categoryId: z.number({ error: 'Escolha a categoria.' }).int().positive('Escolha a categoria.'),
         isGateway: z.boolean({ error: 'Gateway deve ser verdadeiro ou falso.' }).default(false),
         icon: z

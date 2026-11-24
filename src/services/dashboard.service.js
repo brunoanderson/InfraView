@@ -16,6 +16,8 @@ export function summary(now = Date.now()) {
         devices: dashboardModel.deviceCounts(),
         activeAlerts: dashboardModel.activeAlertCount(),
         averageLatencyMs: dashboardModel.averageLatency(since),
+        averageLoss24hPct: dashboardModel.averageLoss(since),
+        devicesWithActiveLoss: dashboardModel.devicesWithActiveLoss(),
         gateway: gatewaySummary(since),
         categories: categoryModel.listWithCounts(),
         recentAlerts: alertModel.list({ status: 'ativo', limit: 5 }),
@@ -35,5 +37,6 @@ function gatewaySummary(since) {
         // ex.: 2870 sucessos em 2880 verificações -> 99.7 (%)
         availability24h: stats.total > 0 ? Math.round((stats.successes / stats.total) * 1000) / 10 : null,
         averageLatency24hMs: stats.averageLatencyMs,
+        averageLoss24hPct: dashboardModel.averageLoss(since, gateway.id),
     };
 }

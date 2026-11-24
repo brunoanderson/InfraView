@@ -16,7 +16,7 @@ export function categories(req, res) {
     res.json({ categories: categoryModel.listWithCounts() });
 }
 
-/** GET /api/events?type=todos|downtime|latencia&period=0|7|30|all&device=<id> */
+/** GET /api/events?type=todos|downtime|latencia|perda&period=0|7|30|all&device=<id> */
 export function events(req, res) {
     const { type, period, device } = req.validated.query;
     const now = new Date();
@@ -29,12 +29,14 @@ export function events(req, res) {
         type,
         period,
         since,
-        downtime: type === 'latencia' ? [] : eventModel.listDowntime({ ...filters, now: now.toISOString() }),
-        latency: type === 'downtime' ? [] : eventModel.listLatency(filters),
+        // "todos" traz as três listas; os outros tipos trazem só a sua (as demais vêm vazias)
+        downtime: ['todos', 'downtime'].includes(type) ? eventModel.listDowntime({ ...filters, now: now.toISOString() }) : [],
+        latency: ['todos', 'latencia'].includes(type) ? eventModel.listLatency(filters) : [],
+        loss: ['todos', 'perda'].includes(type) ? eventModel.listLoss(filters) : [],
     });
 }
 
-/** GET /api/alerts?status=&severity= (counts = totais por status, para os badges) */
+/** GET /api/alerts?status=&severity=&kind= (counts = totais por status, para os badges) */
 export function alerts(req, res) {
     res.json({ alerts: alertModel.list(req.validated.query), counts: alertModel.countByStatus() });
 }

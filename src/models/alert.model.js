@@ -22,16 +22,17 @@ function toAlert(row) {
 }
 
 /** Lista com filtros opcionais. Ativos primeiro, depois os mais recentes. */
-export function list({ status = null, severity = null, limit = -1 } = {}) {
+export function list({ status = null, severity = null, kind = null, limit = -1 } = {}) {
     return getDb()
         .prepare(
             `${SELECT_ALERT}
              WHERE (@status IS NULL OR a.status = @status)
                AND (@severity IS NULL OR a.severity = @severity)
+               AND (@kind IS NULL OR a.kind = @kind)
              ORDER BY a.status = 'ativo' DESC, a.created_at DESC
              LIMIT @limit`,
         )
-        .all({ status, severity, limit }) // LIMIT -1 = sem limite no SQLite
+        .all({ status, severity, kind, limit }) // LIMIT -1 = sem limite no SQLite
         .map(toAlert);
 }
 

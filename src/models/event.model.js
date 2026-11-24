@@ -1,5 +1,5 @@
 // =============================================================================
-// Model dos eventos (tela Relatórios): quedas e picos de latência.
+// Model dos eventos (tela Relatórios): quedas, picos de latência e perda de pacotes.
 // Parâmetros nomeados (@since, @deviceId): "(@since IS NULL OR ...)" desliga o
 // filtro quando ele não foi pedido, sem montar SQL diferente para cada caso.
 // =============================================================================
@@ -35,6 +35,23 @@ export function listLatency({ since = null, deviceId = null }) {
                     e.threshold_ms AS thresholdMs, e.resolved,
                     d.id AS deviceId, d.name AS deviceName, d.host AS deviceHost
              FROM latency_events e
+             JOIN devices d ON d.id = e.device_id
+             WHERE (@since IS NULL OR e.recorded_at >= @since)
+               AND (@deviceId IS NULL OR e.device_id = @deviceId)
+             ORDER BY e.recorded_at DESC`,
+        )
+        .all({ since, deviceId })
+        .map((row) => ({ ...row, resolved: row.resolved === 1 }));
+}
+
+/** Períodos com perda de pacotes acima do limite (loss_pct = maior perda observada). */
+export function listLoss({ since = null, deviceId = null }) {
+    return getDb()
+        .prepare(
+            `SELECT e.id, e.recorded_at AS recordedAt, e.loss_pct AS lossPct,
+                    e.threshold_pct AS thresholdPct, e.resolved,
+                    d.id AS deviceId, d.name AS deviceName, d.host AS deviceHost
+             FROM loss_events e
              JOIN devices d ON d.id = e.device_id
              WHERE (@since IS NULL OR e.recorded_at >= @since)
                AND (@deviceId IS NULL OR e.device_id = @deviceId)

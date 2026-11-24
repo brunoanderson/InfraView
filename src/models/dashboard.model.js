@@ -31,6 +31,27 @@ export function averageLatency(since) {
         .get(since);
 }
 
+/**
+ * Perda média desde `since`: tentativas sem resposta / tentativas feitas, em %
+ * (null se não houver verificações). Com `deviceId`, só daquele dispositivo.
+ * Como no gatilho de perda, só entram verificações em que algo respondeu: a falha
+ * total já aparece como queda e na disponibilidade.
+ */
+export function averageLoss(since, deviceId = null) {
+    const row = getDb()
+        .prepare(
+            `SELECT SUM(packets_sent) AS sent, SUM(packets_lost) AS lost FROM checks
+             WHERE success = 1 AND checked_at >= @since AND (@deviceId IS NULL OR device_id = @deviceId)`,
+        )
+        .get({ since, deviceId });
+    return row.sent ? Math.round((row.lost / row.sent) * 1000) / 10 : null; // 1 casa decimal
+}
+
+/** Quantos dispositivos têm um evento de perda de pacotes aberto agora. */
+export function devicesWithActiveLoss() {
+    return getDb().prepare('SELECT COUNT(DISTINCT device_id) FROM loss_events WHERE resolved = 0').pluck().get();
+}
+
 /** O gateway (o primeiro marcado como tal), ou undefined. */
 export function findGateway() {
     return getDb()

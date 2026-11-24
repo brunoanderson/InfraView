@@ -7,7 +7,7 @@ import { getDb } from '../lib/db.js';
 
 const SELECT_DEVICE = `
     SELECT d.id, d.name, d.model, d.host, d.check_type, d.port, d.status, d.status_note,
-           d.latency_ms, d.latency_threshold_ms, d.is_gateway, d.icon, d.monitoring_enabled,
+           d.latency_ms, d.latency_threshold_ms, d.last_loss_pct, d.loss_threshold_pct, d.is_gateway, d.icon, d.monitoring_enabled,
            d.consecutive_failures, d.up_since, d.last_seen_at, d.last_check_at,
            d.created_at, d.updated_at,
            c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon
@@ -28,6 +28,8 @@ function toDevice(row) {
         statusNote: row.status_note,
         latencyMs: row.latency_ms,
         latencyThresholdMs: row.latency_threshold_ms,
+        lastLossPct: row.last_loss_pct,
+        lossThresholdPct: row.loss_threshold_pct,
         isGateway: row.is_gateway === 1,
         icon: row.icon,
         monitoringEnabled: row.monitoring_enabled === 1,
@@ -75,13 +77,14 @@ export function create(d) {
     return getDb()
         .prepare(
             `INSERT INTO devices
-                (name, model, host, check_type, port, latency_threshold_ms, is_gateway, icon, monitoring_enabled, category_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (name, model, host, check_type, port, latency_threshold_ms, loss_threshold_pct, is_gateway, icon,
+                 monitoring_enabled, category_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              RETURNING id`,
         )
         .pluck()
-        .get(d.name, d.model, d.host, d.checkType, d.port, d.latencyThresholdMs, d.isGateway ? 1 : 0, d.icon,
-            d.monitoringEnabled ? 1 : 0, d.categoryId);
+        .get(d.name, d.model, d.host, d.checkType, d.port, d.latencyThresholdMs, d.lossThresholdPct, d.isGateway ? 1 : 0,
+            d.icon, d.monitoringEnabled ? 1 : 0, d.categoryId);
 }
 
 /** Atualiza só a configuração. Devolve quantas linhas mudaram (0 = não existe). */
@@ -90,12 +93,12 @@ export function update(id, d) {
         .prepare(
             `UPDATE devices
              SET name = ?, model = ?, host = ?, check_type = ?, port = ?, latency_threshold_ms = ?,
-                 is_gateway = ?, icon = ?, monitoring_enabled = ?, category_id = ?,
+                 loss_threshold_pct = ?, is_gateway = ?, icon = ?, monitoring_enabled = ?, category_id = ?,
                  updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
              WHERE id = ?`,
         )
-        .run(d.name, d.model, d.host, d.checkType, d.port, d.latencyThresholdMs, d.isGateway ? 1 : 0, d.icon,
-            d.monitoringEnabled ? 1 : 0, d.categoryId, id).changes;
+        .run(d.name, d.model, d.host, d.checkType, d.port, d.latencyThresholdMs, d.lossThresholdPct, d.isGateway ? 1 : 0,
+            d.icon, d.monitoringEnabled ? 1 : 0, d.categoryId, id).changes;
 }
 
 /** Apaga; checks, quedas, picos e alertas do dispositivo vão junto (ON DELETE CASCADE). */
