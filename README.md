@@ -232,6 +232,7 @@ Authorization: Bearer <token>
 | `GET /api/auth/me` | logado | Dados do usuário dono do token |
 | `GET /api/devices` | logado | Lista os dispositivos. Filtros: `?status=online\|offline\|atencao\|pendente&search=&categoryId=` |
 | `GET /api/devices/:id` | logado | Um dispositivo |
+| `GET /api/devices/:id/measurements` | logado | Últimas verificações (`checkedAt`, `success`, `latencyMs`, `packetsLost`), da mais antiga para a mais nova. `?limit=` de 1 a 120, padrão 30 |
 | `POST /api/devices` | admin | Cadastra e já verifica → `201` |
 | `PUT /api/devices/:id` | admin | Edita |
 | `DELETE /api/devices/:id` | admin | Exclui → `204` |

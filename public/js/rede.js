@@ -1,7 +1,8 @@
 // =============================================================================
-// Rede: dispositivos por categoria, com busca, filtro por status e, para o
-// admin, cadastro/edição (modal), pausar/retomar, excluir e "verificar agora".
-//   GET  /api/devices   GET /api/categories
+// Rede: dispositivos por categoria, com busca, filtro por status, gráfico de
+// latência e, para o admin, cadastro/edição (modal), pausar/retomar, excluir e
+// "verificar agora".
+//   GET  /api/devices   GET /api/categories   GET /api/devices/:id/measurements
 //   POST /api/devices   PUT /api/devices/:id   DELETE /api/devices/:id
 //   POST /api/devices/:id/check
 // =============================================================================
@@ -14,7 +15,7 @@ import {
 import { initPage, startAutoRefresh } from './layout.js';
 import {
     clearFieldErrors, closeModal, confirmDialog, el, filterPills, hideFormMessage, meter, relativeTime, setBusy,
-    setFieldError, setText, showEmpty, showError, showFieldErrors, showFormMessage, statusBadge, statusLabel, syncBadges,
+    setFieldError, setText, showEmpty, showError, showFieldErrors, showFormMessage, sparkline, statusBadge, statusLabel, syncBadges,
     statusTone, syncChildren, tableShell, toast,
 } from './ui.js';
 
@@ -25,8 +26,11 @@ const list = document.getElementById('deviceList');
 const resultsCount = document.getElementById('resultsCount');
 const searchInput = document.getElementById('deviceSearch');
 
+const HISTORY_SIZE = 30; // verificações no gráfico de cada dispositivo
+
 let devices = [];
 let categories = [];
+let histories = new Map(); // id do dispositivo -> últimas verificações
 let search = '';
 
 // ---- Filtros ---------------------------------------------------------------
@@ -71,6 +75,7 @@ const COLUMNS = [
     { label: 'Status', className: 'col-status' },
     { label: 'Latência', className: 'col-latency' },
     { label: 'Perda', className: 'col-loss' },
+    { label: 'Histórico', className: 'col-history' },
     { label: 'Última verificação', className: 'col-last' },
     ...(admin ? [{ label: 'Ações', className: 'col-actions text-end' }] : []),
 ];
@@ -118,6 +123,7 @@ function deviceRow(d, row) {
             meter([{ percent: latencyPercentOfLimit(d), tone: latencyTone(d) }]),
         ])]),
         el('td', { className: `mono ${lossClass(d)}`, text: lossText(d) }),
+        el('td', {}, [d.history.length ? sparkline(d.history, { limitMs: d.latencyThresholdMs, tone: latencyTone(d) }) : el('span', { className: 'caption', text: 'sem medições' })]),
         el('td', { className: offline ? 'text-danger' : 'text-custom' }, [
             el('div', {}, [
                 el('div', {}, [relativeTime(d.lastCheckAt)]),
@@ -193,7 +199,8 @@ function render() {
         if (rows.length === 0) continue;
         const entry = categoryCard(category);
         setText(entry.count, `${rows.length} dispositivo(s)`);
-        syncChildren(entry.tbody, rows, (d) => d.id, (d) => deviceRow(d, entry.row));
+        const withHistory = rows.map((d) => ({ ...d, history: histories.get(d.id) ?? [] }));
+        syncChildren(entry.tbody, withHistory, (d) => d.id, (d) => deviceRow(d, entry.row));
         shown.push(entry.card);
     }
     const same = shown.length === list.children.length && shown.every((card, i) => list.children[i] === card);
@@ -206,6 +213,8 @@ async function load() {
     const [devicesRes, categoriesRes] = await Promise.all([api('GET', '/devices'), api('GET', '/categories')]);
     devices = devicesRes.devices;
     categories = categoriesRes.categories;
+    const measured = await Promise.all(devices.map((d) => api('GET', `/devices/${d.id}/measurements?limit=${HISTORY_SIZE}`)));
+    histories = new Map(devices.map((d, i) => [d.id, measured[i].measurements]));
     render();
 }
 

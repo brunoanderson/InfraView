@@ -11,6 +11,11 @@ export function show(req, res) {
     res.json({ device: deviceService.findById(req.validated.params.id) });
 }
 
+/** GET /api/devices/:id/measurements?limit= (últimas verificações, da mais antiga para a mais nova) */
+export function measurements(req, res) {
+    res.json({ measurements: deviceService.measurements(req.validated.params.id, req.validated.query.limit) });
+}
+
 /** POST /api/devices (admin) -> 201 com o status já medido */
 export async function create(req, res) {
     const device = await deviceService.create(req.validated.body);

@@ -267,7 +267,7 @@ time {
    4. Tons: a cor de um status, usada por selos, ícones,
       faixas laterais, barras e medidores
    ====================================================== */
-:where(.status-badge, .icon-box, .stripe, .meter, .gauge) {
+:where(.status-badge, .icon-box, .stripe, .meter, .gauge, .sparkline, .app-toast) {
     --tone-rgb: var(--rgb-neutral);
 }
 
@@ -845,15 +845,16 @@ tr.stripe > td:first-child {
 /* Colunas de largura fixa: as tabelas de todas as categorias ficam alinhadas */
 .devices-table {
     table-layout: fixed;
-    min-width: 980px;
+    min-width: 1080px;
 }
 
-.col-host { width: 150px; }
-.col-check { width: 120px; }
-.col-status { width: 170px; }
+.col-host { width: 130px; }
+.col-check { width: 104px; }
+.col-status { width: 156px; }
 .col-latency { width: 120px; }
 .col-loss { width: 80px; }
-.col-last { width: 130px; }
+.col-history { width: 128px; }
+.col-last { width: 116px; }
 .col-actions { width: 196px; }
 
 .device-name {
@@ -879,6 +880,35 @@ tr.stripe > td:first-child {
     flex-direction: column;
     gap: var(--space-1);
     min-width: 72px;
+}
+
+/* Mini gráfico de latência (ui.sparkline) */
+.sparkline {
+    width: 100px;
+    height: 28px;
+    overflow: visible;
+}
+
+.sparkline-line {
+    fill: none;
+    stroke: rgb(var(--tone-rgb));
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 3px rgba(var(--tone-rgb), 0.7));
+}
+
+.sparkline-point {
+    fill: rgb(var(--tone-rgb));
+}
+
+.sparkline-limit {
+    stroke: var(--color-text-subtle);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+}
+
+.sparkline-fail {
+    fill: rgb(var(--rgb-danger));
 }
 
 .row-actions {

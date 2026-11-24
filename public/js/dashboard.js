@@ -10,7 +10,7 @@ import { EVENT_TYPES, mergeEvents } from './events.js';
 import { initPage, startAutoRefresh } from './layout.js';
 import {
     badge, countdown, el, formatDateTime, formatDuration, formatLatency, formatPercent, meter, setText, statusLabel,
-    syncOrEmpty, toast,
+    svgEl, syncOrEmpty, toast,
 } from './ui.js';
 
 const user = await initPage('dashboard');
@@ -26,7 +26,6 @@ const $ = (id) => document.getElementById(id);
 const state = $('dashboardState');
 const content = $('dashboardContent');
 const RECENT_EVENTS = 8;
-const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // ---- Faixa "Estado da rede" -----------------------------------------------------
 
@@ -65,23 +64,11 @@ function renderMetricWithLimit(id, value, limit, unit) {
 function gauge(percent, tone) {
     const radius = 30;
     const length = 2 * Math.PI * radius;
-    const circle = (className) => {
-        const c = document.createElementNS(SVG_NS, 'circle');
-        c.setAttribute('class', className);
-        c.setAttribute('cx', '36');
-        c.setAttribute('cy', '36');
-        c.setAttribute('r', String(radius));
-        return c;
-    };
-    const value = circle('gauge-value');
-    value.setAttribute('stroke-dasharray', String(length));
-    value.setAttribute('stroke-dashoffset', String(length * (1 - (percent ?? 0) / 100)));
-    const svg = document.createElementNS(SVG_NS, 'svg');
-    svg.setAttribute('class', `gauge tone-${tone}`);
-    svg.setAttribute('viewBox', '0 0 72 72');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.append(circle('gauge-track'), value);
-    return svg;
+    const circle = (attrs) => svgEl('circle', { cx: 36, cy: 36, r: radius, ...attrs });
+    return svgEl('svg', { class: `gauge tone-${tone}`, viewBox: '0 0 72 72', 'aria-hidden': 'true' }, [
+        circle({ class: 'gauge-track' }),
+        circle({ class: 'gauge-value', 'stroke-dasharray': length, 'stroke-dashoffset': length * (1 - (percent ?? 0) / 100) }),
+    ]);
 }
 
 function availabilityTone(percent) {

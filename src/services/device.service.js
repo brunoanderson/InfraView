@@ -9,6 +9,7 @@ import { AppError } from '../errors/AppError.js';
 import { getDb } from '../lib/db.js';
 import * as categoryModel from '../models/category.model.js';
 import * as deviceModel from '../models/device.model.js';
+import * as monitorModel from '../models/monitor.model.js';
 import * as monitor from '../monitor/monitor.js';
 
 function findOrFail(id) {
@@ -26,6 +27,12 @@ function assertCategoryExists(categoryId) {
 
 export const list = (filters) => deviceModel.list(filters);
 export const findById = (id) => findOrFail(id);
+
+/** Últimas verificações do dispositivo (404 se ele não existir). */
+export function measurements(id, limit) {
+    findOrFail(id);
+    return monitorModel.recentChecks(id, limit);
+}
 
 export async function create(data) {
     assertCategoryExists(data.categoryId);

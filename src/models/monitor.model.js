@@ -89,6 +89,18 @@ export function openProblems(deviceId) {
     return { latency: row.latency === 1, loss: row.loss === 1 };
 }
 
+/** Últimas `limit` verificações de um dispositivo, da mais antiga para a mais nova (gráfico da Rede). */
+export function recentChecks(deviceId, limit) {
+    return db()
+        .prepare(
+            `SELECT checked_at AS checkedAt, success, latency_ms AS latencyMs, packets_lost AS packetsLost
+             FROM (SELECT * FROM checks WHERE device_id = ? ORDER BY checked_at DESC, id DESC LIMIT ?)
+             ORDER BY checked_at, id`,
+        )
+        .all(deviceId, limit)
+        .map((row) => ({ ...row, success: row.success === 1 }));
+}
+
 /** Últimas `limit` latências de verificações com sucesso (mais recente primeiro). */
 export function recentLatencies(deviceId, limit) {
     return db()

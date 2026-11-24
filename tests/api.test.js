@@ -136,6 +136,35 @@ describe('CRUD de dispositivos', () => {
         assert.equal(paused.status, 409);
     });
 
+    test('GET /:id/measurements: últimas verificações, da mais antiga para a mais nova', async () => {
+        nextResult = DOWN;
+        await request(app).put(`/api/devices/${id}`).set(auth(adminToken)).send(newDevice({ host: '192.168.50.9' })); // religa e verifica
+        nextResult = UP;
+        await request(app).post(`/api/devices/${id}/check`).set(auth(adminToken));
+
+        const all = await request(app).get(`/api/devices/${id}/measurements`).set(auth(viewerToken)); // leitura: viewer pode
+        assert.equal(all.status, 200);
+        const list = all.body.measurements;
+        assert.ok(list.length >= 2);
+        assert.deepEqual(Object.keys(list[0]).sort(), ['checkedAt', 'latencyMs', 'packetsLost', 'success']);
+        assert.deepEqual(list.map((m) => m.checkedAt), list.map((m) => m.checkedAt).toSorted());
+        assert.deepEqual(list.at(-1), { ...list.at(-1), success: true, latencyMs: 5, packetsLost: 0 });
+        assert.deepEqual(list.at(-2), { ...list.at(-2), success: false, latencyMs: null, packetsLost: 1 });
+
+        const two = await request(app).get(`/api/devices/${id}/measurements?limit=2`).set(auth(viewerToken));
+        assert.deepEqual(two.body.measurements, list.slice(-2)); // as 2 mais novas
+    });
+
+    test('GET /:id/measurements: limite inválido 400, inexistente 404, sem token 401', async () => {
+        for (const limit of ['0', '121', 'abc']) {
+            const res = await request(app).get(`/api/devices/${id}/measurements?limit=${limit}`).set(auth(viewerToken));
+            assert.equal(res.status, 400, `limit=${limit}`);
+            assert.equal(res.body.error.details[0].field, 'limit');
+        }
+        assert.equal((await request(app).get('/api/devices/9999/measurements').set(auth(viewerToken))).status, 404);
+        assert.equal((await request(app).get(`/api/devices/${id}/measurements`)).status, 401);
+    });
+
     test('DELETE -> 204, depois 404', async () => {
         assert.equal((await request(app).delete(`/api/devices/${id}`).set(auth(adminToken))).status, 204);
         assert.equal((await request(app).delete(`/api/devices/${id}`).set(auth(adminToken))).status, 404);

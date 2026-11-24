@@ -292,6 +292,57 @@ export function meter(segments) {
     }));
 }
 
+// ---- Gráficos em SVG -------------------------------------------------------------
+
+/** Cria um elemento SVG com atributos (números viram texto). */
+export function svgEl(tag, attrs = {}, children = []) {
+    const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [name, value] of Object.entries(attrs)) element.setAttribute(name, String(value));
+    element.append(...children);
+    return element;
+}
+
+const SPARK = { width: 100, height: 28, pad: 3 };
+
+/**
+ * Mini gráfico de latência das últimas verificações. A linha tracejada é o
+ * limite do dispositivo; falhas aparecem como pontos vermelhos embaixo e
+ * interrompem a linha.
+ * @param checks [{ success, latencyMs }] da mais antiga para a mais nova
+ */
+export function sparkline(checks, { limitMs, tone }) {
+    const latencies = checks.filter((c) => c.success).map((c) => c.latencyMs);
+    const failures = checks.length - latencies.length;
+    const label = latencies.length
+        ? `Latência nas últimas ${checks.length} verificações: de ${Math.min(...latencies)} a ${Math.max(...latencies)} ms${failures ? `, ${failures} sem resposta` : ''}`
+        : `Nenhuma resposta nas últimas ${checks.length} verificações`;
+    const { width, height, pad } = SPARK;
+    const scale = Math.max(limitMs, ...latencies);
+    const x = (i) => pad + (checks.length > 1 ? (i / (checks.length - 1)) * (width - 2 * pad) : (width - 2 * pad) / 2);
+    const y = (ms) => height - pad - (ms / scale) * (height - 2 * pad);
+
+    // Trechos contínuos de respostas: cada falha corta a linha.
+    const segments = [[]];
+    const marks = [];
+    checks.forEach((c, i) => {
+        if (c.success) segments.at(-1).push([x(i), y(c.latencyMs)]);
+        else {
+            segments.push([]);
+            marks.push(svgEl('circle', { class: 'sparkline-fail', cx: x(i), cy: height - pad, r: 1.8 }));
+        }
+    });
+    // Trecho de um ponto só vira um ponto; os outros, uma linha.
+    const drawSegment = (points) => (points.length === 1
+        ? svgEl('circle', { class: 'sparkline-point', cx: points[0][0], cy: points[0][1], r: 1.8 })
+        : svgEl('polyline', { class: 'sparkline-line', points: points.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(' ') }));
+
+    return svgEl('svg', { class: `sparkline tone-${tone}`, viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': label }, [
+        svgEl('line', { class: 'sparkline-limit', x1: 0, x2: width, y1: y(limitMs), y2: y(limitMs) }),
+        ...segments.filter((points) => points.length > 0).map(drawSegment),
+        ...marks,
+    ]);
+}
+
 // ---- Horários que se atualizam sozinhos (layout.js chama refreshTimes a cada 1 s) ----
 
 /** <time> com "há 12 s" e o horário completo no title. */

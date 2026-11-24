@@ -96,6 +96,15 @@ export const deviceBodySchema = z
         }
     });
 
+/** GET /api/devices/:id/measurements: quantas verificações devolver */
+export const measurementQuerySchema = z.object({
+    limit: z.coerce.number({ error: 'O limite precisa ser um número.' })
+        .int('O limite precisa ser um número inteiro.')
+        .min(1, 'O limite vai de 1 a 120.')
+        .max(120, 'O limite vai de 1 a 120.')
+        .default(30),
+});
+
 /** Filtros de GET /api/devices */
 export const deviceQuerySchema = z.object({
     status: z.enum(['online', 'offline', 'atencao', 'pendente'], { error: 'Status inválido.' }).optional(),

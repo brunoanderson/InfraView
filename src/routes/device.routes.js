@@ -5,13 +5,14 @@ import * as deviceController from '../controllers/device.controller.js';
 import { requireRole } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import { idParamSchema } from '../validators/common.validators.js';
-import { deviceBodySchema, deviceQuerySchema } from '../validators/device.validators.js';
+import { deviceBodySchema, deviceQuerySchema, measurementQuerySchema } from '../validators/device.validators.js';
 
 const router = Router();
 const adminOnly = requireRole('admin');
 
 router.get('/', validate({ query: deviceQuerySchema }), deviceController.list);
 router.get('/:id', validate({ params: idParamSchema }), deviceController.show);
+router.get('/:id/measurements', validate({ params: idParamSchema, query: measurementQuerySchema }), deviceController.measurements);
 
 router.post('/', adminOnly, validate({ body: deviceBodySchema }), deviceController.create);
 router.put('/:id', adminOnly, validate({ params: idParamSchema, body: deviceBodySchema }), deviceController.update);
