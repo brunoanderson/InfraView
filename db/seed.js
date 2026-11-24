@@ -9,9 +9,8 @@
 //
 // O seed APAGA os dados existentes e insere de novo, numa única transação.
 // =============================================================================
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
+import { isMain } from '../src/lib/isMain.js';
 import { hashPassword } from '../src/lib/password.js';
 
 /** Categorias da tela Rede (as mesmas da versão estática do projeto). */
@@ -135,9 +134,7 @@ export function printSummary(db, admin, demo) {
 // ---------------------------------------------------------------------------
 // Execução direta: node db/seed.js [--demo]
 // ---------------------------------------------------------------------------
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-
-if (isMain) {
+if (isMain(import.meta.url)) {
     const { env } = await import('../src/config/env.js');
     const { openDb, closeDb, resolveDbPath } = await import('../src/lib/db.js');
     const { migrate } = await import('./migrate.js');

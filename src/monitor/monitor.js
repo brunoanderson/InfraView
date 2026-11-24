@@ -13,6 +13,7 @@
 // =============================================================================
 import { env } from '../config/env.js';
 import { getDb } from '../lib/db.js';
+import { DAY_MS, HOUR_MS } from '../lib/time.js';
 import * as model from '../models/monitor.model.js';
 import { runCheck } from './checkers.js';
 import { nextState } from './stateMachine.js';
@@ -21,7 +22,7 @@ const CONCURRENCY = 5; // verificações simultâneas por rodada
 const LATENCY_SAMPLES = 3; // a "atenção" usa a média das últimas 3 latências
 const LOSS_SAMPLES = 3; // e a perda acumulada das últimas 3 verificações com resposta (3 x 4 = 12 tentativas)
 const RETENTION_DAYS = 7; // histórico de checks guardado
-const CLEANUP_EVERY_MS = 60 * 60 * 1000; // limpeza do histórico: uma vez por hora
+const CLEANUP_EVERY_MS = HOUR_MS; // limpeza do histórico: uma vez por hora
 
 // A função que faz a verificação de verdade. Os testes trocam por uma falsa
 // (setCheckFunction) para simular quedas sem depender da rede.
@@ -252,7 +253,7 @@ async function runRound() {
 
     if (Date.now() - lastCleanupAt >= CLEANUP_EVERY_MS) {
         lastCleanupAt = Date.now();
-        const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+        const cutoff = new Date(Date.now() - RETENTION_DAYS * DAY_MS).toISOString();
         const removed = model.deleteChecksBefore(cutoff);
         if (removed > 0) console.log(`[monitor] Limpeza: ${removed} verificações com mais de ${RETENTION_DAYS} dias apagadas.`);
     }

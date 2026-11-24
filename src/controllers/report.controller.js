@@ -8,8 +8,7 @@ import * as eventModel from '../models/event.model.js';
 import * as monitor from '../monitor/monitor.js';
 import * as alertService from '../services/alert.service.js';
 import * as dashboardService from '../services/dashboard.service.js';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { DAY_MS } from '../lib/time.js';
 
 /** GET /api/categories (com contagem de dispositivos) */
 export function categories(req, res) {

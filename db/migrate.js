@@ -19,6 +19,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isMain } from '../src/lib/isMain.js';
 
 const MIGRATIONS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'migrations');
 
@@ -87,9 +88,7 @@ export function migrate(db, { log = console.log } = {}) {
 // Execução direta (node db/migrate.js). Quando o arquivo é só importado
 // (pelo seed ou pelos testes), este bloco não roda.
 // ---------------------------------------------------------------------------
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-
-if (isMain) {
+if (isMain(import.meta.url)) {
     const { openDb, closeDb, resolveDbPath } = await import('../src/lib/db.js');
     try {
         const db = openDb({ create: true });

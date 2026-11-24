@@ -5,8 +5,7 @@
 import * as alertModel from '../models/alert.model.js';
 import * as categoryModel from '../models/category.model.js';
 import * as dashboardModel from '../models/dashboard.model.js';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { DAY_MS } from '../lib/time.js';
 
 export function summary(now = Date.now()) {
     const since = new Date(now - DAY_MS).toISOString(); // janela: últimas 24 horas
