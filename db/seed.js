@@ -4,7 +4,7 @@
 //   npm run db:seed        -> uso real: só o admin e as 4 categorias. Os
 //                             dispositivos você cadastra pela tela.
 //   npm run db:seed:demo   -> o mesmo + 6 alvos locais que respondem DE VERDADE,
-//                             para a apresentação (nada aqui é inventado: status,
+//                             para a demonstração (nada aqui é inventado: status,
 //                             latência, quedas e alertas são todos medidos pelo monitor).
 //
 // O seed APAGA os dados existentes e insere de novo, numa única transação.

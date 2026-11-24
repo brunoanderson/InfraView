@@ -4,7 +4,7 @@
 //   porta 7011 -> responde em ~350 ms   (INVERSOR-DEMO, verificação http, limite 200 ms)
 //   porta 7012 -> derruba 2 de cada 5   (REDE-INSTAVEL-DEMO, verificação http, limite de perda 20%)
 //
-// Na apresentação: com este script rodando, o CAM-DEMO fica online, o
+// Na demonstração: com este script rodando, o CAM-DEMO fica online, o
 // INVERSOR-DEMO em atenção por latência e o REDE-INSTAVEL-DEMO em atenção por
 // perda de pacotes. Aperte Ctrl+C e, depois de 3 verificações com falha, o
 // monitor marca as quedas e gera os alertas sozinho. Rode de novo e eles são resolvidos.

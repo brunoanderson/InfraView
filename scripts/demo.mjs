@@ -172,6 +172,6 @@ setTimeout(() => {
     if (stopping) return;
     log(`Painel: http://localhost:${env.PORT}  (login: SEED_ADMIN_EMAIL e SEED_ADMIN_PASSWORD do .env)`);
     log(`O monitor verifica a cada ${env.MONITOR_INTERVAL_SECONDS} s`
-        + (env.MONITOR_INTERVAL_SECONDS > 5 ? ' (para a apresentação, use MONITOR_INTERVAL_SECONDS=5 no .env).' : '.'));
+        + (env.MONITOR_INTERVAL_SECONDS > 5 ? ' (use MONITOR_INTERVAL_SECONDS=5 no .env para ver as quedas mais rápido).' : '.'));
     log('Neste terminal: a + Enter derruba ou religa o alvo; Ctrl+C encerra tudo.');
 }, 3000).unref();

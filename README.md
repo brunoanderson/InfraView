@@ -146,8 +146,8 @@ rede, até sem internet, e nada é simulado: o monitor mede tudo de verdade.
 O "alvo de demonstração" (`demo/alvo.js`) são três servidores pequenos, nas portas **7010**, **7011**
 e **7012**.
 
-**Dica:** para a apresentação, coloque `MONITOR_INTERVAL_SECONDS=5` no `.env`. Com 30 s, uma queda
-leva cerca de 1,5 minuto para ser confirmada (3 verificações).
+**Sobre o intervalo:** uma queda só é confirmada depois de 3 verificações com falha. Com
+`MONITOR_INTERVAL_SECONDS=30` (o padrão), isso leva cerca de 1,5 minuto; com `5`, cerca de 15 s.
 
 ### Jeito rápido: um terminal só
 
