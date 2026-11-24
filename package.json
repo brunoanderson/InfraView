@@ -17,6 +17,7 @@
     "db:reset": "node db/reset.js",
     "db:reset:demo": "node db/reset.js --demo",
     "demo:alvo": "node demo/alvo.js",
+    "demo": "node scripts/demo.mjs",
     "test": "node --test",
     "verificar": "node scripts/verificar.mjs"
   },
