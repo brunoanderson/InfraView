@@ -533,3 +533,43 @@ body {
 .search-box input {
     padding-left: 36px;
 }
+
+/* ======================================================
+   Layout das páginas internas (js/layout.js)
+   ====================================================== */
+/* Enquanto a sessão não é confirmada, o conteúdo fica escondido e aparece
+   só o "Carregando...". O layout.js adiciona .is-ready no <body> ao terminar. */
+.app-page:not(.is-ready) main {
+    display: none;
+}
+
+.app-page.is-ready .page-loader {
+    display: none;
+}
+
+.page-loader {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    color: #a0a6ab;
+    text-align: center;
+}
+
+/* Estado "carregando" dentro de uma área da página (ui.showLoading) */
+.loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1rem;
+    color: #a0a6ab;
+}
+
+/* Selo de dispositivo com monitoramento pausado (ui.statusBadge) */
+.badge-paused {
+    background-color: transparent;
+    border: 1px solid #6c757d;
+    color: #a0a6ab;
+}
