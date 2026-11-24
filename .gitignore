@@ -8,6 +8,7 @@ node_modules/
 
 # Banco SQLite local (gerado por npm run db:reset)
 *.db
+*.db-journal
 *.db-wal
 *.db-shm
 *.sqlite
