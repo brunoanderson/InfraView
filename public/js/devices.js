@@ -16,7 +16,7 @@ export function checkTypeText(device) {
  * Latência e perda só fazem sentido se o dispositivo está respondendo agora.
  * Offline, pendente ou pausado: a tela mostra "—".
  */
-export function hasCurrentMeasurement(device) {
+function hasCurrentMeasurement(device) {
     return device.monitoringEnabled && (device.status === 'online' || device.status === 'atencao');
 }
 

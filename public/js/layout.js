@@ -44,7 +44,7 @@ export async function initPage(pageKey) {
  * Sino e contador de alertas ativos na navbar e no menu. Cada página chama
  * esta função no mesmo poller que atualiza os seus dados.
  */
-export async function refreshNavAlerts() {
+async function refreshNavAlerts() {
     const { counts } = await api('GET', '/alerts?status=ativo');
     const active = counts.ativo;
     const dot = document.getElementById('navAlertDot');
@@ -102,7 +102,7 @@ export function startAutoRefresh({ load, area, statusEl }) {
 }
 
 /** Elementos com data-admin-only somem para quem não é admin. */
-export function applyRoleVisibility(user, root = document) {
+function applyRoleVisibility(user, root = document) {
     for (const element of root.querySelectorAll('[data-admin-only]')) {
         element.hidden = !isAdmin(user);
     }
@@ -138,7 +138,7 @@ function renderLayout(user, pageKey) {
             el('div', { className: 'd-flex align-items-center' }, [
                 el('a', { className: 'text-light me-4 position-relative text-decoration-none', attrs: { href: 'alertas.html', 'aria-label': 'Alertas' } }, [
                     el('i', { className: `bi ${pageKey === 'alertas' ? 'bi-bell-fill' : 'bi-bell'} fs-5` }),
-                    // bolinha de alertas ativos: ligada pela etapa que carrega os alertas
+                    // bolinha de "há alertas ativos": refreshNavAlerts() mostra ou esconde
                     el('span', { className: 'notif-dot position-absolute top-0 start-100 translate-middle', attrs: { id: 'navAlertDot', hidden: true } }),
                 ]),
                 el('span', { className: 'text-custom me-4 d-none d-sm-inline' }, [

@@ -4,7 +4,7 @@
 import { el, formatDateTime } from './ui.js';
 
 /** Tipos de alerta (campo kind da API). */
-export const ALERT_KINDS = {
+const ALERT_KINDS = {
     offline: { label: 'Queda', icon: 'bi-wifi-off' },
     latency: { label: 'Latência alta', icon: 'bi-graph-up-arrow' },
     loss: { label: 'Perda de pacotes', icon: 'bi-reception-1' },

@@ -119,7 +119,7 @@ export async function seed(db, admin, { demo = false, apiPort = 3000 } = {}) {
 }
 
 /** Quantidade de linhas em cada tabela. */
-export function countRows(db) {
+function countRows(db) {
     const tables = ['users', 'categories', 'devices', 'checks', 'downtime_events', 'latency_events', 'loss_events', 'alerts'];
     return Object.fromEntries(tables.map((t) => [t, db.prepare(`SELECT COUNT(*) FROM ${t}`).pluck().get()]));
 }

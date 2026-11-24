@@ -16,7 +16,7 @@ export function getToken() {
     return localStorage.getItem(TOKEN_KEY);
 }
 
-export function getUser() {
+function getUser() {
     try {
         return JSON.parse(localStorage.getItem(USER_KEY));
     } catch {

@@ -88,7 +88,7 @@ export function resetMonitoring(deviceId, note) {
 }
 
 /** Grava o resultado de uma verificação e executa as transições, numa transação. */
-export function applyResult({ deviceId, result: measured, checkedAt, target }) {
+function applyResult({ deviceId, result: measured, checkedAt, target }) {
     // Verificações sem contagem de tentativas (ex.: as falsas dos testes antigos)
     // valem como 1 tentativa: perdida se falhou, respondida se deu certo.
     const result = {
@@ -229,7 +229,7 @@ async function runWithLimit(items, limit, worker) {
  * (a API local aparecia com 400 ms). Medindo antes e gravando depois numa única
  * transação, nenhuma medição espera o disco e há um só COMMIT por rodada.
  */
-export async function runRound() {
+async function runRound() {
     const ids = model.listEnabledDeviceIds();
     const measurements = [];
     await runWithLimit(ids, CONCURRENCY, async (id) => {

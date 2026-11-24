@@ -85,7 +85,7 @@ body {
     color: #6ea8fe;
 }
 
-/* Estado vazio (nada para mostrar, filtro sem resultado, em construção) */
+/* Estado vazio (nada para mostrar ou filtro sem resultado) */
 .empty-state {
     text-align: center;
     padding: 3rem 1.5rem;
@@ -488,10 +488,6 @@ body {
     @keyframes popIn {
         from { opacity: 0; transform: scale(0.96); }
         to { opacity: 1; transform: scale(1); }
-    }
-
-    .anim-card {
-        animation: fadeInUp 0.45s ease both;
     }
 
     .stagger-row > * {
