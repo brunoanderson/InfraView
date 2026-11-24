@@ -6,7 +6,7 @@
 // =============================================================================
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { formatDuration, formatLatency, formatLoss } from '../public/js/ui.js';
+import { formatDuration, formatLatency, formatLoss, formatPercent } from '../public/js/ui.js';
 import { checkTypeText, latencyText, lossText, toRequestBody, validateDevice } from '../public/js/devices.js';
 import { mergeEvents } from '../public/js/events.js';
 
@@ -25,6 +25,8 @@ describe('formatação (ui.js)', () => {
         assert.equal(formatLatency(null), '—');
         assert.equal(formatLoss(25), '25%');
         assert.equal(formatLoss(null), '—');
+        assert.equal(formatPercent(99.7), '99.7%'); // disponibilidade do gateway
+        assert.equal(formatPercent(undefined), '—');
     });
 });
 

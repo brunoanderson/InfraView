@@ -5,17 +5,12 @@
 // CSP bloquearia no navegador.
 // Rodar: npm test
 // =============================================================================
+import './helpers/env.js'; // primeiro: define o ambiente de teste
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, test } from 'node:test';
 import request from 'supertest';
-
-process.env.NODE_ENV = 'test';
-process.env.DATABASE_URL = ':memory:';
-process.env.JWT_SECRET = 'segredo-somente-para-testes-automatizados-123';
-process.env.CORS_ORIGIN = 'http://localhost:3000';
-process.env.MONITOR_ENABLED = 'false';
 
 const { createApp } = await import('../src/app.js');
 const { ROOT_DIR } = await import('../src/config/env.js');
