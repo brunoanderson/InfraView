@@ -290,6 +290,25 @@ body {
     border-bottom: none;
 }
 
+/* Nome e valor com largura fixa, para as barras ficarem alinhadas */
+.latency-name {
+    width: 170px;
+    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.latency-value {
+    min-width: 110px;
+    text-align: right;
+}
+
+/* Permite que um texto longo quebre dentro de um item flex (ex.: card do gateway) */
+.min-width-0 {
+    min-width: 0;
+}
+
 .latency-track {
     flex: 1;
     height: 8px;
