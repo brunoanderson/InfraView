@@ -78,3 +78,46 @@ test('dispositivo pausado não é verificado', async () => {
     assert.equal(count('SELECT COUNT(*) FROM checks WHERE device_id = ?', id), 0);
     assert.equal(device(id).status, 'pendente');
 });
+
+// ---------------------------------------------------------------------------
+// Perda de pacotes: a verificação falsa informa quantas das 4 tentativas falharam
+// ---------------------------------------------------------------------------
+const partial = (lost, latencyMs = 5) => ({ success: true, latencyMs, error: lost ? 'Conexão encerrada pelo dispositivo' : null, packetsSent: 4, packetsLost: lost });
+
+test('perda de pacotes: abre evento e alerta, não duplica e resolve ao normalizar', async () => {
+    const id = deviceId('CAM-DEMO'); // limite de perda padrão: 20%
+
+    await check(id, partial(2), 4); // 50% de perda
+    assert.equal(device(id).status, 'atencao');
+    assert.equal(count('SELECT COUNT(*) FROM loss_events WHERE device_id = ? AND resolved = 0', id), 1);
+    assert.equal(count("SELECT COUNT(*) FROM alerts WHERE device_id = ? AND kind = 'loss' AND status = 'ativo'", id), 1);
+    assert.equal(count('SELECT COUNT(*) FROM loss_events WHERE device_id = ?', id), 1, 'não pode duplicar o evento');
+    assert.deepEqual(
+        db.prepare('SELECT packets_sent AS sent, packets_lost AS lost FROM checks WHERE device_id = ? ORDER BY id DESC LIMIT 1').get(id),
+        { sent: 4, lost: 2 },
+    );
+    assert.equal(db.prepare('SELECT last_loss_pct FROM devices WHERE id = ?').pluck().get(id), 50);
+
+    await check(id, partial(0), 3); // perda zero: a janela de 3 verificações fica limpa
+    assert.equal(device(id).status, 'online');
+    assert.equal(count('SELECT COUNT(*) FROM loss_events WHERE device_id = ? AND resolved = 0', id), 0);
+    const alert = db.prepare("SELECT status, message FROM alerts WHERE device_id = ? AND kind = 'loss'").get(id);
+    assert.equal(alert.status, 'resolvido');
+    assert.match(alert.message, /Perda normalizada/);
+});
+
+test('cair com latência e perda ativas encerra os dois eventos', async () => {
+    const id = deviceId('REDE-INSTAVEL-DEMO'); // limites: 100 ms e 20%
+
+    await check(id, partial(2, 350));
+    assert.equal(count('SELECT COUNT(*) FROM latency_events WHERE device_id = ? AND resolved = 0', id), 1);
+    assert.equal(count('SELECT COUNT(*) FROM loss_events WHERE device_id = ? AND resolved = 0', id), 1);
+    assert.match(db.prepare('SELECT status_note FROM devices WHERE id = ?').pluck().get(id), /Latência alta.*Perda de pacotes/);
+
+    await check(id, DOWN, 3);
+    assert.equal(device(id).status, 'offline');
+    assert.equal(count('SELECT COUNT(*) FROM latency_events WHERE device_id = ? AND resolved = 0', id), 0);
+    assert.equal(count('SELECT COUNT(*) FROM loss_events WHERE device_id = ? AND resolved = 0', id), 0);
+    const active = db.prepare("SELECT kind FROM alerts WHERE device_id = ? AND status = 'ativo'").pluck().all(id);
+    assert.deepEqual(active, ['offline']);
+});

@@ -78,6 +78,8 @@ describe('CRUD de dispositivos', () => {
         assert.equal(res.status, 201);
         assert.equal(res.body.device.status, 'online');
         assert.equal(res.body.device.latencyMs, 5);
+        assert.equal(res.body.device.lossThresholdPct, 20); // padrão
+        assert.equal(res.body.device.lastLossPct, 0); // 1 tentativa respondida (verificação falsa sem contagem)
         id = res.body.device.id;
     });
 
@@ -89,6 +91,8 @@ describe('CRUD de dispositivos', () => {
             [newDevice({ port: 80 }), 'port'], // ping com porta
             [newDevice({ checkType: 'http', port: 554 }), 'port'], // porta bloqueada pelo fetch
             [newDevice({ categoryId: 999 }), 'categoryId'],
+            [newDevice({ lossThresholdPct: 0 }), 'lossThresholdPct'], // perda vai de 1% a 100%
+            [newDevice({ lossThresholdPct: 101 }), 'lossThresholdPct'],
         ];
         for (const [body, field] of cases) {
             const res = await request(app).post('/api/devices').set(auth(adminToken)).send({ ...body, name: 'OUTRO' });
@@ -181,6 +185,35 @@ describe('alertas, eventos e dashboard', () => {
         assert.deepEqual(onlyLatency.downtime, []);
 
         assert.equal((await request(app).get('/api/events?period=15').set(auth(viewerToken))).status, 400);
+    });
+
+    test('perda de pacotes: alerta (kind=loss), evento (type=perda) e números do dashboard', async () => {
+        const cam = (await request(app).get('/api/devices?search=CAM-DEMO').set(auth(adminToken))).body.devices[0];
+        nextResult = { success: true, latencyMs: 5, error: 'Conexão encerrada pelo dispositivo', packetsSent: 4, packetsLost: 2 };
+        const res = await request(app).post(`/api/devices/${cam.id}/check`).set(auth(adminToken));
+        assert.equal(res.body.device.status, 'atencao');
+        assert.equal(res.body.device.lastLossPct, 50);
+
+        const alerts = (await request(app).get('/api/alerts?kind=loss').set(auth(viewerToken))).body.alerts;
+        assert.equal(alerts.length, 1);
+        assert.equal(alerts[0].device.id, cam.id);
+        assert.equal((await request(app).get('/api/alerts?kind=xyz').set(auth(viewerToken))).status, 400);
+
+        const events = (await request(app).get('/api/events?type=perda&period=0').set(auth(viewerToken))).body;
+        assert.deepEqual(events.downtime, []);
+        assert.deepEqual(events.latency, []);
+        assert.equal(events.loss.length, 1);
+        assert.equal(events.loss[0].lossPct, 50);
+        assert.equal(events.loss[0].thresholdPct, 20);
+
+        const all = (await request(app).get('/api/events?period=0').set(auth(viewerToken))).body;
+        assert.ok(all.downtime.length > 0 && all.loss.length > 0, 'type=todos traz as três listas');
+
+        const summary = (await request(app).get('/api/dashboard/summary').set(auth(viewerToken))).body;
+        assert.equal(summary.devicesWithActiveLoss, 1);
+        assert.ok(summary.averageLoss24hPct > 0);
+        assert.equal(summary.gateway.averageLoss24hPct, 0); // o gateway só teve 1 tentativa respondida
+        nextResult = UP;
     });
 
     test('dashboard com gateway: disponibilidade calculada das verificações', async () => {
