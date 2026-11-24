@@ -1,6 +1,6 @@
 // Página de login: valida no navegador, chama POST /api/auth/login e vai para o dashboard.
 import { getToken, login, validateEmail } from './auth.js';
-import { clearFieldErrors, setBusy, setFieldError, showFieldErrors } from './ui.js';
+import { clearFieldErrors, hideFormMessage, setBusy, setFieldError, showFieldErrors, showFormMessage } from './ui.js';
 
 // Já está logado? Vai direto para o painel. (Se o token tiver vencido, o
 // dashboard recebe 401 e manda de volta para cá, já sem o token.)
@@ -10,15 +10,8 @@ const form = document.getElementById('loginForm');
 const button = document.getElementById('loginButton');
 const message = document.getElementById('formMessage');
 
-function showMessage(text, type = 'danger') {
-    message.className = `alert alert-${type}`;
-    message.textContent = text;
-}
-
-function hideMessage() {
-    message.className = 'alert d-none';
-    message.textContent = '';
-}
+const showMessage = (text, type) => showFormMessage(message, text, type);
+const hideMessage = () => hideFormMessage(message);
 
 // Por que a pessoa chegou aqui (o api.js e o logout mandam ?motivo=...)
 const REASONS = {

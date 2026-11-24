@@ -1,7 +1,7 @@
 // Página de cadastro: valida no navegador (mesmas regras do back-end), chama
 // POST /api/auth/register e entra no painel já logado, como visualizador.
 import { getToken, register, validateEmail, validateName, validatePassword } from './auth.js';
-import { clearFieldErrors, setBusy, setFieldError, showFieldErrors } from './ui.js';
+import { clearFieldErrors, hideFormMessage, setBusy, setFieldError, showFieldErrors, showFormMessage } from './ui.js';
 
 if (getToken()) window.location.replace('/dashboard.html');
 
@@ -10,15 +10,8 @@ const button = document.getElementById('registerButton');
 const message = document.getElementById('formMessage');
 const field = (name) => form.elements.namedItem(name);
 
-function showMessage(text, type = 'danger') {
-    message.className = `alert alert-${type}`;
-    message.textContent = text;
-}
-
-function hideMessage() {
-    message.className = 'alert d-none';
-    message.textContent = '';
-}
+const showMessage = (text, type) => showFormMessage(message, text, type);
+const hideMessage = () => hideFormMessage(message);
 
 form.addEventListener('submit', async (event) => {
     event.preventDefault();

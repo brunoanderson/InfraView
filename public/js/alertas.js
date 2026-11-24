@@ -6,7 +6,7 @@ import { api } from './api.js';
 import { renderAlert } from './alertView.js';
 import { isAdmin } from './auth.js';
 import { initPage, startAutoRefresh } from './layout.js';
-import { el, filterPills, setBusy, setText, showEmpty, showError, syncChildren, toast } from './ui.js';
+import { filterPills, setBusy, setText, showError, syncBadges, syncOrEmpty, toast } from './ui.js';
 
 const user = await initPage('alertas');
 const admin = isAdmin(user);
@@ -35,7 +35,7 @@ function renderBadges(counts) {
         { key: 'ativo', className: 'bg-danger', text: `${counts.ativo} ativo(s)` },
         { key: 'resolvido', className: 'bg-success', text: `${counts.resolvido} resolvido(s)` },
     ];
-    syncChildren(document.getElementById('alertBadges'), badges, (b) => b.key, (b) => el('span', { className: `badge px-3 py-2 ${b.className}`, text: b.text }));
+    syncBadges(document.getElementById('alertBadges'), badges);
 }
 
 async function acknowledge(alert, button) {
@@ -61,14 +61,10 @@ async function load() {
     const total = counts.ativo + counts.resolvido + counts.info;
     setText(resultsCount, `Exibindo ${alerts.length} de ${total} alerta(s)`);
 
-    if (alerts.length === 0) {
-        const filtered = Boolean(query);
-        showEmpty(list, filtered
-            ? { icon: 'bi-funnel', title: 'Nenhum alerta com esses filtros', text: 'Tente outro tipo ou outra situação.' }
-            : { icon: 'bi-bell-slash', title: 'Nenhum alerta até agora', text: 'Quando o monitor detectar uma queda, latência alta ou perda de pacotes, o alerta aparece aqui.' });
-        return;
-    }
-    syncChildren(list, alerts, (a) => a.id, (a) => renderAlert(a, { onAcknowledge: admin ? acknowledge : undefined }));
+    const empty = query
+        ? { icon: 'bi-funnel', title: 'Nenhum alerta com esses filtros', text: 'Tente outro tipo ou outra situação.' }
+        : { icon: 'bi-bell-slash', title: 'Nenhum alerta até agora', text: 'Quando o monitor detectar uma queda, latência alta ou perda de pacotes, o alerta aparece aqui.' };
+    syncOrEmpty(list, alerts, (a) => a.id, (a) => renderAlert(a, { onAcknowledge: admin ? acknowledge : undefined }), empty);
 }
 
 const poller = startAutoRefresh({ load, area: list, statusEl: document.getElementById('updateStatus') });

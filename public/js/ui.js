@@ -77,12 +77,30 @@ export function showLoading(container, text = 'Carregando...') {
 /** Estado vazio (nada para mostrar). */
 export function showEmpty(container, { icon = 'bi-inbox', title = 'Nada por aqui', text = '' } = {}) {
     container.replaceChildren(
-        el('div', { className: 'empty-state' }, [
+        el('div', { className: 'empty-state', attrs: { 'data-title': title } }, [
             el('i', { className: `bi ${icon}`, attrs: { 'aria-hidden': 'true' } }),
             el('div', { className: 'fw-semibold text-light mb-1', text: title }),
             text ? el('div', { className: 'small', text }) : null,
         ]),
     );
+}
+
+/**
+ * Lista que pode ficar vazia: sem itens, mostra o estado vazio (só redesenha se
+ * a mensagem mudou); com itens, sincroniza item a item (syncChildren).
+ */
+export function syncOrEmpty(container, items, keyOf, render, empty) {
+    if (items.length > 0) {
+        syncChildren(container, items, keyOf, render);
+        return;
+    }
+    const current = container.querySelector(':scope > .empty-state');
+    if (current?.dataset.title !== empty.title) showEmpty(container, empty);
+}
+
+/** Selos de contagem no topo das telas: [{ key, className, text }]. */
+export function syncBadges(container, badges) {
+    syncChildren(container, badges, (b) => b.key, (b) => el('span', { className: `badge px-3 py-2 ${b.className}`, text: b.text }));
 }
 
 /** Erro numa área, com botão "Tentar de novo" opcional. */
@@ -113,6 +131,18 @@ export function setBusy(button, busy, busyText = 'Enviando...') {
         button.disabled = false;
         button.textContent = button.dataset.idleText ?? button.textContent;
     }
+}
+
+// ---- Mensagem geral de um formulário (o <div class="alert"> do topo) ------
+
+export function showFormMessage(element, text, type = 'danger') {
+    element.className = `alert alert-${type}`;
+    element.textContent = text;
+}
+
+export function hideFormMessage(element) {
+    element.className = 'alert d-none';
+    element.textContent = '';
 }
 
 // ---- Erros por campo nos formulários ------------------------------------
@@ -193,10 +223,15 @@ export function formatLatency(ms) {
     return ms === 0 ? '<1 ms' : `${ms} ms`;
 }
 
+/** Porcentagem: null -> "—". */
+export function formatPercent(value) {
+    if (value === null || value === undefined) return '—';
+    return `${value}%`;
+}
+
 /** Perda de pacotes em %: null -> "—". */
 export function formatLoss(pct) {
-    if (pct === null || pct === undefined) return '—';
-    return `${pct}%`;
+    return formatPercent(pct);
 }
 
 const STATUS = {

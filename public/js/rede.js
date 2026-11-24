@@ -12,8 +12,9 @@ import {
 } from './devices.js';
 import { initPage, startAutoRefresh } from './layout.js';
 import {
-    clearFieldErrors, closeModal, confirmDialog, el, filterPills, formatRelative, formatTime, setBusy, setFieldError, setText,
-    showEmpty, showError, showFieldErrors, statusBadge, statusLabel, syncChildren, tableShell, toast,
+    clearFieldErrors, closeModal, confirmDialog, el, filterPills, formatRelative, formatTime, hideFormMessage, setBusy,
+    setFieldError, setText, showEmpty, showError, showFieldErrors, showFormMessage, statusBadge, statusLabel, syncBadges,
+    syncChildren, tableShell, toast,
 } from './ui.js';
 
 const user = await initPage('rede');
@@ -147,7 +148,7 @@ function renderBadges() {
         ['offline', 'bg-danger', 'offline'],
         ['pausado', 'badge-paused', 'pausado(s)'],
     ].filter(([key]) => counts[key] > 0).map(([key, className, label]) => ({ key, className, text: `${counts[key]} ${label}` }));
-    syncChildren(document.getElementById('statusBadges'), badges, (b) => b.key, (b) => el('span', { className: `badge px-3 py-2 ${b.className}`, text: b.text }));
+    syncBadges(document.getElementById('statusBadges'), badges);
 }
 
 function render() {
@@ -273,7 +274,7 @@ function openForm(device = null) {
     editing = device;
     form.reset();
     clearFieldErrors(form);
-    formMessage.className = 'alert d-none';
+    hideFormMessage(formMessage);
     setText(document.getElementById('deviceModalTitle'), device ? `Editar ${device.name}` : 'Novo dispositivo');
 
     field('categoryId').replaceChildren(...categories.map((c) => el('option', { text: c.name, attrs: { value: c.id } })));
@@ -319,7 +320,7 @@ function readForm() {
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearFieldErrors(form);
-    formMessage.className = 'alert d-none';
+    hideFormMessage(formMessage);
 
     const body = readForm();
     const errors = validateDevice(body);
@@ -351,8 +352,7 @@ form.addEventListener('submit', async (event) => {
         } else if (err.status === 403) {
             showError(err);
         } else {
-            formMessage.className = 'alert alert-danger';
-            formMessage.textContent = err.message;
+            showFormMessage(formMessage, err.message);
         }
     } finally {
         setBusy(saveButton, false);

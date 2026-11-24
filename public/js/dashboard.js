@@ -6,7 +6,7 @@ import { api } from './api.js';
 import { renderAlert } from './alertView.js';
 import { EVENT_TYPES, mergeEvents } from './events.js';
 import { initPage, startAutoRefresh } from './layout.js';
-import { el, formatDateTime, formatDuration, formatLatency, setText, showEmpty, statusLabel, syncChildren, toast } from './ui.js';
+import { el, formatDateTime, formatDuration, formatLatency, formatPercent, setText, statusLabel, syncOrEmpty, toast } from './ui.js';
 
 const user = await initPage('dashboard');
 
@@ -22,17 +22,6 @@ const state = $('dashboardState');
 const content = $('dashboardContent');
 const RECENT_EVENTS = 8;
 
-const pct = (value) => (value === null || value === undefined ? '—' : `${value}%`);
-
-/** Lista que pode ficar vazia: mostra o estado vazio ou sincroniza os itens. */
-function syncOrEmpty(container, items, keyOf, render, empty) {
-    if (items.length === 0) {
-        if (!container.querySelector('.empty-state')) showEmpty(container, empty);
-    } else {
-        syncChildren(container, items, keyOf, render);
-    }
-}
-
 // ---- Cards de números ----------------------------------------------------------
 
 function renderStats(summary) {
@@ -45,7 +34,7 @@ function renderStats(summary) {
     setText($('statOfflineSub'), devices.pendente ? `${devices.pendente} aguardando verificação` : '');
     setText($('statAlerts'), summary.activeAlerts);
     setText($('statLatency'), formatLatency(summary.averageLatencyMs));
-    setText($('statLoss'), pct(summary.averageLoss24hPct));
+    setText($('statLoss'), formatPercent(summary.averageLoss24hPct));
     setText($('statLossDevices'), summary.devicesWithActiveLoss);
 
     if (!gateway) {
@@ -53,7 +42,7 @@ function renderStats(summary) {
         setText($('statGatewaySub'), 'Nenhum dispositivo marcado como gateway');
         return;
     }
-    setText($('statGateway'), pct(gateway.availability24h));
+    setText($('statGateway'), formatPercent(gateway.availability24h));
     const parts = [gateway.name, gateway.monitoringEnabled ? statusLabel(gateway.status) : 'Pausado'];
     if (gateway.upSince) parts.push(`no ar há ${formatDuration((Date.now() - new Date(gateway.upSince)) / 1000)}`);
     setText($('statGatewaySub'), parts.join(' · '));
