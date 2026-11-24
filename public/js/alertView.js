@@ -1,7 +1,7 @@
 // =============================================================================
 // alertView.js — como desenhar um alerta (usado na tela Alertas e no Dashboard).
 // =============================================================================
-import { el, formatDateTime } from './ui.js';
+import { badge, el, formatDateTime } from './ui.js';
 
 /** Tipos de alerta (campo kind da API). */
 const ALERT_KINDS = {
@@ -12,14 +12,15 @@ const ALERT_KINDS = {
 };
 
 const STATUS_BADGES = {
-    ativo: { label: 'Ativo', className: 'bg-danger' },
-    resolvido: { label: 'Resolvido', className: 'bg-success' },
-    info: { label: 'Info', className: 'bg-info text-dark' },
+    ativo: { label: 'Ativo', tone: 'danger' },
+    resolvido: { label: 'Resolvido', tone: 'success' },
+    info: { label: 'Info', tone: 'neutral' },
 };
 
-function iconClass(alert) {
-    if (alert.status === 'resolvido') return 'severity-resolved';
-    return `severity-${alert.severity}`; // critical | warning | info
+const SEVERITY_TONES = { critical: 'tone-danger', warning: 'tone-warning', info: 'tone-primary' };
+
+function iconTone(alert) {
+    return alert.status === 'resolvido' ? 'tone-success' : SEVERITY_TONES[alert.severity] ?? 'tone-neutral';
 }
 
 /**
@@ -36,7 +37,7 @@ export function renderAlert(alert, { onAcknowledge } = {}) {
 
     let ackLine = null;
     if (alert.acknowledgedAt) {
-        ackLine = el('div', { className: 'small text-info mt-1' }, [
+        ackLine = el('div', { className: 'alert-ack' }, [
             el('i', { className: 'bi bi-check2-all me-1', attrs: { 'aria-hidden': 'true' } }),
             `Reconhecido por ${alert.acknowledgedBy?.name ?? 'usuário removido'} em ${formatDateTime(alert.acknowledgedAt)}`,
         ]);
@@ -44,7 +45,7 @@ export function renderAlert(alert, { onAcknowledge } = {}) {
 
     let ackButton = null;
     if (onAcknowledge && alert.status === 'ativo' && !alert.acknowledgedAt) {
-        ackButton = el('button', { className: 'btn btn-outline-info btn-sm', attrs: { type: 'button', 'data-admin-only': true } }, [
+        ackButton = el('button', { className: 'btn btn-ghost btn-sm', attrs: { type: 'button', 'data-admin-only': true } }, [
             el('i', { className: 'bi bi-check2 me-1', attrs: { 'aria-hidden': 'true' } }),
             'Reconhecer',
         ]);
@@ -52,17 +53,17 @@ export function renderAlert(alert, { onAcknowledge } = {}) {
     }
 
     return el('div', { className: 'alert-item' }, [
-        el('div', { className: `alert-icon ${iconClass(alert)}`, attrs: { 'aria-hidden': 'true' } }, [el('i', { className: `bi ${kind.icon}` })]),
-        el('div', { className: 'flex-grow-1' }, [
-            el('div', { className: 'd-flex justify-content-between align-items-start flex-wrap gap-2' }, [
-                el('div', { className: 'text-light fw-bold', text: alert.title }),
-                el('div', { className: 'd-flex gap-1' }, [
-                    el('span', { className: 'badge text-bg-dark border border-secondary', text: kind.label }),
-                    el('span', { className: `badge ${status.className}`, text: status.label }),
+        el('div', { className: `icon-box icon-box-sm ${iconTone(alert)}`, attrs: { 'aria-hidden': 'true' } }, [el('i', { className: `bi ${kind.icon}` })]),
+        el('div', { className: 'alert-item-body' }, [
+            el('div', { className: 'alert-item-head' }, [
+                el('div', { className: 'alert-item-title', text: alert.title }),
+                el('div', { className: 'd-flex align-items-center gap-2' }, [
+                    el('span', { className: 'tag', text: kind.label }),
+                    badge(status.label, status.tone),
                 ]),
             ]),
-            alert.message ? el('div', { className: 'small text-light-emphasis', text: alert.message }) : null,
-            el('div', { className: 'text-custom small', text: details }),
+            alert.message ? el('div', { text: alert.message }) : null,
+            el('div', { className: 'alert-item-meta', text: details }),
             ackLine,
         ]),
         ackButton,

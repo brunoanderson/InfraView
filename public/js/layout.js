@@ -62,7 +62,7 @@ async function refreshNavAlerts() {
 /**
  * Atualização automática de uma tela (a cada 10 s, pelo poller.js), com os
  * estados de carregando e erro já resolvidos:
- *   - 1ª carga: "Carregando..." em `area`; se falhar, erro com "Tentar de novo".
+ *   - 1ª carga: esqueleto de carregamento em `area`; se falhar, erro com "Tentar novamente".
  *   - Atualizações seguintes: os dados na tela ficam; se uma falhar, só o
  *     `statusEl` avisa ("Falha ao atualizar...") e a próxima tenta de novo.
  *   - Também atualiza o sino de alertas da navbar.
@@ -110,7 +110,7 @@ function applyRoleVisibility(user, root = document) {
 
 function renderLayout(user, pageKey) {
     const role = el('span', {
-        className: `badge ms-2 ${user.role === 'admin' ? 'bg-primary' : 'bg-secondary'}`,
+        className: `tag ms-2 ${user.role === 'admin' ? 'tag-primary' : ''}`,
         text: ROLE_LABELS[user.role] ?? user.role,
     });
 
@@ -123,30 +123,30 @@ function renderLayout(user, pageKey) {
         return button;
     };
 
-    const navbar = el('nav', { className: 'navbar navbar-dark bg-dark mb-4 py-3 border-bottom border-secondary border-opacity-25' }, [
+    const navbar = el('nav', { className: 'navbar app-navbar' }, [
         el('div', { className: 'container-fluid px-4' }, [
-            el('div', { className: 'd-flex align-items-center gap-3' }, [
+            el('div', { className: 'd-flex align-items-center gap-2' }, [
                 el('button', {
-                    className: 'btn-menu-toggle',
+                    className: 'btn btn-ghost btn-icon',
                     attrs: { type: 'button', 'data-bs-toggle': 'offcanvas', 'data-bs-target': '#sidebarMenu', 'aria-controls': 'sidebarMenu', 'aria-label': 'Abrir menu' },
-                }, [el('i', { className: 'bi bi-list fs-5' })]),
-                el('a', { className: 'navbar-brand mb-0 h1 fs-5 text-decoration-none', attrs: { href: 'dashboard.html' } }, [
-                    el('i', { className: 'bi bi-hdd-network me-2' }),
+                }, [el('i', { className: 'bi bi-list fs-5', attrs: { 'aria-hidden': 'true' } })]),
+                el('a', { className: 'navbar-brand mb-0 fs-5 text-decoration-none', attrs: { href: 'dashboard.html' } }, [
+                    el('i', { className: 'bi bi-hdd-network me-2', attrs: { 'aria-hidden': 'true' } }),
                     'InfraView',
                 ]),
             ]),
-            el('div', { className: 'd-flex align-items-center' }, [
-                el('a', { className: 'text-light me-4 position-relative text-decoration-none', attrs: { href: 'alertas.html', 'aria-label': 'Alertas' } }, [
-                    el('i', { className: `bi ${pageKey === 'alertas' ? 'bi-bell-fill' : 'bi-bell'} fs-5` }),
+            el('div', { className: 'd-flex align-items-center gap-3' }, [
+                el('a', { className: 'nav-icon-link', attrs: { href: 'alertas.html', 'aria-label': 'Alertas' } }, [
+                    el('i', { className: `bi ${pageKey === 'alertas' ? 'bi-bell-fill' : 'bi-bell'}`, attrs: { 'aria-hidden': 'true' } }),
                     // bolinha de "há alertas ativos": refreshNavAlerts() mostra ou esconde
-                    el('span', { className: 'notif-dot position-absolute top-0 start-100 translate-middle', attrs: { id: 'navAlertDot', hidden: true } }),
+                    el('span', { className: 'notif-dot', attrs: { id: 'navAlertDot', hidden: true } }),
                 ]),
-                el('span', { className: 'text-custom me-4 d-none d-sm-inline' }, [
-                    el('i', { className: 'bi bi-person-circle me-1' }),
+                el('span', { className: 'navbar-user d-none d-sm-inline' }, [
+                    el('i', { className: 'bi bi-person-circle me-1', attrs: { 'aria-hidden': 'true' } }),
                     user.name,
                     role,
                 ]),
-                logoutButton('btn btn-outline-danger btn-sm', 'me-1'),
+                logoutButton('btn btn-ghost is-danger btn-sm', 'me-1'),
             ]),
         ]),
     ]);
@@ -156,9 +156,9 @@ function renderLayout(user, pageKey) {
             className: `nav-link${page.key === pageKey ? ' active' : ''}`,
             attrs: { href: page.href, 'aria-current': page.key === pageKey ? 'page' : null },
         }, [
-            el('span', {}, [el('i', { className: `bi ${page.icon} nav-icon` }), page.label]),
+            el('span', {}, [el('i', { className: `bi ${page.icon} nav-icon`, attrs: { 'aria-hidden': 'true' } }), page.label]),
             page.key === 'alertas'
-                ? el('span', { className: 'badge bg-danger rounded-pill badge-count', attrs: { id: 'navAlertCount', hidden: true } })
+                ? el('span', { className: 'nav-count', attrs: { id: 'navAlertCount', hidden: true } })
                 : null,
         ]),
     );
@@ -178,9 +178,9 @@ function renderLayout(user, pageKey) {
             el('nav', { className: 'sidebar-nav flex-grow-1' }, [
                 ...links,
                 el('div', { className: 'nav-divider' }),
-                logoutButton('nav-link text-danger w-100 border-0 bg-transparent text-start', 'nav-icon'),
+                logoutButton('nav-link is-danger w-100 border-0 bg-transparent text-start', 'nav-icon'),
             ]),
-            el('div', { className: 'text-custom small pt-3 border-top border-secondary border-opacity-25' }, [
+            el('div', { className: 'sidebar-footer' }, [
                 'Conectado como ',
                 el('span', { className: 'text-light', text: user.email }),
             ]),
@@ -194,12 +194,12 @@ function renderLayout(user, pageKey) {
 function showBootError(err) {
     const loader = document.querySelector('.page-loader');
     if (!loader) return;
-    const retry = el('button', { className: 'btn btn-outline-light btn-sm mt-3', text: 'Tentar de novo', attrs: { type: 'button' } });
+    const retry = el('button', { className: 'btn btn-ghost btn-sm mt-3', text: 'Tentar novamente', attrs: { type: 'button' } });
     retry.addEventListener('click', () => window.location.reload());
     loader.replaceChildren(
         el('i', { className: 'bi bi-exclamation-octagon text-danger fs-2 mb-2', attrs: { 'aria-hidden': 'true' } }),
-        el('div', { className: 'fw-semibold text-light', text: 'Não foi possível abrir a página' }),
-        el('div', { className: 'small text-custom', text: err?.message || 'Erro desconhecido.' }),
+        el('div', { className: 'empty-state-title', text: 'Não foi possível abrir a página' }),
+        el('div', { text: err?.message || 'Erro desconhecido.' }),
         retry,
     );
 }

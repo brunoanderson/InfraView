@@ -10,7 +10,7 @@
 /**
  * Cria um elemento. Filhos podem ser elementos ou textos (textos viram nós de
  * texto, então são sempre seguros).
- *   el('span', { className: 'badge bg-success', text: 'Online' })
+ *   el('span', { className: 'status-badge tone-success', text: 'Online' })
  *   el('a', { attrs: { href: 'rede.html' } }, [el('i', { className: 'bi bi-wifi' }), ' Rede'])
  */
 export function el(tag, { className, text, attrs } = {}, children = []) {
@@ -24,33 +24,26 @@ export function el(tag, { className, text, attrs } = {}, children = []) {
     return element;
 }
 
-// ---- Avisos (toasts do Bootstrap) ---------------------------------------
+// ---- Avisos ---------------------------------------------------------------
 
-let toastArea;
+let toastRegion;
 const TOAST_ICONS = { success: 'bi-check-circle', danger: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
 
-/** Aviso flutuante no canto da tela. type: success | danger | warning | info */
+/** Aviso discreto no canto da tela, lido pelos leitores de tela. type: success | danger | warning | info */
 export function toast(message, type = 'success') {
-    toastArea ??= document.body.appendChild(el('div', { className: 'toast-container position-fixed bottom-0 end-0 p-3' }));
-    const item = el(
-        'div',
-        {
-            className: `toast align-items-center border-0 text-bg-${type}`,
-            attrs: { role: type === 'danger' ? 'alert' : 'status', 'aria-live': 'polite', 'aria-atomic': 'true' },
-        },
-        [
-            el('div', { className: 'd-flex' }, [
-                el('div', { className: 'toast-body' }, [el('i', { className: `bi ${TOAST_ICONS[type]} me-2` }), message]),
-                el('button', {
-                    className: 'btn-close btn-close-white me-2 m-auto',
-                    attrs: { type: 'button', 'data-bs-dismiss': 'toast', 'aria-label': 'Fechar' },
-                }),
-            ]),
-        ],
-    );
-    toastArea.append(item);
-    item.addEventListener('hidden.bs.toast', () => item.remove());
-    new window.bootstrap.Toast(item, { delay: type === 'danger' ? 7000 : 4000 }).show();
+    toastRegion ??= document.body.appendChild(el('div', { className: 'toast-region', attrs: { 'aria-live': 'polite' } }));
+    const close = el('button', { className: 'btn-close btn-close-white', attrs: { type: 'button', 'aria-label': 'Fechar aviso' } });
+    const item = el('div', { className: `app-toast app-toast-${type}` }, [
+        el('i', { className: `bi ${TOAST_ICONS[type]}`, attrs: { 'aria-hidden': 'true' } }),
+        el('span', { className: 'app-toast-text', text: message }),
+        close,
+    ]);
+    const timer = setTimeout(() => item.remove(), type === 'danger' ? 7000 : 4000);
+    close.addEventListener('click', () => {
+        clearTimeout(timer);
+        item.remove();
+    });
+    toastRegion.append(item);
 }
 
 /** Mostra um erro da API (ApiError) como aviso. 403 vira "sem permissão" (amarelo). */
@@ -64,25 +57,35 @@ export function showError(err) {
 
 // ---- Estados de uma área da página --------------------------------------
 
-/** "Carregando..." com spinner dentro de `container`. */
-export function showLoading(container, text = 'Carregando...') {
+/** Esqueleto de carregamento dentro de `container` (o texto fica para leitores de tela). */
+export function showLoading(container, { lines = 4 } = {}) {
     container.replaceChildren(
-        el('div', { className: 'loading-state', attrs: { role: 'status' } }, [
-            el('div', { className: 'spinner-border spinner-border-sm text-primary me-2', attrs: { 'aria-hidden': 'true' } }),
-            text,
+        el('div', { className: 'skeleton', attrs: { role: 'status' } }, [
+            el('span', { className: 'visually-hidden', text: 'Carregando...' }),
+            ...Array.from({ length: lines }, () => el('div', { className: 'skeleton-line', attrs: { 'aria-hidden': 'true' } })),
         ]),
     );
 }
 
-/** Estado vazio (nada para mostrar). */
-export function showEmpty(container, { icon = 'bi-inbox', title = 'Nada por aqui', text = '' } = {}) {
+/**
+ * Estado vazio: ícone, frase e, se fizer sentido, um botão de ação.
+ * @param action { label, onClick } opcional
+ */
+export function showEmpty(container, { icon = 'bi-inbox', title = 'Nada por aqui', text = '', action } = {}) {
     container.replaceChildren(
         el('div', { className: 'empty-state', attrs: { 'data-title': title } }, [
-            el('i', { className: `bi ${icon}`, attrs: { 'aria-hidden': 'true' } }),
-            el('div', { className: 'fw-semibold text-light mb-1', text: title }),
-            text ? el('div', { className: 'small', text }) : null,
+            el('i', { className: `bi ${icon} empty-state-icon`, attrs: { 'aria-hidden': 'true' } }),
+            el('div', { className: 'empty-state-title', text: title }),
+            text ? el('div', { text }) : null,
+            action ? actionButton(action) : null,
         ]),
     );
+}
+
+function actionButton({ label, onClick, className = 'btn btn-primary btn-sm' }) {
+    const button = el('button', { className, text: label, attrs: { type: 'button' } });
+    button.addEventListener('click', onClick);
+    return button;
 }
 
 /**
@@ -98,24 +101,21 @@ export function syncOrEmpty(container, items, keyOf, render, empty) {
     if (current?.dataset.title !== empty.title) showEmpty(container, empty);
 }
 
-/** Selos de contagem no topo das telas: [{ key, className, text }]. */
+/** Selos de contagem no topo das telas: [{ key, tone, text }]. */
 export function syncBadges(container, badges) {
-    syncChildren(container, badges, (b) => b.key, (b) => el('span', { className: `badge px-3 py-2 ${b.className}`, text: b.text }));
+    syncChildren(container, badges, (b) => b.key, (b) => badge(b.text, b.tone));
 }
 
-/** Erro numa área, com botão "Tentar de novo" opcional. */
+/** Erro numa área, com o botão "Tentar novamente" opcional. */
 export function showErrorState(container, err, onRetry) {
     container.replaceChildren(
-        el('div', { className: 'empty-state' }, [
-            el('i', { className: 'bi bi-exclamation-octagon text-danger', attrs: { 'aria-hidden': 'true' } }),
-            el('div', { className: 'fw-semibold text-light mb-1', text: 'Não foi possível carregar' }),
-            el('div', { className: 'small mb-3', text: err?.message || 'Erro desconhecido.' }),
-            onRetry
-                ? el('button', { className: 'btn btn-outline-light btn-sm', text: 'Tentar de novo', attrs: { type: 'button' } })
-                : null,
+        el('div', { className: 'empty-state', attrs: { role: 'alert' } }, [
+            el('i', { className: 'bi bi-exclamation-octagon empty-state-icon is-error', attrs: { 'aria-hidden': 'true' } }),
+            el('div', { className: 'empty-state-title', text: 'Não foi possível carregar' }),
+            el('div', { text: err?.message || 'Erro desconhecido.' }),
+            onRetry ? actionButton({ label: 'Tentar novamente', onClick: onRetry, className: 'btn btn-ghost btn-sm' }) : null,
         ]),
     );
-    if (onRetry) container.querySelector('button').addEventListener('click', onRetry);
 }
 
 /** Botão "ocupado" durante um envio: desabilita e mostra um spinner. */
@@ -186,9 +186,10 @@ export function showFieldErrors(form, details) {
 // A API manda datas em ISO UTC (ex.: 2026-11-24T13:05:00.000Z); o navegador
 // converte para o fuso de quem está vendo.
 
-export function formatDateTime(iso) {
+/** timeStyle 'medium' inclui os segundos. */
+export function formatDateTime(iso, timeStyle = 'short') {
     if (!iso) return '—';
-    return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle });
 }
 
 /** Só a hora, com segundos (ex.: "verificado às 14:05:32"). */
@@ -197,12 +198,11 @@ export function formatTime(iso) {
     return new Date(iso).toLocaleTimeString('pt-BR');
 }
 
-/** "há 3 min", "há 2 h"... */
-export function formatRelative(iso) {
+/** "há 12 s", "há 3 min", "há 2h 05min"... */
+export function formatRelative(iso, now = Date.now()) {
     if (!iso) return '—';
-    const seconds = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
-    if (seconds < 60) return 'agora há pouco';
-    return `há ${formatDuration(seconds)}`;
+    const seconds = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000));
+    return seconds < 1 ? 'agora' : `há ${formatDuration(seconds)}`;
 }
 
 /** Segundos -> "45 s", "12 min", "3h 05min", "2d 04h". */
@@ -235,45 +235,80 @@ export function formatLoss(pct) {
 }
 
 const STATUS = {
-    online: { label: 'Online', className: 'bg-success' },
-    atencao: { label: 'Atenção', className: 'bg-warning text-dark' },
-    offline: { label: 'Offline', className: 'bg-danger' },
-    pendente: { label: 'Pendente', className: 'bg-secondary' },
-    pausado: { label: 'Pausado', className: 'badge-paused' },
+    online: { label: 'Online', tone: 'success' },
+    atencao: { label: 'Em atenção', tone: 'warning' },
+    offline: { label: 'Offline', tone: 'danger' },
+    pendente: { label: 'Pendente', tone: 'neutral' },
+    pausado: { label: 'Pausado', tone: 'paused' },
 };
 
-/** Nome do status para mostrar em texto ("atencao" -> "Atenção"). */
+/** Nome do status para mostrar em texto ("atencao" -> "Em atenção"). */
 export function statusLabel(status, monitoringEnabled = true) {
     return (STATUS[monitoringEnabled ? status : 'pausado'] ?? { label: status }).label;
 }
 
-/** Selo colorido do status. Dispositivo pausado aparece como "Pausado". */
+/** Selo com ponto colorido e texto. tone: success | warning | danger | neutral | paused */
+export function badge(text, tone) {
+    return el('span', { className: `status-badge tone-${tone}`, text });
+}
+
+/** Selo do status de um dispositivo. Dispositivo pausado aparece como "Pausado". */
 export function statusBadge(status, monitoringEnabled = true) {
-    const info = STATUS[monitoringEnabled ? status : 'pausado'] ?? { label: status, className: 'bg-secondary' };
-    return el('span', { className: `badge ${info.className}`, text: info.label });
+    const info = STATUS[monitoringEnabled ? status : 'pausado'] ?? { label: status, tone: 'neutral' };
+    return badge(info.label, info.tone);
+}
+
+// ---- Tempo relativo que se atualiza sozinho ------------------------------------
+
+/** <time> com "há 12 s" e o horário completo no title. */
+export function relativeTime(iso) {
+    if (!iso) return el('span', { text: '—' });
+    return el('time', { text: formatRelative(iso), attrs: { datetime: iso, title: formatDateTime(iso, 'medium'), 'data-relative': true } });
+}
+
+/**
+ * Atualiza os "há N s" de `root`: as linhas que não mudaram são reaproveitadas
+ * (syncChildren), então o texto delas precisa ser refeito a cada atualização.
+ */
+export function refreshRelativeTimes(root) {
+    const now = Date.now();
+    for (const time of root.querySelectorAll('time[data-relative]')) setText(time, formatRelative(time.dateTime, now));
 }
 
 // ---- Tabelas ------------------------------------------------------------------
 
 /**
- * Esqueleto de tabela: cabeçalho fixo e um <tbody> para preencher.
- * @param headers [{ label, className }] ou textos
- * @returns { wrapper, tbody }
+ * Tabela com cabeçalho fixo e um <tbody> para preencher. Em telas pequenas, o
+ * CSS mostra cada linha como cartão, com o rótulo da coluna ao lado do valor.
+ * @param headers textos ou [{ label, className }]  className vai no <th> (ex.: largura da coluna)
+ * @returns { wrapper, tbody, row } row(cells, className) monta um <tr> com os rótulos
  */
-export function tableShell(headers, { className = 'table table-devices table-hover mb-0 align-middle', caption } = {}) {
+export function tableShell(headers, { className = '', caption } = {}) {
+    const columns = headers.map((h) => (typeof h === 'string' ? { label: h } : h));
     const tbody = el('tbody');
     // Descrição para leitores de tela via aria-label (um <caption> escondido
     // transbordava 1 px e fazia aparecer uma barra de rolagem vertical).
-    const table = el('table', { className, attrs: { 'aria-label': caption } }, [
+    const table = el('table', { className: `table table-hover align-middle data-table ${className}`, attrs: { 'aria-label': caption } }, [
         el('thead', {}, [
-            el('tr', {}, headers.map((h) => {
-                const { label, className: cls } = typeof h === 'string' ? { label: h } : h;
-                return el('th', { className: cls, text: label, attrs: { scope: 'col' } });
-            })),
+            el('tr', {}, columns.map((c) => el('th', { className: c.className, text: c.label, attrs: { scope: 'col' } }))),
         ]),
         tbody,
     ]);
-    return { wrapper: el('div', { className: 'table-responsive' }, [table]), tbody };
+
+    // A célula com .cell-title vira o título do cartão e a .cell-actions, o rodapé: sem rótulo.
+    function row(cells, rowClass = '') {
+        cells.forEach((cell, i) => {
+            if (!cell.matches('.cell-title, .cell-actions')) cell.dataset.label = columns[i].label;
+        });
+        return el('tr', { className: rowClass }, cells);
+    }
+
+    return { wrapper: el('div', { className: 'table-responsive' }, [table]), tbody, row };
+}
+
+/** Linha única de "nada no período", ocupando todas as colunas. */
+export function emptyTableRow(text, columnCount) {
+    return el('tr', {}, [el('td', { className: 'table-empty', text, attrs: { colspan: columnCount } })]);
 }
 
 // ---- Atualização sem piscar ----------------------------------------------
@@ -356,8 +391,8 @@ if (typeof document !== 'undefined') {
 
 /**
  * Fecha um modal mesmo que ele ainda esteja abrindo: o Bootstrap ignora hide()
- * durante a animação de abertura (~300 ms), e uma resposta rápida da API
- * deixaria o modal aberto.
+ * durante a animação de abertura, e uma resposta rápida da API deixaria o
+ * modal aberto.
  */
 export function closeModal(element) {
     const modal = window.bootstrap.Modal.getOrCreateInstance(element);
@@ -379,7 +414,7 @@ let dialogCount = 0;
 export function confirmDialog({ title, message, confirmText = 'Confirmar', danger = false }) {
     return new Promise((resolve) => {
         const titleId = `confirmTitle${++dialogCount}`;
-        const cancel = el('button', { className: 'btn btn-outline-light', text: 'Cancelar', attrs: { type: 'button', 'data-bs-dismiss': 'modal' } });
+        const cancel = el('button', { className: 'btn btn-ghost', text: 'Cancelar', attrs: { type: 'button', 'data-bs-dismiss': 'modal' } });
         const confirm = el('button', { className: `btn ${danger ? 'btn-danger' : 'btn-primary'}`, text: confirmText, attrs: { type: 'button' } });
         const dialog = el('div', { className: 'modal fade', attrs: { tabindex: '-1', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId } }, [
             el('div', { className: 'modal-dialog modal-dialog-centered' }, [

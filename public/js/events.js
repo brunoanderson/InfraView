@@ -5,9 +5,9 @@
 import { formatDuration } from './ui.js';
 
 export const EVENT_TYPES = {
-    downtime: { label: 'Queda', icon: 'bi-wifi-off', iconClass: 'severity-critical' },
-    latency: { label: 'Latência alta', icon: 'bi-graph-up-arrow', iconClass: 'severity-warning' },
-    loss: { label: 'Perda de pacotes', icon: 'bi-reception-1', iconClass: 'severity-warning' },
+    downtime: { label: 'Queda', icon: 'bi-wifi-off', tone: 'tone-danger' },
+    latency: { label: 'Latência alta', icon: 'bi-graph-up-arrow', tone: 'tone-warning' },
+    loss: { label: 'Perda de pacotes', icon: 'bi-reception-1', tone: 'tone-warning' },
 };
 
 /**

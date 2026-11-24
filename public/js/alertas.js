@@ -32,8 +32,8 @@ const currentStatus = filterPills(document.getElementById('statusFilter'), STATU
 
 function renderBadges(counts) {
     const badges = [
-        { key: 'ativo', className: 'bg-danger', text: `${counts.ativo} ativo(s)` },
-        { key: 'resolvido', className: 'bg-success', text: `${counts.resolvido} resolvido(s)` },
+        { key: 'ativo', tone: 'danger', text: `${counts.ativo} ativo(s)` },
+        { key: 'resolvido', tone: 'success', text: `${counts.resolvido} resolvido(s)` },
     ];
     syncBadges(document.getElementById('alertBadges'), badges);
 }

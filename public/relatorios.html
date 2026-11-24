@@ -19,20 +19,20 @@
     </div>
 
     <main class="container-fluid px-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div class="page-header">
             <div>
-                <h4 class="text-light mb-1"><i class="bi bi-file-earmark-bar-graph me-2 text-custom"></i>Relatórios e Logs</h4>
-                <span class="text-custom small">Histórico de quedas, picos de latência e perda de pacotes</span>
+                <h1 class="page-title"><i class="bi bi-file-earmark-bar-graph me-2 text-custom" aria-hidden="true"></i>Relatórios e Logs</h1>
+                <p class="page-subtitle mb-0">Histórico de quedas, picos de latência e perda de pacotes</p>
             </div>
         </div>
 
         <!-- Filtros: mudar qualquer um busca de novo na hora -->
-        <form class="card shadow-sm mb-4" id="filters">
+        <form class="card mb-4" id="filters">
             <div class="card-body">
                 <div class="row g-3 align-items-end">
                     <div class="col-12 col-md-4">
                         <label for="filterPeriod" class="filter-label">Período</label>
-                        <select id="filterPeriod" name="period" class="form-select form-select-sm bg-dark text-light border-secondary">
+                        <select id="filterPeriod" name="period" class="form-select form-select-sm">
                             <option value="0">Últimas 24 horas</option>
                             <option value="7" selected>Últimos 7 dias</option>
                             <option value="30">Últimos 30 dias</option>
@@ -41,13 +41,13 @@
                     </div>
                     <div class="col-12 col-md-4">
                         <label for="filterDevice" class="filter-label">Dispositivo</label>
-                        <select id="filterDevice" name="device" class="form-select form-select-sm bg-dark text-light border-secondary">
+                        <select id="filterDevice" name="device" class="form-select form-select-sm">
                             <option value="">Todos os dispositivos</option>
                         </select>
                     </div>
                     <div class="col-12 col-md-4">
                         <label for="filterType" class="filter-label">Tipo de evento</label>
-                        <select id="filterType" name="type" class="form-select form-select-sm bg-dark text-light border-secondary">
+                        <select id="filterType" name="type" class="form-select form-select-sm">
                             <option value="todos" selected>Todos</option>
                             <option value="downtime">Quedas</option>
                             <option value="latencia">Picos de latência</option>
@@ -62,29 +62,29 @@
             </div>
         </form>
 
-        <!-- "Carregando..." e erro da primeira carga -->
+        <!-- Esqueleto e erro da primeira carga -->
         <div id="reportState"></div>
 
-        <section class="card shadow-sm mb-4" id="downtimeCard" aria-labelledby="downtimeTitle" hidden>
-            <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
-                <h2 class="h6 mb-0 text-light" id="downtimeTitle"><i class="bi bi-wifi-off me-2 text-custom"></i>Quedas (downtime)</h2>
-                <span class="badge bg-secondary" id="downtimeCount"></span>
+        <section class="card mb-4" id="downtimeCard" aria-labelledby="downtimeTitle" hidden>
+            <div class="card-header">
+                <h2 class="section-title" id="downtimeTitle"><i class="bi bi-wifi-off me-2 text-custom" aria-hidden="true"></i>Quedas (downtime)</h2>
+                <span class="count-badge" id="downtimeCount"></span>
             </div>
             <div class="card-body p-0" id="downtimeTable"></div>
         </section>
 
-        <section class="card shadow-sm mb-4" id="latencyCard" aria-labelledby="latencyTitle" hidden>
-            <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
-                <h2 class="h6 mb-0 text-light" id="latencyTitle"><i class="bi bi-graph-up-arrow me-2 text-custom"></i>Picos de latência</h2>
-                <span class="badge bg-secondary" id="latencyCount"></span>
+        <section class="card mb-4" id="latencyCard" aria-labelledby="latencyTitle" hidden>
+            <div class="card-header">
+                <h2 class="section-title" id="latencyTitle"><i class="bi bi-graph-up-arrow me-2 text-custom" aria-hidden="true"></i>Picos de latência</h2>
+                <span class="count-badge" id="latencyCount"></span>
             </div>
             <div class="card-body p-0" id="latencyTable"></div>
         </section>
 
-        <section class="card shadow-sm mb-4" id="lossCard" aria-labelledby="lossTitle" hidden>
-            <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
-                <h2 class="h6 mb-0 text-light" id="lossTitle"><i class="bi bi-reception-1 me-2 text-custom"></i>Perda de pacotes</h2>
-                <span class="badge bg-secondary" id="lossCount"></span>
+        <section class="card mb-4" id="lossCard" aria-labelledby="lossTitle" hidden>
+            <div class="card-header">
+                <h2 class="section-title" id="lossTitle"><i class="bi bi-reception-1 me-2 text-custom" aria-hidden="true"></i>Perda de pacotes</h2>
+                <span class="count-badge" id="lossCount"></span>
             </div>
             <div class="card-body p-0" id="lossTable"></div>
         </section>

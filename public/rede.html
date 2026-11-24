@@ -19,16 +19,16 @@
     </div>
 
     <main class="container-fluid px-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div class="page-header">
             <div>
-                <h4 class="text-light mb-1"><i class="bi bi-diagram-3 me-2 text-custom"></i>Rede</h4>
-                <span class="text-custom small">Todos os dispositivos monitorados, por categoria</span>
+                <h1 class="page-title"><i class="bi bi-diagram-3 me-2 text-custom" aria-hidden="true"></i>Rede</h1>
+                <p class="page-subtitle mb-0">Todos os dispositivos monitorados, por categoria</p>
             </div>
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <div id="statusBadges" class="d-flex flex-wrap gap-2"></div>
                 <!-- Só para admin: o js/layout.js esconde para quem é viewer (o back-end também recusa com 403) -->
                 <button type="button" id="newDeviceButton" class="btn btn-primary btn-sm" data-admin-only>
-                    <i class="bi bi-plus-lg me-1"></i>Novo dispositivo
+                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Novo dispositivo
                 </button>
             </div>
         </div>
@@ -39,7 +39,7 @@
             <div class="search-box flex-grow-1">
                 <i class="bi bi-search" aria-hidden="true"></i>
                 <label for="deviceSearch" class="visually-hidden">Buscar dispositivo</label>
-                <input type="search" id="deviceSearch" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Buscar por nome, host ou modelo..." autocomplete="off">
+                <input type="search" id="deviceSearch" class="form-control form-control-sm" placeholder="Buscar por nome, host ou modelo..." autocomplete="off">
             </div>
         </div>
         <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
@@ -127,7 +127,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary" id="deviceSaveButton">Salvar</button>
                 </div>
             </form>

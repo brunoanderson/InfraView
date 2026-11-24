@@ -2,11 +2,12 @@
    InfraView — estilos do painel (tema escuro sobre o Bootstrap 5)
 
    Seções:
-     1. Base (fonte, cores)          6. Dashboard (categorias, latência)
-     2. Componentes gerais           7. Alertas
-     3. Layout das páginas internas  8. Filtros e busca
-     4. Menu lateral e navbar        9. Login e cadastro
-     5. Tabela de dispositivos      10. Animações
+     1. Tokens                       7. Rede (tabela de dispositivos)
+     2. Base e tipografia            8. Tabelas em telas pequenas (cartões)
+     3. Acessibilidade               9. Dashboard
+     4. Componentes                 10. Alertas e eventos
+     5. Estados (carregando, vazio, erro)   11. Filtros e busca
+     6. Layout, navbar e menu       12. Login e cadastro
    ============================================================================= */
 
 /* A fonte Inter vem do CDN jsDelivr (o mesmo do Bootstrap): a política de
@@ -17,106 +18,513 @@
 @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/latin-700.css');
 
 /* ======================================================
-   1. Base
+   1. Tokens — todo valor de cor, espaço, raio, sombra e fonte sai daqui
    ====================================================== */
-body {
-    background-color: #26292d;
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+:root {
+    /* cores em r, g, b para montar as versões transparentes */
+    --rgb-primary: 127, 176, 255;
+    --rgb-success: 16, 185, 129;
+    --rgb-warning: 245, 158, 11;
+    --rgb-danger: 239, 68, 68;
+    --rgb-neutral: 148, 163, 184;
+
+    --color-bg: #1f2226;
+    --color-surface: #2a2e33;
+    --color-surface-hover: #30353b;
+    --color-input: #23272b;
+    --color-border: #3d434a;
+    --color-border-strong: #545b63;
+    --color-text: #e9ecef;
+    --color-text-muted: #a9b0b7;
+    --color-text-subtle: #7d858d;
+
+    --color-primary: #2f6fe0;
+    --color-primary-hover: #2a62c6;
+    --color-primary-text: rgb(var(--rgb-primary));
+    --color-primary-soft: rgba(var(--rgb-primary), 0.14);
+
+    --color-success: rgb(var(--rgb-success));
+    --color-success-soft: rgba(var(--rgb-success), 0.16);
+    --color-warning: rgb(var(--rgb-warning));
+    --color-warning-soft: rgba(var(--rgb-warning), 0.16);
+    --color-danger: rgb(var(--rgb-danger));
+    --color-danger-soft: rgba(var(--rgb-danger), 0.16);
+    --color-neutral: rgb(var(--rgb-neutral));
+    --color-neutral-soft: rgba(var(--rgb-neutral), 0.16);
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-pill: 999px;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
+
+    --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    --font-size-caption: 0.75rem;  /* 12 px */
+    --font-size-body: 0.875rem;    /* 14 px */
+    --font-size-md: 1rem;          /* 16 px */
+    --font-size-title: 1.5rem;     /* 24 px */
+    --font-size-metric: 1.75rem;   /* 28 px */
+
+    --touch-target: 40px;
+    --transition: 150ms ease;
 }
 
+/* O Bootstrap lê as próprias variáveis: apontá-las para os tokens deixa os
+   componentes dele (botões, formulários, modais) no mesmo visual. */
+:root[data-bs-theme='dark'] {
+    --bs-body-bg: var(--color-bg);
+    --bs-body-color: var(--color-text);
+    --bs-body-font-family: var(--font-sans);
+    --bs-body-font-size: var(--font-size-body);
+    --bs-secondary-color: var(--color-text-muted);
+    --bs-tertiary-bg: var(--color-bg);
+    --bs-border-color: var(--color-border);
+    --bs-emphasis-color: var(--color-text);
+    --bs-link-color: var(--color-primary-text);
+    --bs-link-color-rgb: var(--rgb-primary);
+    --bs-link-hover-color: var(--color-text);
+    --bs-success-rgb: var(--rgb-success);
+    --bs-warning-rgb: var(--rgb-warning);
+    --bs-danger-rgb: var(--rgb-danger);
+    --bs-primary-rgb: var(--rgb-primary);
+    --bs-border-radius: var(--radius-md);
+    --bs-focus-ring-color: rgba(var(--rgb-primary), 0.35);
+}
+
+/* ======================================================
+   2. Base e tipografia
+   ====================================================== */
+body {
+    background-color: var(--color-bg);
+    font-size: var(--font-size-body);
+}
+
+.text-custom {
+    color: var(--color-text-muted);
+}
+
+.page-title {
+    font-size: var(--font-size-title);
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--space-1);
+}
+
+.page-subtitle {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-body);
+}
+
+.section-title {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.caption {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-muted);
+}
+
+.metric {
+    font-size: var(--font-size-metric);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.tabular {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Deixa um texto longo quebrar dentro de um item flex */
+.min-w-0 {
+    min-width: 0;
+}
+
+.font-monospace-ip {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-body);
+    color: var(--color-text);
+}
+
+/* ======================================================
+   3. Acessibilidade
+   ====================================================== */
+/* O Bootstrap tira o contorno de botões e campos (deixa só uma sombra fraca) */
+:focus-visible,
+.btn:focus-visible,
+.btn-close:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.form-check-input:focus-visible,
+.nav-link:focus-visible {
+    outline: 2px solid var(--color-primary-text);
+    outline-offset: 2px;
+}
+
+.btn,
+.filter-pill,
+.form-control,
+.form-select {
+    min-height: var(--touch-target);
+}
+
+.btn-icon {
+    min-width: var(--touch-target);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* O "x" do Bootstrap tem 1em: o padding leva o alvo de toque a 40 px */
+.btn-close {
+    padding: var(--space-3);
+}
+
+.btn,
+.filter-pill,
+.card,
+.nav-link,
+.form-control,
+.form-select {
+    transition: background-color var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
+}
+
+/* O Bootstrap usa 300 ms na abertura dos modais e do menu */
+.modal.fade .modal-dialog,
+.offcanvas,
+.fade {
+    transition-duration: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
+
+/* ======================================================
+   4. Componentes
+   ====================================================== */
 .card {
-    background-color: #2c3034;
-    border: none;
-    border-radius: 8px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.card:hover {
+    border-color: var(--color-border-strong);
 }
 
 .card-header,
 .card-footer {
-    border-color: #3f444a !important;
+    background-color: transparent;
+    border-color: var(--color-border);
+    padding: var(--space-4) var(--space-5);
 }
 
-.text-custom {
-    color: #a0a6ab;
-}
-
-/* Cores de status um pouco mais vivas que as do Bootstrap */
-.bg-success {
-    background-color: #10b981 !important;
-}
-
-.bg-danger {
-    background-color: #ef4444 !important;
-}
-
-/* Turquesa (card de latência média do dashboard) */
-.bg-teal-subtle {
-    background-color: rgba(20, 184, 166, 0.18) !important;
-}
-
-.text-teal {
-    color: #14b8a6 !important;
-}
-
-/* ======================================================
-   2. Componentes gerais
-   ====================================================== */
-/* Ícone quadrado dos cards de indicador */
-.stat-icon {
-    width: 46px;
-    height: 46px;
-    min-width: 46px;
-    border-radius: 10px;
+.card-header {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.card-footer {
+    text-align: right;
+}
+
+.modal-content {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.modal-header,
+.modal-footer {
+    border-color: var(--color-border);
+}
+
+.form-control,
+.form-select {
+    background-color: var(--color-input);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    font-size: var(--font-size-body);
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--color-input);
+    border-color: var(--color-primary-text);
+    color: var(--color-text);
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.form-text {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-muted);
+}
+
+.btn {
+    font-size: var(--font-size-body);
+    border-radius: var(--radius-md);
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--color-primary);
+    --bs-btn-border-color: var(--color-primary);
+    --bs-btn-hover-bg: var(--color-primary-hover);
+    --bs-btn-hover-border-color: var(--color-primary-hover);
+    --bs-btn-active-bg: var(--color-primary-hover);
+    --bs-btn-active-border-color: var(--color-primary-hover);
+    --bs-btn-disabled-bg: var(--color-primary);
+    --bs-btn-disabled-border-color: var(--color-primary);
+}
+
+.btn-ghost {
+    background-color: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+}
+
+.btn-ghost:hover {
+    background-color: var(--color-surface-hover);
+    border-color: var(--color-border-strong);
+    color: var(--color-text);
+}
+
+.btn-ghost.is-danger:hover {
+    background-color: var(--color-danger-soft);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+/* Ícone quadrado dos cartões e das listas */
+.icon-box {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 1.25rem;
+    background-color: var(--color-neutral-soft);
+    color: var(--color-text-muted);
 }
 
-/* Link "ver todos" no rodapé dos cards */
+.icon-box-sm {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+}
+
+.icon-box.tone-primary {
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary-text);
+}
+
+/* Selo de status: ponto colorido + texto (a cor nunca vem sozinha) */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.status-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+    flex-shrink: 0;
+}
+
+.tone-success {
+    background-color: var(--color-success-soft);
+    color: var(--color-success);
+}
+
+.tone-warning {
+    background-color: var(--color-warning-soft);
+    color: var(--color-warning);
+}
+
+.tone-danger {
+    background-color: var(--color-danger-soft);
+    color: var(--color-danger);
+}
+
+.tone-neutral {
+    background-color: var(--color-neutral-soft);
+    color: var(--color-neutral);
+}
+
+/* Pausado: só contorno, para não parecer um status medido */
+.tone-paused {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px var(--color-border-strong);
+    color: var(--color-text-muted);
+}
+
+/* Etiqueta sem status (tipo de alerta, gateway) e contador de cartão */
+.tag,
+.count-badge {
+    display: inline-block;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.tag {
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text-muted);
+}
+
+.tag-primary {
+    border-color: transparent;
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary-text);
+}
+
+.count-badge {
+    background-color: var(--color-neutral-soft);
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+}
+
 .details-link {
-    color: #a0a6ab;
+    color: var(--color-text-muted);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
+    min-height: var(--touch-target);
 }
 
 .details-link:hover {
-    color: #6ea8fe;
+    color: var(--color-primary-text);
 }
 
-/* Estado vazio (nada para mostrar ou filtro sem resultado) */
-.empty-state {
-    text-align: center;
-    padding: 3rem 1.5rem;
-    color: #a0a6ab;
+/* Avisos (ui.toast) */
+.toast-region {
+    position: fixed;
+    right: var(--space-4);
+    bottom: var(--space-4);
+    z-index: 1090;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: min(380px, calc(100vw - 2 * var(--space-4)));
 }
 
-.empty-state i {
-    font-size: 2.2rem;
-    display: block;
-    margin-bottom: 0.75rem;
-    color: #565c63;
-}
-
-/* Estado "carregando" dentro de uma área da página (ui.showLoading) */
-.loading-state {
+.app-toast {
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 2.5rem 1rem;
-    color: #a0a6ab;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--toast-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    color: var(--color-text);
 }
 
-/* Selo de dispositivo com monitoramento pausado (ui.statusBadge) */
-.badge-paused {
-    background-color: transparent;
-    border: 1px solid #6c757d;
-    color: #a0a6ab;
+.app-toast > i {
+    color: var(--toast-color);
+}
+
+.app-toast-text {
+    flex: 1;
+}
+
+.app-toast-success { --toast-color: var(--color-success); }
+.app-toast-info { --toast-color: var(--color-primary-text); }
+.app-toast-warning { --toast-color: var(--color-warning); }
+.app-toast-danger { --toast-color: var(--color-danger); }
+
+/* ======================================================
+   5. Estados de uma área: carregando, vazio e erro
+   ====================================================== */
+.skeleton {
+    padding: var(--space-4) var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.skeleton-line {
+    height: 14px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface-hover);
+}
+
+.skeleton-line:nth-child(odd) {
+    width: 70%;
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--space-6) var(--space-5);
+    color: var(--color-text-muted);
+}
+
+.empty-state-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: var(--space-3);
+    color: var(--color-text-subtle);
+}
+
+.empty-state-icon.is-error {
+    color: var(--color-danger);
+}
+
+.empty-state-title {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--space-1);
+}
+
+.empty-state .btn {
+    margin-top: var(--space-4);
 }
 
 /* ======================================================
-   3. Layout das páginas internas (js/layout.js)
+   6. Layout das páginas internas, navbar e menu (js/layout.js)
    ====================================================== */
 /* Enquanto a sessão não é confirmada, o conteúdo fica escondido e aparece
    só o "Carregando...". O layout.js adiciona .is-ready no <body> ao terminar. */
@@ -134,399 +542,586 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
-    color: #a0a6ab;
+    gap: var(--space-1);
+    color: var(--color-text-muted);
     text-align: center;
 }
 
-/* ======================================================
-   4. Menu lateral (offcanvas) e navbar
-   ====================================================== */
-.offcanvas-dark {
-    background-color: #2c3034;
-    border-right: 1px solid #3f444a;
-    width: 280px;
-}
-
-.offcanvas-dark .offcanvas-header {
-    border-bottom: 1px solid #3f444a;
-}
-
-.sidebar-nav .nav-link {
-    color: #a0a6ab;
-    border-radius: 8px;
-    padding: 0.65rem 0.9rem;
-    margin-bottom: 4px;
+.page-header {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
     justify-content: space-between;
-    font-size: 0.92rem;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
 }
 
-.sidebar-nav .nav-link i.nav-icon {
-    width: 20px;
-    text-align: center;
-    margin-right: 10px;
-    font-size: 1.05rem;
+.app-navbar {
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-3) 0;
+    margin-bottom: var(--space-5);
 }
 
-.sidebar-nav .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.06);
-    color: #e9ecef;
-}
-
-.sidebar-nav .nav-link.active {
-    background-color: rgba(110, 168, 254, 0.15);
-    color: #6ea8fe;
+.app-navbar .navbar-brand {
+    color: var(--color-text);
     font-weight: 600;
 }
 
-.sidebar-nav .nav-divider {
-    border-top: 1px solid #3f444a;
-    margin: 0.75rem 0;
+.navbar-user {
+    color: var(--color-text-muted);
 }
 
-/* Botão hambúrguer da navbar */
-.btn-menu-toggle {
-    background: transparent;
-    border: 1px solid #3f444a;
-    color: #e9ecef;
-    border-radius: 8px;
-    padding: 0.4rem 0.65rem;
+.nav-icon-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-target);
+    height: var(--touch-target);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    font-size: 1.25rem;
 }
 
-.btn-menu-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.06);
-    color: #fff;
+.nav-icon-link:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text);
 }
 
 /* Bolinha de "há alertas ativos" no sino */
 .notif-dot {
+    position: absolute;
+    top: 8px;
+    right: 8px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: #ef4444;
-    display: inline-block;
+    background-color: var(--color-danger);
+    box-shadow: 0 0 0 2px var(--color-surface);
 }
 
-.badge-count {
-    font-size: 0.7rem;
-    padding: 0.15rem 0.45rem;
+.offcanvas-dark {
+    --bs-offcanvas-width: 280px;
+    background-color: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+}
+
+.offcanvas-dark .offcanvas-header {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.sidebar-nav .nav-link {
+    color: var(--color-text-muted);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-1);
+    min-height: var(--touch-target);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--font-size-body);
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav .nav-icon {
+    width: 20px;
+    text-align: center;
+    margin-right: var(--space-3);
+    font-size: 1.05rem;
+}
+
+.sidebar-nav .nav-link:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text);
+}
+
+.sidebar-nav .nav-link.active {
+    background-color: var(--color-primary-soft);
+    border-left-color: var(--color-primary-text);
+    color: var(--color-primary-text);
+    font-weight: 600;
+}
+
+.sidebar-nav .nav-link.is-danger {
+    color: var(--color-danger);
+}
+
+.sidebar-nav .nav-divider {
+    border-top: 1px solid var(--color-border);
+    margin: var(--space-3) 0;
+}
+
+/* Contador de alertas ativos no item "Alertas" do menu */
+.nav-count {
+    min-width: 22px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-danger);
+    color: #fff;
+    font-size: var(--font-size-caption);
+    font-weight: 700;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.sidebar-footer {
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    overflow-wrap: anywhere;
 }
 
 /* ======================================================
-   5. Tabela de dispositivos (Rede)
+   7. Rede: tabela de dispositivos
    ====================================================== */
-.device-type-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(160, 166, 171, 0.12);
-    color: #a0a6ab;
-    font-size: 1rem;
+.data-table {
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: var(--color-surface-hover);
+    --bs-table-border-color: var(--color-border);
+    margin-bottom: 0;
 }
 
-.table-devices thead th {
-    color: #a0a6ab;
-    font-size: 0.75rem;
+.data-table thead th {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-caption);
     text-transform: uppercase;
     letter-spacing: 0.04em;
     font-weight: 600;
-    border-bottom-width: 1px;
+    white-space: nowrap;
 }
 
-.table-devices td {
+.data-table th,
+.data-table td {
     vertical-align: middle;
+    padding: var(--space-3);
 }
 
-/* Linha de dispositivo offline: fundo avermelhado discreto */
-.table-devices tr.table-danger-row > td {
-    background-color: rgba(239, 68, 68, 0.08);
+.data-table th:first-child,
+.data-table td:first-child {
+    padding-left: var(--space-5);
 }
 
-.font-monospace-ip {
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 0.85rem;
-    color: #d0d4d8;
+.data-table th:last-child,
+.data-table td:last-child {
+    padding-right: var(--space-5);
+}
+
+/* Linha de dispositivo offline ou de queda em andamento */
+.data-table tr.is-down > td {
+    background-color: rgba(var(--rgb-danger), 0.07);
+}
+
+/* Colunas de largura fixa: as tabelas de todas as categorias ficam alinhadas */
+.devices-table {
+    table-layout: fixed;
+    min-width: 980px;
+}
+
+.col-device { width: auto; }
+.col-host { width: 150px; }
+.col-check { width: 120px; }
+.col-status { width: 170px; }
+.col-latency { width: 100px; }
+.col-loss { width: 80px; }
+.col-last { width: 140px; }
+.col-actions { width: 196px; }
+
+.device-name {
+    color: var(--color-text);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.device-model {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-muted);
+    overflow-wrap: anywhere;
+}
+
+.status-note {
+    margin-top: var(--space-1);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-muted);
+}
+
+.row-actions {
+    display: inline-flex;
+    gap: var(--space-1);
+}
+
+.table-empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: var(--space-5);
 }
 
 /* ======================================================
-   6. Dashboard: categorias e latência
+   8. Tabelas em telas pequenas: cada linha vira um cartão
    ====================================================== */
-.category-row {
-    padding: 0.85rem 0;
-    border-bottom: 1px solid #3f444a;
+@media (max-width: 767.98px) {
+    .data-table,
+    .devices-table {
+        min-width: 0;
+        table-layout: auto;
+    }
+
+    .data-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+    }
+
+    .data-table tbody,
+    .data-table tr,
+    .data-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .data-table tr {
+        padding: var(--space-3) var(--space-4);
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .data-table tr:last-child {
+        border-bottom: none;
+    }
+
+    .data-table td,
+    .data-table td:first-child,
+    .data-table td:last-child {
+        border: none;
+        padding: var(--space-1) 0;
+        background-color: transparent;
+    }
+
+    /* Rótulo + valor, lado a lado */
+    .data-table td[data-label] {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: var(--space-3);
+        text-align: right;
+    }
+
+    .data-table td[data-label]::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-caption);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+        text-align: left;
+        padding-top: 2px;
+    }
+
+    .data-table tr.is-down {
+        background-color: rgba(var(--rgb-danger), 0.07);
+    }
+
+    .data-table tr.is-down > td {
+        background-color: transparent;
+    }
+
+    .data-table .cell-title {
+        padding-bottom: var(--space-2);
+    }
+
+    .data-table .cell-actions {
+        padding-top: var(--space-2);
+    }
+
+    .row-actions {
+        display: flex;
+        width: 100%;
+    }
+
+    .row-actions .btn {
+        flex: 1;
+    }
+
+    .table-responsive {
+        overflow-x: visible;
+    }
 }
 
-.category-row:last-child {
+/* ======================================================
+   9. Dashboard
+   ====================================================== */
+/* Cartões de número: a grade decide quantas colunas cabem */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+}
+
+/* .card do Bootstrap é coluna: aqui o ícone fica ao lado do texto */
+.stat-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    height: 100%;
+}
+
+.stat-card-body {
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.stat-label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-body);
+}
+
+.stat-detail {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-caption);
+    margin-top: 2px;
+}
+
+.list-row {
+    padding: var(--space-3) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.list-row:last-child {
     border-bottom: none;
 }
 
-.category-progress {
-    height: 6px;
-    background-color: #3f444a;
-    border-radius: 3px;
+.list-row-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-2);
+}
+
+/* Barra empilhada: online (verde) + em atenção (amarelo) */
+.stacked-bar {
+    display: flex;
+    height: 8px;
+    background-color: var(--color-border);
+    border-radius: var(--radius-pill);
     overflow: hidden;
 }
 
-.category-progress .fill {
+.stacked-bar > span {
     height: 100%;
-    border-radius: 3px;
 }
 
+.bar-success { background-color: var(--color-success); }
+.bar-warning { background-color: var(--color-warning); }
+.bar-danger { background-color: var(--color-danger); }
+
 .latency-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 170px) 1fr auto;
     align-items: center;
-    gap: 0.85rem;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid #3f444a;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .latency-row:last-child {
     border-bottom: none;
 }
 
-/* Nome e valor com largura fixa, para as barras ficarem alinhadas */
 .latency-name {
-    width: 170px;
-    flex-shrink: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .latency-value {
-    min-width: 110px;
     text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
-/* Permite que um texto longo quebre dentro de um item flex (ex.: card do gateway) */
-.min-width-0 {
-    min-width: 0;
-}
+@media (max-width: 575.98px) {
+    .latency-row {
+        grid-template-columns: 1fr auto;
+    }
 
-.latency-track {
-    flex: 1;
-    height: 8px;
-    background-color: #3f444a;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.latency-fill {
-    height: 100%;
-    border-radius: 4px;
-    background-color: #10b981;
-}
-
-.latency-fill.warn {
-    background-color: #f59e0b;
-}
-
-.latency-fill.crit {
-    background-color: #ef4444;
+    .latency-row .stacked-bar {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
 }
 
 /* ======================================================
-   7. Alertas
+   10. Alertas e eventos
    ====================================================== */
 .alert-item {
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid #3f444a;
+    padding: var(--space-3) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: var(--space-3);
 }
 
 .alert-item:last-child {
     border-bottom: none;
 }
 
-.alert-icon {
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-    border-radius: 10px;
+.alert-item-body {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.alert-item-head {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.05rem;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--space-2);
 }
 
-.severity-critical {
-    background-color: rgba(239, 68, 68, 0.18);
-    color: #ef4444;
+.alert-item-title {
+    font-weight: 600;
+    color: var(--color-text);
 }
 
-.severity-warning {
-    background-color: rgba(245, 158, 11, 0.18);
-    color: #f59e0b;
+.alert-item-meta {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-muted);
+    margin-top: 2px;
 }
 
-.severity-info {
-    background-color: rgba(110, 168, 254, 0.18);
-    color: #6ea8fe;
+.alert-ack {
+    font-size: var(--font-size-caption);
+    color: var(--color-primary-text);
+    margin-top: var(--space-1);
 }
 
-.severity-resolved {
-    background-color: rgba(16, 185, 129, 0.18);
-    color: #10b981;
+@media (max-width: 575.98px) {
+    .alert-item {
+        flex-wrap: wrap;
+    }
+
+    .alert-item > .btn {
+        width: 100%;
+    }
 }
 
 /* ======================================================
-   8. Filtros e busca (Rede, Alertas, Relatórios)
+   11. Filtros e busca (Rede, Alertas, Relatórios)
    ====================================================== */
 .filter-pill {
-    background-color: #212528;
-    border: 1px solid #3f444a;
-    color: #a0a6ab;
-    border-radius: 20px;
-    padding: 0.35rem 0.9rem;
-    font-size: 0.85rem;
-    text-decoration: none;
-    display: inline-block;
+    background-color: var(--color-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    border-radius: var(--radius-pill);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-body);
 }
 
-.filter-pill.active,
 .filter-pill:hover {
-    background-color: rgba(110, 168, 254, 0.15);
-    color: #6ea8fe;
-    border-color: rgba(110, 168, 254, 0.4);
+    border-color: var(--color-border-strong);
+    color: var(--color-text);
 }
 
-/* Rótulo pequeno em maiúsculas acima dos campos de filtro */
+.filter-pill.active {
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary-text);
+    border-color: rgba(var(--rgb-primary), 0.45);
+}
+
 .filter-label {
-    color: #a0a6ab;
-    font-size: 0.78rem;
+    display: block;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    margin-bottom: 2px;
+    margin-bottom: var(--space-1);
 }
 
-/* Contador "exibindo X de Y" */
 .results-count {
-    color: #a0a6ab;
-    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-body);
 }
 
 .search-box {
     position: relative;
     max-width: 320px;
+    min-width: 200px;
 }
 
 .search-box i {
     position: absolute;
-    left: 12px;
+    left: var(--space-3);
     top: 50%;
     transform: translateY(-50%);
-    color: #a0a6ab;
+    color: var(--color-text-muted);
 }
 
 .search-box input {
     padding-left: 36px;
 }
 
+@media (max-width: 575.98px) {
+    .search-box {
+        max-width: none;
+        width: 100%;
+    }
+}
+
 /* ======================================================
-   9. Login e cadastro
+   12. Login e cadastro
    ====================================================== */
 .auth-page {
     min-height: 100vh;
     display: flex;
     align-items: center;
-    padding: 1.5rem 1rem;
+    padding: var(--space-5) var(--space-4);
 }
 
 .auth-card {
     width: 100%;
     max-width: 420px;
     margin: 0 auto;
+    padding: var(--space-6) var(--space-5);
 }
 
-.login-brand-icon {
+.auth-card:hover {
+    border-color: var(--color-border);
+}
+
+.auth-title {
+    font-size: var(--font-size-title);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+.auth-brand-icon {
     width: 64px;
     height: 64px;
-    border-radius: 16px;
-    background-color: rgba(110, 168, 254, 0.15);
-    color: #6ea8fe;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary-text);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 2rem;
-    margin: 0 auto 1rem auto;
+    margin: 0 auto var(--space-4) auto;
 }
 
-/* ======================================================
-   10. Animações (desligadas para quem pede menos movimento)
-   ====================================================== */
-@media (prefers-reduced-motion: no-preference) {
+.auth-footer {
+    text-align: center;
+    margin-top: var(--space-4);
+    color: var(--color-text-muted);
+}
 
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    @keyframes growBar {
-        from { width: 0; }
-        to { width: var(--w, 0%); }
-    }
-
-    @keyframes pulseDot {
-        0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
-        70%  { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-    }
-
-    @keyframes popIn {
-        from { opacity: 0; transform: scale(0.96); }
-        to { opacity: 1; transform: scale(1); }
-    }
-
-    .stagger-row > * {
-        animation: fadeInUp 0.45s ease both;
-    }
-
-    .stagger-row > *:nth-child(1) { animation-delay: 0.02s; }
-    .stagger-row > *:nth-child(2) { animation-delay: 0.08s; }
-    .stagger-row > *:nth-child(3) { animation-delay: 0.14s; }
-    .stagger-row > *:nth-child(4) { animation-delay: 0.20s; }
-    .stagger-row > *:nth-child(5) { animation-delay: 0.26s; }
-    .stagger-row > *:nth-child(6) { animation-delay: 0.32s; }
-
-    .alert-item {
-        animation: fadeIn 0.4s ease both;
-    }
-
-    .category-progress .fill,
-    .latency-fill {
-        animation: growBar 1s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-
-    .notif-dot {
-        animation: pulseDot 2s infinite;
-    }
-
-    .login-card-anim {
-        animation: popIn 0.4s ease both;
-    }
-
-    .filter-pill {
-        transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-    }
-
-    .filter-pill:active {
-        transform: scale(0.96);
-    }
-
-    table.table-devices tbody tr {
-        transition: background-color 0.15s ease, opacity 0.2s ease;
-    }
+.form-floating > .form-control {
+    min-height: 58px;
 }

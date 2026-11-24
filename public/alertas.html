@@ -19,10 +19,10 @@
     </div>
 
     <main class="container-fluid px-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div class="page-header">
             <div>
-                <h4 class="text-light mb-1"><i class="bi bi-bell me-2 text-custom"></i>Alertas</h4>
-                <span class="text-custom small">Gerados automaticamente pelo monitor: quedas, latência alta e perda de pacotes</span>
+                <h1 class="page-title"><i class="bi bi-bell me-2 text-custom" aria-hidden="true"></i>Alertas</h1>
+                <p class="page-subtitle mb-0">Gerados automaticamente pelo monitor: quedas, latência alta e perda de pacotes</p>
             </div>
             <div id="alertBadges" class="d-flex flex-wrap gap-2"></div>
         </div>
@@ -43,9 +43,9 @@
             <div class="results-count" id="updateStatus" aria-live="polite"></div>
         </div>
 
-        <section class="card shadow-sm mb-4" aria-labelledby="alertListTitle">
-            <div class="card-header bg-transparent py-3">
-                <h2 class="h6 mb-0 text-light" id="alertListTitle"><i class="bi bi-list-ul me-2 text-custom"></i>Alertas</h2>
+        <section class="card mb-4" aria-labelledby="alertListTitle">
+            <div class="card-header">
+                <h2 class="section-title" id="alertListTitle"><i class="bi bi-list-ul me-2 text-custom" aria-hidden="true"></i>Alertas</h2>
             </div>
             <div class="card-body p-0" id="alertList"></div>
         </section>

@@ -12,7 +12,7 @@ import {
 } from './devices.js';
 import { initPage, startAutoRefresh } from './layout.js';
 import {
-    clearFieldErrors, closeModal, confirmDialog, el, filterPills, formatRelative, formatTime, hideFormMessage, setBusy,
+    clearFieldErrors, closeModal, confirmDialog, el, filterPills, hideFormMessage, refreshRelativeTimes, relativeTime, setBusy,
     setFieldError, setText, showEmpty, showError, showFieldErrors, showFormMessage, statusBadge, statusLabel, syncBadges,
     syncChildren, tableShell, toast,
 } from './ui.js';
@@ -61,93 +61,104 @@ function matches(device) {
 
 // ---- Desenho -----------------------------------------------------------------
 
-const cards = new Map(); // categoria -> { card, count, tbody }
+const cards = new Map(); // categoria -> { card, count, tbody, row }
+
+const COLUMNS = [
+    { label: 'Dispositivo', className: 'col-device' },
+    { label: 'Host', className: 'col-host' },
+    { label: 'Verificação', className: 'col-check' },
+    { label: 'Status', className: 'col-status' },
+    { label: 'Latência', className: 'col-latency' },
+    { label: 'Perda', className: 'col-loss' },
+    { label: 'Última verificação', className: 'col-last' },
+    ...(admin ? [{ label: 'Ações', className: 'col-actions text-end' }] : []),
+];
 
 function categoryCard(category) {
     if (cards.has(category.id)) return cards.get(category.id);
-    const headers = [
-        { label: 'Dispositivo', className: 'ps-4' }, 'Host', 'Verificação', 'Status',
-        { label: 'Latência média', className: 'text-nowrap' }, 'Perda', 'Última verificação',
-    ];
-    if (admin) headers.push({ label: 'Ações', className: 'pe-4 text-end' });
-    const { wrapper, tbody } = tableShell(headers, { caption: `Dispositivos da categoria ${category.name}` });
-    const count = el('span', { className: 'badge bg-secondary' });
-    const card = el('section', { className: 'card shadow-sm mb-4', attrs: { 'aria-label': category.name } }, [
-        el('div', { className: 'card-header bg-transparent d-flex justify-content-between align-items-center py-3' }, [
-            el('h2', { className: 'h6 mb-0 text-light' }, [el('i', { className: `bi ${category.icon} me-2 text-custom`, attrs: { 'aria-hidden': 'true' } }), category.name]),
+    const { wrapper, tbody, row } = tableShell(COLUMNS, { className: 'devices-table', caption: `Dispositivos da categoria ${category.name}` });
+    const count = el('span', { className: 'count-badge' });
+    const card = el('section', { className: 'card mb-4', attrs: { 'aria-label': category.name } }, [
+        el('div', { className: 'card-header' }, [
+            el('h2', { className: 'section-title' }, [el('i', { className: `bi ${category.icon} me-2 text-custom`, attrs: { 'aria-hidden': 'true' } }), category.name]),
             count,
         ]),
         el('div', { className: 'card-body p-0' }, [wrapper]),
     ]);
-    const entry = { card, count, tbody };
+    const entry = { card, count, tbody, row };
     cards.set(category.id, entry);
     return entry;
 }
 
-function deviceRow(d) {
-    const offline = d.monitoringEnabled && d.status === 'offline';
-    const nameCell = el('td', { className: 'ps-4' }, [
-        el('div', { className: 'd-flex align-items-center gap-2' }, [
-            el('span', { className: 'device-type-icon', attrs: { 'aria-hidden': 'true' } }, [el('i', { className: `bi ${d.icon}` })]),
-            el('div', {}, [
-                el('div', { className: 'text-light' }, [
-                    d.name,
-                    d.isGateway ? el('span', { className: 'badge bg-primary bg-opacity-25 text-primary ms-2', text: 'Gateway' }) : null,
-                ]),
-                d.model ? el('div', { className: 'small text-custom', text: d.model }) : null,
-            ]),
-        ]),
-    ]);
-
-    let note = d.statusNote;
-    if (!d.monitoringEnabled) note = 'Monitoramento pausado';
-    else if (d.status === 'pendente' && !note) note = 'Aguardando a primeira verificação';
-
-    const cells = [
-        nameCell,
-        el('td', { className: 'font-monospace-ip', text: d.host }),
-        el('td', { className: 'text-custom text-nowrap', text: checkTypeText(d) }),
-        el('td', {}, [statusBadge(d.status, d.monitoringEnabled), note ? el('div', { className: 'small text-custom mt-1', text: note }) : null]),
-        el('td', { className: `text-nowrap ${latencyClass(d)}`, text: latencyText(d) }),
-        el('td', { className: `text-nowrap ${lossClass(d)}`, text: lossText(d) }),
-        el('td', { className: `text-nowrap ${offline ? 'text-danger' : 'text-custom'}` }, [
-            el('div', { text: d.lastCheckAt ? formatTime(d.lastCheckAt) : '—' }),
-            offline && d.lastSeenAt ? el('div', { className: 'small', text: `última resposta ${formatRelative(d.lastSeenAt)}` }) : null,
-        ]),
-    ];
-    if (admin) cells.push(el('td', { className: 'pe-4 text-end text-nowrap' }, [actionButtons(d)]));
-
-    return el('tr', { className: offline ? 'table-danger-row' : '' }, cells);
+function statusNote(d) {
+    if (!d.monitoringEnabled) return 'Monitoramento pausado';
+    if (d.status === 'pendente' && !d.statusNote) return 'Aguardando a primeira verificação';
+    return d.statusNote;
 }
 
-function iconButton(icon, label, onClick, variant = 'outline-secondary') {
-    const button = el('button', { className: `btn btn-sm btn-${variant}`, attrs: { type: 'button', title: label, 'aria-label': label } }, [
-        el('i', { className: `bi ${icon}`, attrs: { 'aria-hidden': 'true' } }),
-    ]);
+function deviceRow(d, row) {
+    const offline = d.monitoringEnabled && d.status === 'offline';
+    const note = statusNote(d);
+    const cells = [
+        el('td', { className: 'cell-title' }, [
+            el('div', { className: 'd-flex align-items-center gap-3' }, [
+                el('span', { className: 'icon-box icon-box-sm', attrs: { 'aria-hidden': 'true' } }, [el('i', { className: `bi ${d.icon}` })]),
+                el('div', { className: 'min-w-0' }, [
+                    el('div', { className: 'device-name' }, [d.name, d.isGateway ? el('span', { className: 'tag tag-primary ms-2', text: 'Gateway' }) : null]),
+                    d.model ? el('div', { className: 'device-model', text: d.model }) : null,
+                ]),
+            ]),
+        ]),
+        el('td', { className: 'font-monospace-ip', text: d.host }),
+        el('td', { className: 'text-custom', text: checkTypeText(d) }),
+        el('td', {}, [el('div', {}, [statusBadge(d.status, d.monitoringEnabled), note ? el('div', { className: 'status-note', text: note }) : null])]),
+        el('td', { className: `tabular ${latencyClass(d)}`, text: latencyText(d) }),
+        el('td', { className: `tabular ${lossClass(d)}`, text: lossText(d) }),
+        el('td', { className: offline ? 'text-danger' : 'text-custom' }, [
+            el('div', {}, [
+                el('div', {}, [relativeTime(d.lastCheckAt)]),
+                offline && d.lastSeenAt ? el('div', { className: 'status-note' }, ['última resposta ', relativeTime(d.lastSeenAt)]) : null,
+            ]),
+        ]),
+    ];
+    if (admin) cells.push(el('td', { className: 'cell-actions text-end' }, [actionButtons(d)]));
+    return row(cells, offline ? 'is-down' : '');
+}
+
+function iconButton(icon, label, onClick, danger = false) {
+    const button = el('button', {
+        className: `btn btn-sm btn-ghost btn-icon${danger ? ' is-danger' : ''}`,
+        attrs: { type: 'button', title: label, 'aria-label': label },
+    }, [el('i', { className: `bi ${icon}`, attrs: { 'aria-hidden': 'true' } })]);
     button.addEventListener('click', () => onClick(button));
     return button;
 }
 
 function actionButtons(d) {
-    return el('div', { className: 'btn-group', attrs: { role: 'group', 'aria-label': `Ações de ${d.name}` } }, [
+    return el('div', { className: 'row-actions', attrs: { role: 'group', 'aria-label': `Ações de ${d.name}` } }, [
         iconButton('bi-arrow-repeat', `Verificar ${d.name} agora`, (b) => checkNow(d, b)),
         d.monitoringEnabled
             ? iconButton('bi-pause-fill', `Pausar ${d.name}`, (b) => toggleMonitoring(d, b))
             : iconButton('bi-play-fill', `Retomar ${d.name}`, (b) => toggleMonitoring(d, b)),
         iconButton('bi-pencil', `Editar ${d.name}`, () => openForm(d)),
-        iconButton('bi-trash', `Excluir ${d.name}`, (b) => removeDevice(d, b), 'outline-danger'),
+        iconButton('bi-trash', `Excluir ${d.name}`, (b) => removeDevice(d, b), true),
     ]);
 }
 
+// Mesmo critério do Dashboard: "online" não inclui quem está em atenção.
+const SITUATION_BADGES = [
+    ['online', 'success', 'online'],
+    ['atencao', 'warning', 'em atenção'],
+    ['offline', 'danger', 'offline'],
+    ['pendente', 'neutral', 'pendente(s)'],
+    ['pausado', 'paused', 'pausado(s)'],
+];
+
 function renderBadges() {
-    const counts = { online: 0, atencao: 0, offline: 0, pausado: 0 };
+    const counts = {};
     for (const d of devices) counts[situationOf(d)] = (counts[situationOf(d)] ?? 0) + 1;
-    const badges = [
-        ['online', 'bg-success', 'online'],
-        ['atencao', 'bg-warning text-dark', 'em atenção'],
-        ['offline', 'bg-danger', 'offline'],
-        ['pausado', 'badge-paused', 'pausado(s)'],
-    ].filter(([key]) => counts[key] > 0).map(([key, className, label]) => ({ key, className, text: `${counts[key]} ${label}` }));
+    const badges = SITUATION_BADGES.filter(([key]) => counts[key] > 0)
+        .map(([key, tone, label]) => ({ key, tone, text: `${counts[key]} ${label}` }));
     syncBadges(document.getElementById('statusBadges'), badges);
 }
 
@@ -161,7 +172,8 @@ function render() {
         showEmpty(list, {
             icon: 'bi-hdd-network',
             title: 'Nenhum dispositivo cadastrado',
-            text: admin ? 'Clique em "Novo dispositivo" para começar a monitorar.' : 'Peça a um administrador para cadastrar os dispositivos.',
+            text: admin ? 'Cadastre o primeiro para começar a monitorar.' : 'Peça a um administrador para cadastrar os dispositivos.',
+            action: admin ? { label: 'Cadastrar dispositivo', onClick: () => openForm() } : undefined,
         });
         return;
     }
@@ -177,11 +189,12 @@ function render() {
         if (rows.length === 0) continue;
         const entry = categoryCard(category);
         setText(entry.count, `${rows.length} dispositivo(s)`);
-        syncChildren(entry.tbody, rows, (d) => d.id, deviceRow);
+        syncChildren(entry.tbody, rows, (d) => d.id, (d) => deviceRow(d, entry.row));
         shown.push(entry.card);
     }
     const same = shown.length === list.children.length && shown.every((card, i) => list.children[i] === card);
     if (!same) list.replaceChildren(...shown);
+    refreshRelativeTimes(list);
 }
 
 // ---- Carga e atualização automática -------------------------------------------
