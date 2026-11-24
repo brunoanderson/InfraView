@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar conta | InfraView</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page bg-body-tertiary">
+
+    <main class="auth-card card shadow-sm border-0 p-4 login-card-anim">
+        <form id="registerForm" novalidate>
+            <div class="text-center mb-4">
+                <div class="login-brand-icon"><i class="bi bi-person-plus"></i></div>
+                <h1 class="h3 mb-2 fw-normal">Criar conta</h1>
+                <p class="text-muted small mb-0">Novas contas entram como <strong>visualizador</strong>: veem tudo, mas não alteram dispositivos.</p>
+            </div>
+
+            <div id="formMessage" class="alert d-none" role="alert"></div>
+
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="name" name="name" placeholder="Seu nome" autocomplete="name" maxlength="100" required>
+                <label for="name">Nome</label>
+                <div class="invalid-feedback"></div>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="email" name="email" placeholder="nome@exemplo.com" autocomplete="email" maxlength="254" required>
+                <label for="email">E-mail</label>
+                <div class="invalid-feedback"></div>
+            </div>
+            <div class="form-floating mb-1">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Senha" autocomplete="new-password" maxlength="72" required aria-describedby="passwordHelp">
+                <label for="password">Senha</label>
+                <div class="invalid-feedback"></div>
+            </div>
+            <div id="passwordHelp" class="form-text mb-3">De 8 a 72 caracteres, com pelo menos uma letra e um número.</div>
+            <div class="form-floating mb-4">
+                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Repita a senha" autocomplete="new-password" maxlength="72" required>
+                <label for="confirmPassword">Repita a senha</label>
+                <div class="invalid-feedback"></div>
+            </div>
+
+            <button id="registerButton" class="btn btn-primary w-100 py-2 fw-bold" type="submit">Criar conta</button>
+
+            <p class="text-center small mt-3 mb-0">
+                Já tem conta? <a href="login.html">Entrar</a>
+            </p>
+        </form>
+    </main>
+
+    <script type="module" src="js/cadastro.js"></script>
+</body>
+</html>

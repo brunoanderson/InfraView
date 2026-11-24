@@ -573,3 +573,19 @@ body {
     border: 1px solid #6c757d;
     color: #a0a6ab;
 }
+
+/* ======================================================
+   Login e cadastro
+   ====================================================== */
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 1.5rem 1rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+}
