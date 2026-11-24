@@ -1,8 +1,14 @@
 // =============================================================================
-// As verificações em si. Cada uma devolve sempre o mesmo formato:
-//     { success: true,  latencyMs: 12,   error: null }
-//     { success: false, latencyMs: null, error: 'Conexão recusada' }
-// e nunca lança exceção (falhar é um resultado normal, não um erro do programa).
+// As verificações em si.
+//
+// Cada verificação faz ATTEMPTS tentativas AO MESMO TEMPO e junta o resultado:
+//     { success, latencyMs, error, packetsSent, packetsLost }
+//   success     = pelo menos uma tentativa respondeu (se todas falharam, é queda)
+//   latencyMs   = média das tentativas que responderam
+//   packetsLost = tentativas sem resposta. A "perda de pacotes" é lost / sent:
+//                 no ping são pacotes perdidos; no tcp/http, conexões ou
+//                 requisições que falharam.
+// As funções nunca lançam exceção (falhar é um resultado normal, não um erro).
 //
 //   ping -> ICMP, mede o próprio aparelho (padrão)
 //   tcp  -> tenta conectar numa porta; mede o tempo do handshake. Útil quando o
@@ -15,6 +21,10 @@ import { execFile } from 'node:child_process';
 import net from 'node:net';
 
 const isWindows = process.platform === 'win32';
+
+// Tentativas por verificação. Em paralelo, e não em sequência, para a verificação
+// continuar rápida: o "ping -n 4" do Windows espera 1 s entre um pacote e outro.
+const ATTEMPTS = 4;
 
 /**
  * Ping via o comando do sistema. O Node não envia ICMP sem privilégios de
@@ -87,8 +97,8 @@ export async function http(host, port, timeoutMs) {
     }
 }
 
-/** Escolhe a verificação conforme o tipo cadastrado no dispositivo. */
-export function runCheck(device, timeoutMs) {
+/** UMA tentativa, conforme o tipo cadastrado no dispositivo. */
+function attempt(device, timeoutMs) {
     switch (device.check_type) {
         case 'tcp':
             return tcp(device.host, device.port, timeoutMs);
@@ -97,6 +107,26 @@ export function runCheck(device, timeoutMs) {
         default:
             return ping(device.host, timeoutMs);
     }
+}
+
+/** Faz ATTEMPTS tentativas em paralelo e junta os resultados (veja o topo do arquivo). */
+export async function runCheck(device, timeoutMs) {
+    const results = await Promise.all(Array.from({ length: ATTEMPTS }, () => attempt(device, timeoutMs)));
+    return summarize(results);
+}
+
+/** Junta várias tentativas num resultado só. Exportada para os testes. */
+export function summarize(results) {
+    const answered = results.filter((r) => r.success);
+    const latencies = answered.map((r) => r.latencyMs).filter((ms) => typeof ms === 'number');
+    const failed = results.find((r) => !r.success);
+    return {
+        success: answered.length > 0,
+        latencyMs: latencies.length ? Math.round(latencies.reduce((sum, ms) => sum + ms, 0) / latencies.length) : null,
+        error: failed ? failed.error : null, // motivo da falha (também quando a perda é parcial)
+        packetsSent: results.length,
+        packetsLost: results.length - answered.length,
+    };
 }
 
 /** Erros de rede do Node -> texto em português para a tela. */
@@ -108,6 +138,7 @@ function describeNetworkError(err) {
         EHOSTUNREACH: 'Host inacessível',
         ENETUNREACH: 'Rede inacessível',
         ECONNRESET: 'Conexão encerrada pelo dispositivo',
+        UND_ERR_SOCKET: 'Conexão encerrada pelo dispositivo', // o servidor fechou a conexão no meio da resposta (fetch)
         ETIMEDOUT: 'Tempo esgotado',
     };
     // o fetch recusa algumas portas por segurança (ex.: 9, 25, 6000) sem nem tentar
