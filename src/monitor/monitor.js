@@ -19,6 +19,7 @@ import { nextState } from './stateMachine.js';
 
 const CONCURRENCY = 5; // verificações simultâneas por rodada
 const LATENCY_SAMPLES = 3; // a "atenção" usa a média das últimas 3 latências
+const LOSS_SAMPLES = 3; // e a perda acumulada das últimas 3 verificações com resposta (3 x 4 = 12 tentativas)
 const RETENTION_DAYS = 7; // histórico de checks guardado
 const CLEANUP_EVERY_MS = 60 * 60 * 1000; // limpeza do histórico: uma vez por hora
 
@@ -78,14 +79,24 @@ export function resetMonitoring(deviceId, note) {
     getDb().transaction(() => {
         model.closeDowntime(deviceId, now);
         model.closeLatencyEvent(deviceId);
+        model.closeLossEvent(deviceId);
         model.resolveAlert(deviceId, 'offline', now, note);
         model.resolveAlert(deviceId, 'latency', now, note);
+        model.resolveAlert(deviceId, 'loss', now, note);
         model.resetDeviceState(deviceId, note);
     })();
 }
 
 /** Grava o resultado de uma verificação e executa as transições, numa transação. */
-export function applyResult({ deviceId, result, checkedAt, target }) {
+export function applyResult({ deviceId, result: measured, checkedAt, target }) {
+    // Verificações sem contagem de tentativas (ex.: as falsas dos testes antigos)
+    // valem como 1 tentativa: perdida se falhou, respondida se deu certo.
+    const result = {
+        ...measured,
+        packetsSent: measured.packetsSent ?? 1,
+        packetsLost: measured.packetsLost ?? (measured.success ? 0 : 1),
+    };
+
     return getDb().transaction(() => {
         // Relê dentro da transação: o dispositivo pode ter sido apagado, pausado ou
         // ter o alvo trocado enquanto o ping estava em andamento. O resultado é descartado.
@@ -100,29 +111,42 @@ export function applyResult({ deviceId, result, checkedAt, target }) {
                 status: device.status,
                 consecutiveFailures: device.consecutive_failures,
                 latencyThresholdMs: device.latency_threshold_ms,
+                lossThresholdPct: device.loss_threshold_pct,
             },
             result,
             {
                 failureThreshold: env.MONITOR_FAILURE_THRESHOLD,
                 recentLatencies: result.success ? model.recentLatencies(device.id, LATENCY_SAMPLES) : [],
+                recentLoss: model.recentPacketTotals(device.id, LOSS_SAMPLES),
+                active: model.openProblems(device.id),
             },
         );
         const avg = next.averageLatencyMs;
         const limit = device.latency_threshold_ms;
+        const lossPct = next.lossPct;
+        const lossLimit = device.loss_threshold_pct;
 
         // "No ar desde": zera ao cair e recomeça no primeiro sucesso depois disso.
         let upSince = device.up_since;
         if (next.status === 'offline') upSince = null;
         else if (result.success && !upSince) upSince = checkedAt;
 
+        // Observação: o erro, se caiu; ou qual(is) problema(s) deixam em atenção.
         let statusNote = null;
-        if (!result.success) statusNote = result.error;
-        else if (next.status === 'atencao') statusNote = `Latência alta: média de ${avg} ms (limite ${limit} ms)`;
+        if (!result.success) {
+            statusNote = result.error;
+        } else if (next.status === 'atencao') {
+            const notes = [];
+            if (next.slow) notes.push(`Latência alta: média de ${avg} ms (limite ${limit} ms)`);
+            if (next.lossy) notes.push(`Perda de pacotes: ${lossPct}% (limite ${lossLimit}%)`);
+            statusNote = notes.join(' · ');
+        }
 
         model.updateDeviceState(device.id, {
             status: next.status,
             consecutiveFailures: next.consecutiveFailures,
             latencyMs: result.latencyMs,
+            lastLossPct: Math.round((result.packetsLost / result.packetsSent) * 100), // perda DESTA verificação
             statusNote,
             upSince,
             checkedAt,
@@ -155,18 +179,35 @@ export function applyResult({ deviceId, result, checkedAt, target }) {
                 model.closeLatencyEvent(device.id);
                 const note = next.status === 'offline' ? 'Encerrado: o dispositivo ficou offline' : 'Latência normalizada';
                 model.resolveAlert(device.id, 'latency', checkedAt, note);
+            } else if (transition === 'loss_high') {
+                model.openLossEvent(device.id, checkedAt, lossPct, lossLimit);
+                model.openAlert({
+                    deviceId: device.id, kind: 'loss', severity: 'warning', createdAt: checkedAt,
+                    title: `Perda de pacotes em ${device.name}`,
+                    message: `${lossPct}% das tentativas sem resposta nas últimas verificações (limite: ${lossLimit}%)`,
+                });
+            } else if (transition === 'loss_ok') {
+                model.closeLossEvent(device.id);
+                const note = next.status === 'offline' ? 'Encerrado: o dispositivo ficou offline' : 'Perda normalizada';
+                model.resolveAlert(device.id, 'loss', checkedAt, note);
             }
         }
-        // Pico em andamento: guarda o maior valor observado. Só com medição de
-        // sucesso: uma falha (ainda abaixo do limiar) mantém "atencao", mas não tem latência.
-        if (result.success && next.status === 'atencao' && !next.transitions.includes('latency_high')) {
+        // Problema em andamento: guarda o pior valor observado. Só com medição de
+        // sucesso: uma falha (ainda abaixo do limiar) mantém "atencao", mas sem medição nova.
+        if (result.success && next.slow && !next.transitions.includes('latency_high')) {
             model.raiseLatencyPeak(device.id, avg);
+        }
+        if (result.success && next.lossy && !next.transitions.includes('loss_high')) {
+            model.raiseLossPeak(device.id, lossPct);
         }
 
         if (next.transitions.length > 0) {
             console.log(`[monitor] ${device.name}: ${device.status} -> ${next.status} (${next.transitions.join(', ')})`);
         }
-        return { deviceId: device.id, status: next.status, latencyMs: result.latencyMs, transitions: next.transitions };
+        return {
+            deviceId: device.id, status: next.status, latencyMs: result.latencyMs, lossPct: next.lossPct,
+            transitions: next.transitions,
+        };
     })();
 }
 
