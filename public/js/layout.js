@@ -6,8 +6,10 @@
 //     const user = await initPage('rede');
 // que confere a sessão, monta o layout com o usuário de verdade e libera a página.
 // =============================================================================
+import { api } from './api.js';
 import { isAdmin, logout, requireAuth } from './auth.js';
-import { el } from './ui.js';
+import { createPoller } from './poller.js';
+import { el, formatTime, setText, showErrorState, showLoading } from './ui.js';
 
 const PAGES = [
     { key: 'dashboard', href: 'dashboard.html', icon: 'bi-speedometer2', label: 'Dashboard' },
@@ -36,6 +38,67 @@ export async function initPage(pageKey) {
     applyRoleVisibility(user);
     document.body.classList.add('is-ready');
     return user;
+}
+
+/**
+ * Sino e contador de alertas ativos na navbar e no menu. Cada página chama
+ * esta função no mesmo poller que atualiza os seus dados.
+ */
+export async function refreshNavAlerts() {
+    const { counts } = await api('GET', '/alerts?status=ativo');
+    const active = counts.ativo;
+    const dot = document.getElementById('navAlertDot');
+    const badge = document.getElementById('navAlertCount');
+    if (dot) {
+        dot.hidden = active === 0;
+        dot.parentElement.setAttribute('aria-label', active ? `Alertas: ${active} ativo(s)` : 'Alertas: nenhum ativo');
+    }
+    if (badge) {
+        badge.hidden = active === 0;
+        setText(badge, active);
+    }
+}
+
+/**
+ * Atualização automática de uma tela (a cada 10 s, pelo poller.js), com os
+ * estados de carregando e erro já resolvidos:
+ *   - 1ª carga: "Carregando..." em `area`; se falhar, erro com "Tentar de novo".
+ *   - Atualizações seguintes: os dados na tela ficam; se uma falhar, só o
+ *     `statusEl` avisa ("Falha ao atualizar...") e a próxima tenta de novo.
+ *   - Também atualiza o sino de alertas da navbar.
+ * @param {object}   options
+ * @param {Function} options.load     async: busca os dados e desenha a tela
+ * @param {Element}  options.area     onde aparecem o "carregando" e o erro da 1ª carga
+ * @param {Element}  [options.statusEl] onde aparece "Atualizado às 14:05:32"
+ * @returns o poller (use poller.refresh() depois de salvar algo)
+ */
+export function startAutoRefresh({ load, area, statusEl }) {
+    let loaded = false;
+    const poller = createPoller(async () => {
+        refreshNavAlerts().catch(() => {}); // o sino não pode derrubar a tela
+        try {
+            await load();
+            loaded = true;
+            if (statusEl) {
+                statusEl.classList.remove('text-warning');
+                setText(statusEl, `Atualizado às ${formatTime(new Date().toISOString())}`);
+            }
+        } catch (err) {
+            if (!loaded) {
+                showErrorState(area, err, () => {
+                    showLoading(area);
+                    poller.refresh();
+                });
+            } else if (statusEl) {
+                statusEl.classList.add('text-warning');
+                setText(statusEl, `Falha ao atualizar às ${formatTime(new Date().toISOString())}: ${err.message}`);
+            }
+            throw err;
+        }
+    });
+    showLoading(area);
+    poller.start();
+    return poller;
 }
 
 /** Elementos com data-admin-only somem para quem não é admin. */

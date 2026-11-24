@@ -207,8 +207,171 @@ const STATUS = {
     pausado: { label: 'Pausado', className: 'badge-paused' },
 };
 
+/** Nome do status para mostrar em texto ("atencao" -> "Atenção"). */
+export function statusLabel(status, monitoringEnabled = true) {
+    return (STATUS[monitoringEnabled ? status : 'pausado'] ?? { label: status }).label;
+}
+
 /** Selo colorido do status. Dispositivo pausado aparece como "Pausado". */
 export function statusBadge(status, monitoringEnabled = true) {
     const info = STATUS[monitoringEnabled ? status : 'pausado'] ?? { label: status, className: 'bg-secondary' };
     return el('span', { className: `badge ${info.className}`, text: info.label });
+}
+
+// ---- Tabelas ------------------------------------------------------------------
+
+/**
+ * Esqueleto de tabela: cabeçalho fixo e um <tbody> para preencher.
+ * @param headers [{ label, className }] ou textos
+ * @returns { wrapper, tbody }
+ */
+export function tableShell(headers, { className = 'table table-devices table-hover mb-0 align-middle', caption } = {}) {
+    const tbody = el('tbody');
+    // Descrição para leitores de tela via aria-label (um <caption> escondido
+    // transbordava 1 px e fazia aparecer uma barra de rolagem vertical).
+    const table = el('table', { className, attrs: { 'aria-label': caption } }, [
+        el('thead', {}, [
+            el('tr', {}, headers.map((h) => {
+                const { label, className: cls } = typeof h === 'string' ? { label: h } : h;
+                return el('th', { className: cls, text: label, attrs: { scope: 'col' } });
+            })),
+        ]),
+        tbody,
+    ]);
+    return { wrapper: el('div', { className: 'table-responsive' }, [table]), tbody };
+}
+
+// ---- Atualização sem piscar ----------------------------------------------
+
+/** Troca o texto só se ele mudou (evita mexer no DOM a cada atualização). */
+export function setText(element, text) {
+    const value = String(text ?? '');
+    if (element.textContent !== value) element.textContent = value;
+}
+
+const fingerprints = new WeakMap();
+
+/**
+ * Sincroniza os filhos de `container` com a lista `items`, item a item:
+ * reaproveita o elemento de quem não mudou e só recria o que mudou. Usado nas
+ * tabelas e listas que se atualizam a cada 10 s, para a tela não piscar.
+ * @param keyOf  (item) => chave única (ex.: id)
+ * @param render (item) => elemento que representa o item
+ */
+export function syncChildren(container, items, keyOf, render) {
+    const previous = new Map();
+    for (const child of container.children) {
+        if (child.dataset.key !== undefined) previous.set(child.dataset.key, child);
+    }
+    const nodes = items.map((item) => {
+        const key = String(keyOf(item));
+        const fingerprint = JSON.stringify(item);
+        const existing = previous.get(key);
+        if (existing && fingerprints.get(existing) === fingerprint) return existing;
+        const node = render(item);
+        node.dataset.key = key;
+        fingerprints.set(node, fingerprint);
+        return node;
+    });
+    // Só mexe na ordem/no conteúdo se algo realmente mudou.
+    const same = nodes.length === container.children.length && nodes.every((node, i) => container.children[i] === node);
+    if (!same) container.replaceChildren(...nodes);
+}
+
+// ---- Filtros em "pílulas" ---------------------------------------------------
+
+/**
+ * Grupo de botões de filtro (só um ativo). Devolve uma função que lê o valor atual.
+ * @param options [{ value, label }]
+ */
+export function filterPills(container, options, { initial, label, onChange }) {
+    let current = initial ?? options[0].value;
+    container.setAttribute('role', 'group');
+    if (label) container.setAttribute('aria-label', label);
+    const buttons = options.map(({ value, label: text }) => {
+        const button = el('button', { className: 'filter-pill', text, attrs: { type: 'button', 'data-value': value } });
+        button.addEventListener('click', () => {
+            if (current === value) return;
+            current = value;
+            paint();
+            onChange(value);
+        });
+        return button;
+    });
+    function paint() {
+        for (const button of buttons) {
+            const active = button.dataset.value === current;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-pressed', String(active));
+        }
+    }
+    container.replaceChildren(...buttons);
+    paint();
+    return () => current;
+}
+
+// ---- Modais do Bootstrap ---------------------------------------------------------
+
+// Marca quais modais já terminaram de abrir. (Só no navegador: os testes do
+// Node importam este arquivo para usar as funções de formatação.)
+if (typeof document !== 'undefined') {
+    document.addEventListener('shown.bs.modal', (event) => { event.target.dataset.opened = 'true'; });
+    document.addEventListener('hide.bs.modal', (event) => { delete event.target.dataset.opened; });
+}
+
+/**
+ * Fecha um modal mesmo que ele ainda esteja abrindo: o Bootstrap ignora hide()
+ * durante a animação de abertura (~300 ms), e uma resposta rápida da API
+ * deixaria o modal aberto.
+ */
+export function closeModal(element) {
+    const modal = window.bootstrap.Modal.getOrCreateInstance(element);
+    if (element.classList.contains('show') && element.dataset.opened !== 'true') {
+        element.addEventListener('shown.bs.modal', () => modal.hide(), { once: true });
+    } else {
+        modal.hide();
+    }
+}
+
+// ---- Confirmação (modal do Bootstrap) ----------------------------------------
+
+let dialogCount = 0;
+
+/**
+ * Pergunta antes de uma ação (ex.: excluir). Usa o modal do Bootstrap, que já
+ * prende o foco dentro dele e fecha com Esc. Resolve true se confirmar.
+ */
+export function confirmDialog({ title, message, confirmText = 'Confirmar', danger = false }) {
+    return new Promise((resolve) => {
+        const titleId = `confirmTitle${++dialogCount}`;
+        const cancel = el('button', { className: 'btn btn-outline-light', text: 'Cancelar', attrs: { type: 'button', 'data-bs-dismiss': 'modal' } });
+        const confirm = el('button', { className: `btn ${danger ? 'btn-danger' : 'btn-primary'}`, text: confirmText, attrs: { type: 'button' } });
+        const dialog = el('div', { className: 'modal fade', attrs: { tabindex: '-1', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId } }, [
+            el('div', { className: 'modal-dialog modal-dialog-centered' }, [
+                el('div', { className: 'modal-content' }, [
+                    el('div', { className: 'modal-header' }, [
+                        el('h2', { className: 'modal-title fs-5', text: title, attrs: { id: titleId } }),
+                        el('button', { className: 'btn-close', attrs: { type: 'button', 'data-bs-dismiss': 'modal', 'aria-label': 'Fechar' } }),
+                    ]),
+                    el('div', { className: 'modal-body', text: message }),
+                    el('div', { className: 'modal-footer' }, [cancel, confirm]),
+                ]),
+            ]),
+        ]);
+        let confirmed = false;
+        confirm.addEventListener('click', () => {
+            confirmed = true;
+            closeModal(dialog);
+        });
+        // Foco no "Cancelar": numa ação destrutiva, Enter sem querer não exclui nada.
+        dialog.addEventListener('shown.bs.modal', () => cancel.focus());
+        dialog.addEventListener('hidden.bs.modal', () => {
+            modal.dispose();
+            dialog.remove();
+            resolve(confirmed);
+        });
+        document.body.append(dialog);
+        const modal = new window.bootstrap.Modal(dialog);
+        modal.show();
+    });
 }
