@@ -1,56 +1,59 @@
 /* =============================================================================
-   InfraView — estilos do painel (tema escuro sobre o Bootstrap 5)
+   InfraView — estilos do painel (tema NOC escuro sobre o Bootstrap 5)
 
    Seções:
-     1. Tokens                       7. Rede (tabela de dispositivos)
-     2. Base e tipografia            8. Tabelas em telas pequenas (cartões)
-     3. Acessibilidade               9. Dashboard
-     4. Componentes                 10. Alertas e eventos
-     5. Estados (carregando, vazio, erro)   11. Filtros e busca
-     6. Layout, navbar e menu       12. Login e cadastro
+     1. Tokens                        8. Tabelas (desktop e cartões no celular)
+     2. Base, fundo e tipografia      9. Dashboard
+     3. Acessibilidade e movimento   10. Alertas e linha do tempo
+     4. Tons (status)                11. Filtros e busca
+     5. Componentes                  12. Login e cadastro
+     6. Estados (carregando, vazio, erro)
+     7. Layout, navbar e menu
    ============================================================================= */
 
-/* A fonte Inter vem do CDN jsDelivr (o mesmo do Bootstrap): a política de
-   segurança do servidor (CSP) só libera o próprio site e esse CDN. */
+/* Fontes do CDN jsDelivr (pacotes @fontsource): a CSP do servidor só libera o
+   próprio site e esse CDN. */
 @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/latin-400.css');
 @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/latin-500.css');
 @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/latin-600.css');
 @import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/latin-700.css');
+@import url('https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.2.5/latin-400.css');
+@import url('https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.2.5/latin-600.css');
 
 /* ======================================================
    1. Tokens — todo valor de cor, espaço, raio, sombra e fonte sai daqui
    ====================================================== */
 :root {
     /* cores em r, g, b para montar as versões transparentes */
-    --rgb-primary: 127, 176, 255;
-    --rgb-success: 16, 185, 129;
-    --rgb-warning: 245, 158, 11;
-    --rgb-danger: 239, 68, 68;
+    --rgb-cyan: 34, 211, 238;
+    --rgb-violet: 167, 139, 250;
+    --rgb-success: 52, 211, 153;
+    --rgb-warning: 251, 191, 36;
+    --rgb-danger: 248, 113, 113;
     --rgb-neutral: 148, 163, 184;
+    --rgb-surface: 15, 22, 34;
 
-    --color-bg: #1f2226;
-    --color-surface: #2a2e33;
-    --color-surface-hover: #30353b;
-    --color-input: #23272b;
-    --color-border: #3d434a;
-    --color-border-strong: #545b63;
-    --color-text: #e9ecef;
-    --color-text-muted: #a9b0b7;
-    --color-text-subtle: #7d858d;
+    --color-bg: #070b12;
+    --color-surface: rgba(var(--rgb-surface), 0.78);
+    --color-surface-solid: #0f1622;
+    --color-surface-hover: rgba(30, 41, 59, 0.55);
+    --color-input: #0b111b;
+    --color-border: rgba(var(--rgb-cyan), 0.14);
+    --color-border-strong: rgba(var(--rgb-cyan), 0.34);
+    --color-text: #e6edf6;
+    --color-text-muted: #9aa8ba;
+    --color-text-subtle: #64748b;
 
-    --color-primary: #2f6fe0;
-    --color-primary-hover: #2a62c6;
-    --color-primary-text: rgb(var(--rgb-primary));
-    --color-primary-soft: rgba(var(--rgb-primary), 0.14);
+    --color-primary: rgb(var(--rgb-cyan));
+    --color-on-primary: #03141a;
+    --color-primary-soft: rgba(var(--rgb-cyan), 0.12);
+    --color-accent: rgb(var(--rgb-violet));
+    --color-accent-soft: rgba(var(--rgb-violet), 0.14);
 
-    --color-success: rgb(var(--rgb-success));
-    --color-success-soft: rgba(var(--rgb-success), 0.16);
-    --color-warning: rgb(var(--rgb-warning));
-    --color-warning-soft: rgba(var(--rgb-warning), 0.16);
-    --color-danger: rgb(var(--rgb-danger));
-    --color-danger-soft: rgba(var(--rgb-danger), 0.16);
-    --color-neutral: rgb(var(--rgb-neutral));
-    --color-neutral-soft: rgba(var(--rgb-neutral), 0.16);
+    --glow-primary: 0 0 14px rgba(var(--rgb-cyan), 0.45);
+    --glow-text: 0 0 12px rgba(var(--rgb-cyan), 0.55);
+    --grid-line: rgba(var(--rgb-cyan), 0.045);
+    --grid-size: 32px;
 
     --space-1: 4px;
     --space-2: 8px;
@@ -64,17 +67,21 @@
     --radius-lg: 12px;
     --radius-pill: 999px;
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --blur-glass: blur(10px);
 
     --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
     --font-size-caption: 0.75rem;  /* 12 px */
     --font-size-body: 0.875rem;    /* 14 px */
     --font-size-md: 1rem;          /* 16 px */
     --font-size-title: 1.5rem;     /* 24 px */
     --font-size-metric: 1.75rem;   /* 28 px */
+    --letter-spacing-label: 0.08em;
 
+    --stripe-width: 3px;
+    --dot-size: 8px;
+    --meter-height: 6px;
     --touch-target: 40px;
     --transition: 150ms ease;
 }
@@ -90,23 +97,33 @@
     --bs-tertiary-bg: var(--color-bg);
     --bs-border-color: var(--color-border);
     --bs-emphasis-color: var(--color-text);
-    --bs-link-color: var(--color-primary-text);
-    --bs-link-color-rgb: var(--rgb-primary);
+    --bs-link-color: var(--color-primary);
+    --bs-link-color-rgb: var(--rgb-cyan);
     --bs-link-hover-color: var(--color-text);
     --bs-success-rgb: var(--rgb-success);
     --bs-warning-rgb: var(--rgb-warning);
     --bs-danger-rgb: var(--rgb-danger);
-    --bs-primary-rgb: var(--rgb-primary);
+    --bs-primary-rgb: var(--rgb-cyan);
     --bs-border-radius: var(--radius-md);
-    --bs-focus-ring-color: rgba(var(--rgb-primary), 0.35);
+    --bs-focus-ring-color: rgba(var(--rgb-cyan), 0.35);
+    --bs-form-invalid-color: rgb(var(--rgb-danger));
+    --bs-form-invalid-border-color: rgb(var(--rgb-danger));
 }
 
 /* ======================================================
-   2. Base e tipografia
+   2. Base, fundo e tipografia
    ====================================================== */
+/* Grade de linhas finas e um brilho no topo, só com gradientes */
 body {
-    background-color: var(--color-bg);
     font-size: var(--font-size-body);
+    background-color: var(--color-bg);
+    background-image:
+        radial-gradient(ellipse 80% 320px at 50% 0, rgba(var(--rgb-cyan), 0.1), transparent),
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 100% 100%, var(--grid-size) var(--grid-size), var(--grid-size) var(--grid-size);
+    background-attachment: fixed;
+    min-height: 100vh;
 }
 
 .text-custom {
@@ -122,7 +139,6 @@ body {
 
 .page-subtitle {
     color: var(--color-text-muted);
-    font-size: var(--font-size-body);
 }
 
 .section-title {
@@ -130,6 +146,15 @@ body {
     font-weight: 600;
     color: var(--color-text);
     margin: 0;
+}
+
+/* Rótulo pequeno em maiúsculas (cabeçalho de tabela, filtros, KPIs) */
+.label-caps {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-label);
 }
 
 .caption {
@@ -145,7 +170,10 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
-.tabular {
+/* IPs, hosts, latência, percentuais e horários */
+.mono,
+time {
+    font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
 }
 
@@ -154,14 +182,8 @@ body {
     min-width: 0;
 }
 
-.font-monospace-ip {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-body);
-    color: var(--color-text);
-}
-
 /* ======================================================
-   3. Acessibilidade
+   3. Acessibilidade e movimento
    ====================================================== */
 /* O Bootstrap tira o contorno de botões e campos (deixa só uma sombra fraca) */
 :focus-visible,
@@ -171,7 +193,7 @@ body {
 .form-select:focus-visible,
 .form-check-input:focus-visible,
 .nav-link:focus-visible {
-    outline: 2px solid var(--color-primary-text);
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
 }
 
@@ -180,13 +202,6 @@ body {
 .form-control,
 .form-select {
     min-height: var(--touch-target);
-}
-
-.btn-icon {
-    min-width: var(--touch-target);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* O "x" do Bootstrap tem 1em: o padding leva o alvo de toque a 40 px */
@@ -215,18 +230,79 @@ body {
     *::before,
     *::after {
         transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
+    }
+}
+
+/* Movimentos de estado: pulso do online, piscar do offline e brilho do esqueleto */
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes status-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(var(--tone-rgb), 0.6); }
+        50% { box-shadow: 0 0 0 4px rgba(var(--tone-rgb), 0); }
+    }
+
+    @keyframes status-blink {
+        0%, 85%, 100% { opacity: 1; }
+        92% { opacity: 0.2; }
+    }
+
+    @keyframes shimmer {
+        from { background-position: 150% 0; }
+        to { background-position: -50% 0; }
+    }
+
+    .status-badge.is-live.tone-success::before {
+        animation: status-pulse 2.4s ease-in-out infinite;
+    }
+
+    .status-badge.is-live.tone-danger::before {
+        animation: status-blink 2s step-end infinite;
+    }
+
+    .skeleton-line {
+        animation: shimmer 1.6s linear infinite;
     }
 }
 
 /* ======================================================
-   4. Componentes
+   4. Tons: a cor de um status, usada por selos, ícones,
+      faixas laterais, barras e medidores
    ====================================================== */
+:where(.status-badge, .icon-box, .stripe, .meter, .gauge) {
+    --tone-rgb: var(--rgb-neutral);
+}
+
+.tone-success { --tone-rgb: var(--rgb-success); }
+.tone-warning { --tone-rgb: var(--rgb-warning); }
+.tone-danger { --tone-rgb: var(--rgb-danger); }
+.tone-neutral,
+.tone-paused { --tone-rgb: var(--rgb-neutral); }
+.tone-primary { --tone-rgb: var(--rgb-cyan); }
+
+/* Faixa lateral na cor do tom (linhas da Rede, alertas, problemas) */
+.stripe {
+    box-shadow: inset var(--stripe-width) 0 0 rgb(var(--tone-rgb));
+}
+
+/* Na tabela, a faixa vai na primeira célula (o <tr> não desenha sombra) */
+tr.stripe {
+    box-shadow: none;
+}
+
+tr.stripe > td:first-child {
+    box-shadow: inset var(--stripe-width) 0 0 rgb(var(--tone-rgb));
+}
+
+/* ======================================================
+   5. Componentes
+   ====================================================== */
+/* Cartão de vidro: borda fina e um brilho leve no canto */
 .card {
     background-color: var(--color-surface);
+    background-image: radial-gradient(circle at 0 0, rgba(var(--rgb-cyan), 0.08), transparent 160px);
+    backdrop-filter: var(--blur-glass);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
 }
 
 .card:hover {
@@ -237,7 +313,7 @@ body {
 .card-footer {
     background-color: transparent;
     border-color: var(--color-border);
-    padding: var(--space-4) var(--space-5);
+    padding: var(--space-3) var(--space-5);
 }
 
 .card-header {
@@ -253,10 +329,10 @@ body {
 }
 
 .modal-content {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
+    background-color: var(--color-surface-solid);
+    border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md), var(--glow-primary);
 }
 
 .modal-header,
@@ -275,7 +351,7 @@ body {
 .form-control:focus,
 .form-select:focus {
     background-color: var(--color-input);
-    border-color: var(--color-primary-text);
+    border-color: var(--color-primary);
     color: var(--color-text);
 }
 
@@ -288,20 +364,31 @@ body {
     color: var(--color-text-muted);
 }
 
+.form-check-input:checked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
 .btn {
     font-size: var(--font-size-body);
     border-radius: var(--radius-md);
 }
 
 .btn-primary {
+    --bs-btn-color: var(--color-on-primary);
     --bs-btn-bg: var(--color-primary);
     --bs-btn-border-color: var(--color-primary);
-    --bs-btn-hover-bg: var(--color-primary-hover);
-    --bs-btn-hover-border-color: var(--color-primary-hover);
-    --bs-btn-active-bg: var(--color-primary-hover);
-    --bs-btn-active-border-color: var(--color-primary-hover);
+    --bs-btn-hover-color: var(--color-on-primary);
+    --bs-btn-hover-bg: var(--color-text);
+    --bs-btn-hover-border-color: var(--color-text);
+    --bs-btn-active-color: var(--color-on-primary);
+    --bs-btn-active-bg: var(--color-text);
+    --bs-btn-active-border-color: var(--color-text);
+    --bs-btn-disabled-color: var(--color-on-primary);
     --bs-btn-disabled-bg: var(--color-primary);
     --bs-btn-disabled-border-color: var(--color-primary);
+    font-weight: 600;
+    box-shadow: var(--glow-primary);
 }
 
 .btn-ghost {
@@ -311,92 +398,63 @@ body {
 }
 
 .btn-ghost:hover {
-    background-color: var(--color-surface-hover);
+    background-color: var(--color-primary-soft);
     border-color: var(--color-border-strong);
     color: var(--color-text);
 }
 
 .btn-ghost.is-danger:hover {
-    background-color: var(--color-danger-soft);
-    border-color: var(--color-danger);
-    color: var(--color-danger);
+    background-color: rgba(var(--rgb-danger), 0.14);
+    border-color: rgb(var(--rgb-danger));
+    color: rgb(var(--rgb-danger));
 }
 
-/* Ícone quadrado dos cartões e das listas */
-.icon-box {
-    width: 44px;
-    height: 44px;
-    flex-shrink: 0;
-    border-radius: var(--radius-md);
+.btn-icon {
+    min-width: var(--touch-target);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
-    background-color: var(--color-neutral-soft);
-    color: var(--color-text-muted);
 }
 
-.icon-box-sm {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
-}
-
-.icon-box.tone-primary {
-    background-color: var(--color-primary-soft);
-    color: var(--color-primary-text);
-}
-
-/* Selo de status: ponto colorido + texto (a cor nunca vem sozinha) */
+/* Selo de status: ponto com brilho + texto (a cor nunca vem sozinha) */
 .status-badge {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    padding: var(--space-1) var(--space-3);
+    padding: 2px var(--space-3);
+    border: 1px solid rgba(var(--tone-rgb), 0.35);
     border-radius: var(--radius-pill);
+    background-color: rgba(var(--tone-rgb), 0.12);
+    color: rgb(var(--tone-rgb));
     font-size: var(--font-size-caption);
     font-weight: 600;
-    line-height: 1.5;
+    line-height: 1.6;
     white-space: nowrap;
 }
 
 .status-badge::before {
     content: '';
-    width: 8px;
-    height: 8px;
+    width: var(--dot-size);
+    height: var(--dot-size);
     border-radius: 50%;
-    background-color: currentColor;
     flex-shrink: 0;
+    background-color: currentColor;
+    box-shadow: 0 0 6px rgba(var(--tone-rgb), 0.9);
 }
 
-.tone-success {
-    background-color: var(--color-success-soft);
-    color: var(--color-success);
-}
-
-.tone-warning {
-    background-color: var(--color-warning-soft);
-    color: var(--color-warning);
-}
-
-.tone-danger {
-    background-color: var(--color-danger-soft);
-    color: var(--color-danger);
-}
-
-.tone-neutral {
-    background-color: var(--color-neutral-soft);
-    color: var(--color-neutral);
-}
-
-/* Pausado: só contorno, para não parecer um status medido */
-.tone-paused {
+/* Pausado: só contorno e ponto apagado, para não parecer um status medido */
+.status-badge.tone-paused {
     background-color: transparent;
-    box-shadow: inset 0 0 0 1px var(--color-border-strong);
     color: var(--color-text-muted);
 }
 
-/* Etiqueta sem status (tipo de alerta, gateway) e contador de cartão */
+.status-badge.tone-paused::before {
+    box-shadow: none;
+    background-color: transparent;
+    border: 1px solid currentColor;
+}
+
+/* Etiqueta sem status (tipo de alerta, gateway, perfil) e contador de cartão */
 .tag,
 .count-badge {
     display: inline-block;
@@ -412,16 +470,75 @@ body {
     color: var(--color-text-muted);
 }
 
-.tag-primary {
-    border-color: transparent;
-    background-color: var(--color-primary-soft);
-    color: var(--color-primary-text);
+.tag-accent {
+    border-color: rgba(var(--rgb-violet), 0.4);
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent);
 }
 
 .count-badge {
-    background-color: var(--color-neutral-soft);
-    color: var(--color-text);
-    font-variant-numeric: tabular-nums;
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary);
+    font-family: var(--font-mono);
+}
+
+/* Ícone quadrado dos cartões e das listas */
+.icon-box {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    border: 1px solid rgba(var(--tone-rgb), 0.25);
+    background-color: rgba(var(--tone-rgb), 0.1);
+    color: rgb(var(--tone-rgb));
+}
+
+.icon-box-sm {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+}
+
+/* Barra horizontal: o preenchimento usa o tom e brilha de leve */
+.meter {
+    display: flex;
+    height: var(--meter-height);
+    border-radius: var(--radius-pill);
+    background-color: rgba(var(--rgb-neutral), 0.16);
+    overflow: hidden;
+}
+
+.meter > span {
+    height: 100%;
+    background-color: rgb(var(--tone-rgb));
+    box-shadow: 0 0 8px rgba(var(--tone-rgb), 0.7);
+}
+
+/* Medidor circular (SVG): disponibilidade do gateway */
+.gauge {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    transform: rotate(-90deg);
+}
+
+.gauge circle {
+    fill: none;
+    stroke-width: 7;
+}
+
+.gauge-track {
+    stroke: rgba(var(--rgb-neutral), 0.16);
+}
+
+.gauge-value {
+    stroke: rgb(var(--tone-rgb));
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 4px rgba(var(--tone-rgb), 0.7));
 }
 
 .details-link {
@@ -434,7 +551,7 @@ body {
 }
 
 .details-link:hover {
-    color: var(--color-primary-text);
+    color: var(--color-primary);
 }
 
 /* Avisos (ui.toast) */
@@ -454,29 +571,23 @@ body {
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-left: 4px solid var(--toast-color);
+    background-color: var(--color-surface-solid);
+    border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md), inset var(--stripe-width) 0 0 rgb(var(--tone-rgb));
     color: var(--color-text);
 }
 
 .app-toast > i {
-    color: var(--toast-color);
+    color: rgb(var(--tone-rgb));
 }
 
 .app-toast-text {
     flex: 1;
 }
 
-.app-toast-success { --toast-color: var(--color-success); }
-.app-toast-info { --toast-color: var(--color-primary-text); }
-.app-toast-warning { --toast-color: var(--color-warning); }
-.app-toast-danger { --toast-color: var(--color-danger); }
-
 /* ======================================================
-   5. Estados de uma área: carregando, vazio e erro
+   6. Estados de uma área: carregando, vazio e erro
    ====================================================== */
 .skeleton {
     padding: var(--space-4) var(--space-5);
@@ -489,6 +600,9 @@ body {
     height: 14px;
     border-radius: var(--radius-sm);
     background-color: var(--color-surface-hover);
+    background-image: linear-gradient(90deg, transparent, rgba(var(--rgb-cyan), 0.1), transparent);
+    background-size: 50% 100%;
+    background-repeat: no-repeat;
 }
 
 .skeleton-line:nth-child(odd) {
@@ -509,7 +623,7 @@ body {
 }
 
 .empty-state-icon.is-error {
-    color: var(--color-danger);
+    color: rgb(var(--rgb-danger));
 }
 
 .empty-state-title {
@@ -524,7 +638,7 @@ body {
 }
 
 /* ======================================================
-   6. Layout das páginas internas, navbar e menu (js/layout.js)
+   7. Layout das páginas internas, navbar e menu (js/layout.js)
    ====================================================== */
 /* Enquanto a sessão não é confirmada, o conteúdo fica escondido e aparece
    só o "Carregando...". O layout.js adiciona .is-ready no <body> ao terminar. */
@@ -558,14 +672,23 @@ body {
 
 .app-navbar {
     background-color: var(--color-surface);
+    backdrop-filter: var(--blur-glass);
     border-bottom: 1px solid var(--color-border);
-    padding: var(--space-3) 0;
+    padding: var(--space-2) 0;
     margin-bottom: var(--space-5);
 }
 
-.app-navbar .navbar-brand {
+/* Logo com brilho leve (navbar, menu, login) */
+.brand {
     color: var(--color-text);
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+}
+
+.brand i {
+    color: var(--color-primary);
+    text-shadow: var(--glow-text);
 }
 
 .navbar-user {
@@ -585,26 +708,26 @@ body {
 }
 
 .nav-icon-link:hover {
-    background-color: var(--color-surface-hover);
-    color: var(--color-text);
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary);
 }
 
 /* Bolinha de "há alertas ativos" no sino */
 .notif-dot {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 8px;
-    height: 8px;
+    top: var(--space-2);
+    right: var(--space-2);
+    width: var(--dot-size);
+    height: var(--dot-size);
     border-radius: 50%;
-    background-color: var(--color-danger);
-    box-shadow: 0 0 0 2px var(--color-surface);
+    background-color: rgb(var(--rgb-danger));
+    box-shadow: 0 0 8px rgb(var(--rgb-danger));
 }
 
 .offcanvas-dark {
     --bs-offcanvas-width: 280px;
-    background-color: var(--color-surface);
-    border-right: 1px solid var(--color-border);
+    background-color: var(--color-surface-solid);
+    border-right: 1px solid var(--color-border-strong);
 }
 
 .offcanvas-dark .offcanvas-header {
@@ -621,7 +744,6 @@ body {
     align-items: center;
     justify-content: space-between;
     font-size: var(--font-size-body);
-    border-left: 3px solid transparent;
 }
 
 .sidebar-nav .nav-icon {
@@ -638,13 +760,17 @@ body {
 
 .sidebar-nav .nav-link.active {
     background-color: var(--color-primary-soft);
-    border-left-color: var(--color-primary-text);
-    color: var(--color-primary-text);
+    color: var(--color-primary);
     font-weight: 600;
+    box-shadow: inset var(--stripe-width) 0 0 var(--color-primary), var(--glow-primary);
+}
+
+.sidebar-nav .nav-link.active .nav-icon {
+    text-shadow: var(--glow-text);
 }
 
 .sidebar-nav .nav-link.is-danger {
-    color: var(--color-danger);
+    color: rgb(var(--rgb-danger));
 }
 
 .sidebar-nav .nav-divider {
@@ -657,23 +783,32 @@ body {
     min-width: 22px;
     padding: 2px var(--space-2);
     border-radius: var(--radius-pill);
-    background-color: var(--color-danger);
-    color: #fff;
+    background-color: rgb(var(--rgb-danger));
+    color: var(--color-bg);
+    font-family: var(--font-mono);
     font-size: var(--font-size-caption);
     font-weight: 700;
     text-align: center;
-    font-variant-numeric: tabular-nums;
+    box-shadow: 0 0 8px rgba(var(--rgb-danger), 0.6);
 }
 
 .sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
     padding-top: var(--space-3);
     border-top: 1px solid var(--color-border);
     color: var(--color-text-muted);
     overflow-wrap: anywhere;
 }
 
+.sidebar-user {
+    color: var(--color-text);
+    font-weight: 600;
+}
+
 /* ======================================================
-   7. Rede: tabela de dispositivos
+   8. Tabelas: colunas fixas no desktop, cartões no celular
    ====================================================== */
 .data-table {
     --bs-table-bg: transparent;
@@ -683,11 +818,6 @@ body {
 }
 
 .data-table thead th {
-    color: var(--color-text-muted);
-    font-size: var(--font-size-caption);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    font-weight: 600;
     white-space: nowrap;
 }
 
@@ -718,22 +848,22 @@ body {
     min-width: 980px;
 }
 
-.col-device { width: auto; }
 .col-host { width: 150px; }
 .col-check { width: 120px; }
 .col-status { width: 170px; }
-.col-latency { width: 100px; }
+.col-latency { width: 120px; }
 .col-loss { width: 80px; }
-.col-last { width: 140px; }
+.col-last { width: 130px; }
 .col-actions { width: 196px; }
 
 .device-name {
     color: var(--color-text);
-    font-weight: 500;
+    font-weight: 600;
     overflow-wrap: anywhere;
 }
 
-.device-model {
+.device-model,
+.status-note {
     font-size: var(--font-size-caption);
     color: var(--color-text-muted);
     overflow-wrap: anywhere;
@@ -741,8 +871,14 @@ body {
 
 .status-note {
     margin-top: var(--space-1);
-    font-size: var(--font-size-caption);
-    color: var(--color-text-muted);
+}
+
+/* Latência: valor + barra em relação ao limite do dispositivo */
+.latency-cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 72px;
 }
 
 .row-actions {
@@ -756,9 +892,6 @@ body {
     padding: var(--space-5);
 }
 
-/* ======================================================
-   8. Tabelas em telas pequenas: cada linha vira um cartão
-   ====================================================== */
 @media (max-width: 767.98px) {
     .data-table,
     .devices-table {
@@ -790,12 +923,18 @@ body {
         border-bottom: none;
     }
 
+    .data-table tr.stripe {
+        box-shadow: inset var(--stripe-width) 0 0 rgb(var(--tone-rgb));
+    }
+
     .data-table td,
     .data-table td:first-child,
-    .data-table td:last-child {
+    .data-table td:last-child,
+    .data-table tr.stripe > td:first-child {
         border: none;
         padding: var(--space-1) 0;
         background-color: transparent;
+        box-shadow: none;
     }
 
     /* Rótulo + valor, lado a lado */
@@ -810,13 +949,13 @@ body {
     .data-table td[data-label]::before {
         content: attr(data-label);
         flex-shrink: 0;
-        color: var(--color-text-muted);
-        font-size: var(--font-size-caption);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        font-weight: 600;
         text-align: left;
         padding-top: 2px;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-caption);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: var(--letter-spacing-label);
     }
 
     .data-table tr.is-down {
@@ -833,6 +972,14 @@ body {
 
     .data-table .cell-actions {
         padding-top: var(--space-2);
+    }
+
+    .latency-cell {
+        align-items: flex-end;
+    }
+
+    .latency-cell .meter {
+        width: 96px;
     }
 
     .row-actions {
@@ -852,6 +999,43 @@ body {
 /* ======================================================
    9. Dashboard
    ====================================================== */
+/* .card do Bootstrap é coluna: a faixa e os cartões de número ficam em linha */
+.status-band,
+.stat-card {
+    flex-direction: row;
+}
+
+/* Faixa "Estado da rede": resumo global, relógio e próxima verificação */
+.status-band {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    margin-bottom: var(--space-5);
+}
+
+.status-band-state {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--font-size-md);
+    font-weight: 700;
+}
+
+.status-band-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+    margin: 0;
+}
+
+.status-band-meta dd {
+    margin: 0;
+    color: var(--color-text);
+}
+
 /* Cartões de número: a grade decide quantas colunas cabem */
 .stat-grid {
     display: grid;
@@ -860,10 +1044,8 @@ body {
     margin-bottom: var(--space-5);
 }
 
-/* .card do Bootstrap é coluna: aqui o ícone fica ao lado do texto */
 .stat-card {
     display: flex;
-    flex-direction: row;
     align-items: center;
     gap: var(--space-4);
     padding: var(--space-4);
@@ -871,19 +1053,12 @@ body {
 }
 
 .stat-card-body {
+    flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
     overflow-wrap: break-word;
-}
-
-.stat-label {
-    color: var(--color-text-muted);
-    font-size: var(--font-size-body);
-}
-
-.stat-detail {
-    color: var(--color-text-muted);
-    font-size: var(--font-size-caption);
-    margin-top: 2px;
 }
 
 .list-row {
@@ -904,34 +1079,11 @@ body {
     margin-bottom: var(--space-2);
 }
 
-/* Barra empilhada: online (verde) + em atenção (amarelo) */
-.stacked-bar {
-    display: flex;
-    height: 8px;
-    background-color: var(--color-border);
-    border-radius: var(--radius-pill);
-    overflow: hidden;
-}
-
-.stacked-bar > span {
-    height: 100%;
-}
-
-.bar-success { background-color: var(--color-success); }
-.bar-warning { background-color: var(--color-warning); }
-.bar-danger { background-color: var(--color-danger); }
-
 .latency-row {
     display: grid;
     grid-template-columns: minmax(0, 170px) 1fr auto;
     align-items: center;
     gap: var(--space-3);
-    padding: var(--space-3) var(--space-5);
-    border-bottom: 1px solid var(--color-border);
-}
-
-.latency-row:last-child {
-    border-bottom: none;
 }
 
 .latency-name {
@@ -940,25 +1092,19 @@ body {
     white-space: nowrap;
 }
 
-.latency-value {
-    text-align: right;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-}
-
 @media (max-width: 575.98px) {
     .latency-row {
         grid-template-columns: 1fr auto;
     }
 
-    .latency-row .stacked-bar {
+    .latency-row .meter {
         grid-column: 1 / -1;
         grid-row: 2;
     }
 }
 
 /* ======================================================
-   10. Alertas e eventos
+   10. Alertas e linha do tempo
    ====================================================== */
 .alert-item {
     padding: var(--space-3) var(--space-5);
@@ -999,8 +1145,27 @@ body {
 
 .alert-ack {
     font-size: var(--font-size-caption);
-    color: var(--color-primary-text);
+    color: var(--color-accent);
     margin-top: var(--space-1);
+}
+
+/* Linha do tempo: um fio vertical liga os ícones */
+.timeline .alert-item {
+    position: relative;
+}
+
+.timeline .alert-item::after {
+    content: '';
+    position: absolute;
+    left: calc(var(--space-5) + 18px);
+    top: calc(var(--space-3) + 36px);
+    bottom: calc(-1 * var(--space-3));
+    width: 1px;
+    background-color: var(--color-border-strong);
+}
+
+.timeline .alert-item:last-child::after {
+    display: none;
 }
 
 @media (max-width: 575.98px) {
@@ -1010,6 +1175,10 @@ body {
 
     .alert-item > .btn {
         width: 100%;
+    }
+
+    .timeline .alert-item::after {
+        display: none;
     }
 }
 
@@ -1032,23 +1201,18 @@ body {
 
 .filter-pill.active {
     background-color: var(--color-primary-soft);
-    color: var(--color-primary-text);
-    border-color: rgba(var(--rgb-primary), 0.45);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    box-shadow: var(--glow-primary);
 }
 
 .filter-label {
     display: block;
-    color: var(--color-text-muted);
-    font-size: var(--font-size-caption);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
     margin-bottom: var(--space-1);
 }
 
 .results-count {
     color: var(--color-text-muted);
-    font-size: var(--font-size-body);
 }
 
 .search-box {
@@ -1080,7 +1244,6 @@ body {
    12. Login e cadastro
    ====================================================== */
 .auth-page {
-    min-height: 100vh;
     display: flex;
     align-items: center;
     padding: var(--space-5) var(--space-4);
@@ -1093,13 +1256,9 @@ body {
     padding: var(--space-6) var(--space-5);
 }
 
-.auth-card:hover {
-    border-color: var(--color-border);
-}
-
 .auth-title {
     font-size: var(--font-size-title);
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: var(--space-2);
 }
 
@@ -1107,13 +1266,19 @@ body {
     width: 64px;
     height: 64px;
     border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-strong);
     background-color: var(--color-primary-soft);
-    color: var(--color-primary-text);
+    color: var(--color-primary);
+    box-shadow: var(--glow-primary);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 2rem;
     margin: 0 auto var(--space-4) auto;
+}
+
+.auth-brand-icon i {
+    text-shadow: var(--glow-text);
 }
 
 .auth-footer {
@@ -1124,4 +1289,8 @@ body {
 
 .form-floating > .form-control {
     min-height: 58px;
+}
+
+.form-floating > label {
+    color: var(--color-text-muted);
 }

@@ -8,13 +8,14 @@
 import { api } from './api.js';
 import { isAdmin } from './auth.js';
 import {
-    checkTypeText, DEVICE_ICONS, latencyClass, latencyText, lossClass, lossText, toRequestBody, validateDevice,
+    checkTypeText, DEVICE_ICONS, latencyClass, latencyPercentOfLimit, latencyText, latencyTone, lossClass, lossText, toRequestBody,
+    validateDevice,
 } from './devices.js';
 import { initPage, startAutoRefresh } from './layout.js';
 import {
-    clearFieldErrors, closeModal, confirmDialog, el, filterPills, hideFormMessage, refreshRelativeTimes, relativeTime, setBusy,
+    clearFieldErrors, closeModal, confirmDialog, el, filterPills, hideFormMessage, meter, relativeTime, setBusy,
     setFieldError, setText, showEmpty, showError, showFieldErrors, showFormMessage, statusBadge, statusLabel, syncBadges,
-    syncChildren, tableShell, toast,
+    statusTone, syncChildren, tableShell, toast,
 } from './ui.js';
 
 const user = await initPage('rede');
@@ -104,16 +105,19 @@ function deviceRow(d, row) {
             el('div', { className: 'd-flex align-items-center gap-3' }, [
                 el('span', { className: 'icon-box icon-box-sm', attrs: { 'aria-hidden': 'true' } }, [el('i', { className: `bi ${d.icon}` })]),
                 el('div', { className: 'min-w-0' }, [
-                    el('div', { className: 'device-name' }, [d.name, d.isGateway ? el('span', { className: 'tag tag-primary ms-2', text: 'Gateway' }) : null]),
+                    el('div', { className: 'device-name' }, [d.name, d.isGateway ? el('span', { className: 'tag tag-accent ms-2', text: 'Gateway' }) : null]),
                     d.model ? el('div', { className: 'device-model', text: d.model }) : null,
                 ]),
             ]),
         ]),
-        el('td', { className: 'font-monospace-ip', text: d.host }),
+        el('td', { className: 'mono', text: d.host }),
         el('td', { className: 'text-custom', text: checkTypeText(d) }),
         el('td', {}, [el('div', {}, [statusBadge(d.status, d.monitoringEnabled), note ? el('div', { className: 'status-note', text: note }) : null])]),
-        el('td', { className: `tabular ${latencyClass(d)}`, text: latencyText(d) }),
-        el('td', { className: `tabular ${lossClass(d)}`, text: lossText(d) }),
+        el('td', {}, [el('div', { className: 'latency-cell' }, [
+            el('span', { className: `mono ${latencyClass(d)}`, text: latencyText(d) }),
+            meter([{ percent: latencyPercentOfLimit(d), tone: latencyTone(d) }]),
+        ])]),
+        el('td', { className: `mono ${lossClass(d)}`, text: lossText(d) }),
         el('td', { className: offline ? 'text-danger' : 'text-custom' }, [
             el('div', {}, [
                 el('div', {}, [relativeTime(d.lastCheckAt)]),
@@ -122,7 +126,7 @@ function deviceRow(d, row) {
         ]),
     ];
     if (admin) cells.push(el('td', { className: 'cell-actions text-end' }, [actionButtons(d)]));
-    return row(cells, offline ? 'is-down' : '');
+    return row(cells, `stripe tone-${statusTone(situationOf(d))}${offline ? ' is-down' : ''}`);
 }
 
 function iconButton(icon, label, onClick, danger = false) {
@@ -194,7 +198,6 @@ function render() {
     }
     const same = shown.length === list.children.length && shown.every((card, i) => list.children[i] === card);
     if (!same) list.replaceChildren(...shown);
-    refreshRelativeTimes(list);
 }
 
 // ---- Carga e atualização automática -------------------------------------------

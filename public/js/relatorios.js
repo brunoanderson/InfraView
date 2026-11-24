@@ -25,9 +25,9 @@ const SECTIONS = {
         rowClass: (e) => (e.ongoing ? 'is-down' : ''),
         cells: (e) => [
             deviceCell(e),
-            el('td', { className: 'tabular', text: formatDateTime(e.startedAt) }),
-            el('td', { className: 'tabular' }, [e.ongoing ? badge('Em andamento', 'danger') : formatDateTime(e.endedAt)]),
-            el('td', { className: `tabular ${e.ongoing ? 'text-danger' : ''}`, text: formatDuration(e.durationSeconds) }),
+            el('td', { className: 'mono', text: formatDateTime(e.startedAt) }),
+            el('td', { className: 'mono' }, [e.ongoing ? badge('Em andamento', 'danger') : formatDateTime(e.endedAt)]),
+            el('td', { className: `mono ${e.ongoing ? 'text-danger' : ''}`, text: formatDuration(e.durationSeconds) }),
             el('td', { className: 'text-custom', text: e.reason ?? '—' }),
         ],
     },
@@ -38,9 +38,9 @@ const SECTIONS = {
         rowClass: () => '',
         cells: (e) => [
             deviceCell(e),
-            el('td', { className: 'tabular', text: formatDateTime(e.recordedAt) }),
-            el('td', { className: 'tabular text-warning', text: formatLatency(e.latencyMs) }),
-            el('td', { className: 'tabular text-custom', text: formatLatency(e.thresholdMs) }),
+            el('td', { className: 'mono', text: formatDateTime(e.recordedAt) }),
+            el('td', { className: 'mono text-warning', text: formatLatency(e.latencyMs) }),
+            el('td', { className: 'mono text-custom', text: formatLatency(e.thresholdMs) }),
             el('td', {}, [situationBadge(e.resolved)]),
         ],
     },
@@ -51,9 +51,9 @@ const SECTIONS = {
         rowClass: () => '',
         cells: (e) => [
             deviceCell(e),
-            el('td', { className: 'tabular', text: formatDateTime(e.recordedAt) }),
-            el('td', { className: 'tabular text-warning', text: `${e.lossPct}%` }),
-            el('td', { className: 'tabular text-custom', text: `${e.thresholdPct}%` }),
+            el('td', { className: 'mono', text: formatDateTime(e.recordedAt) }),
+            el('td', { className: 'mono text-warning', text: `${e.lossPct}%` }),
+            el('td', { className: 'mono text-custom', text: `${e.thresholdPct}%` }),
             el('td', {}, [situationBadge(e.resolved)]),
         ],
     },
@@ -62,7 +62,7 @@ const SECTIONS = {
 function deviceCell(e) {
     return el('td', { className: 'cell-title' }, [
         el('div', { className: 'device-name', text: e.deviceName }),
-        el('div', { className: 'device-model font-monospace-ip', text: e.deviceHost }),
+        el('div', { className: 'device-model mono', text: e.deviceHost }),
     ]);
 }
 

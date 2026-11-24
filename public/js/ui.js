@@ -27,14 +27,20 @@ export function el(tag, { className, text, attrs } = {}, children = []) {
 // ---- Avisos ---------------------------------------------------------------
 
 let toastRegion;
-const TOAST_ICONS = { success: 'bi-check-circle', danger: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' };
+const TOAST_TYPES = {
+    success: { icon: 'bi-check-circle', tone: 'success' },
+    danger: { icon: 'bi-x-circle', tone: 'danger' },
+    warning: { icon: 'bi-exclamation-triangle', tone: 'warning' },
+    info: { icon: 'bi-info-circle', tone: 'primary' },
+};
 
 /** Aviso discreto no canto da tela, lido pelos leitores de tela. type: success | danger | warning | info */
 export function toast(message, type = 'success') {
     toastRegion ??= document.body.appendChild(el('div', { className: 'toast-region', attrs: { 'aria-live': 'polite' } }));
     const close = el('button', { className: 'btn-close btn-close-white', attrs: { type: 'button', 'aria-label': 'Fechar aviso' } });
-    const item = el('div', { className: `app-toast app-toast-${type}` }, [
-        el('i', { className: `bi ${TOAST_ICONS[type]}`, attrs: { 'aria-hidden': 'true' } }),
+    const { icon, tone } = TOAST_TYPES[type];
+    const item = el('div', { className: `app-toast tone-${tone}` }, [
+        el('i', { className: `bi ${icon}`, attrs: { 'aria-hidden': 'true' } }),
         el('span', { className: 'app-toast-text', text: message }),
         close,
     ]);
@@ -205,6 +211,13 @@ export function formatRelative(iso, now = Date.now()) {
     return seconds < 1 ? 'agora' : `há ${formatDuration(seconds)}`;
 }
 
+/** Quanto falta: "em 4 s", "em 2 min"; no horário ou depois dele, "agora". */
+export function formatCountdown(iso, now = Date.now()) {
+    if (!iso) return '—';
+    const seconds = Math.ceil((new Date(iso).getTime() - now) / 1000);
+    return seconds <= 0 ? 'agora' : `em ${formatDuration(seconds)}`;
+}
+
 /** Segundos -> "45 s", "12 min", "3h 05min", "2d 04h". */
 export function formatDuration(totalSeconds) {
     if (totalSeconds === null || totalSeconds === undefined) return '—';
@@ -247,18 +260,39 @@ export function statusLabel(status, monitoringEnabled = true) {
     return (STATUS[monitoringEnabled ? status : 'pausado'] ?? { label: status }).label;
 }
 
-/** Selo com ponto colorido e texto. tone: success | warning | danger | neutral | paused */
-export function badge(text, tone) {
-    return el('span', { className: `status-badge tone-${tone}`, text });
+/** Tom (cor) da situação de um dispositivo: online, atencao, offline, pendente ou pausado. */
+export function statusTone(situation) {
+    return STATUS[situation]?.tone ?? 'neutral';
+}
+
+/**
+ * Selo com ponto colorido e texto. tone: success | warning | danger | neutral | paused
+ * live: o ponto pulsa (online) ou pisca (offline) — só para o status medido agora.
+ */
+export function badge(text, tone, { live = false } = {}) {
+    return el('span', { className: `status-badge tone-${tone}${live ? ' is-live' : ''}`, text });
 }
 
 /** Selo do status de um dispositivo. Dispositivo pausado aparece como "Pausado". */
 export function statusBadge(status, monitoringEnabled = true) {
     const info = STATUS[monitoringEnabled ? status : 'pausado'] ?? { label: status, tone: 'neutral' };
-    return badge(info.label, info.tone);
+    return badge(info.label, info.tone, { live: monitoringEnabled });
 }
 
-// ---- Tempo relativo que se atualiza sozinho ------------------------------------
+/**
+ * Barra horizontal com um ou mais trechos, cada um na cor do seu tom.
+ *   meter([{ percent: 40, tone: 'success' }, { percent: 20, tone: 'warning' }])
+ */
+export function meter(segments) {
+    return el('div', { className: 'meter', attrs: { 'aria-hidden': 'true' } }, segments.map(({ percent, tone }) => {
+        const fill = el('span', { className: `tone-${tone}` });
+        // style.width pelo JS é permitido pela CSP; o atributo style="..." no HTML não é
+        fill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+        return fill;
+    }));
+}
+
+// ---- Horários que se atualizam sozinhos (layout.js chama refreshTimes a cada 1 s) ----
 
 /** <time> com "há 12 s" e o horário completo no title. */
 export function relativeTime(iso) {
@@ -266,13 +300,22 @@ export function relativeTime(iso) {
     return el('time', { text: formatRelative(iso), attrs: { datetime: iso, title: formatDateTime(iso, 'medium'), 'data-relative': true } });
 }
 
+/** <time> com "em 4 s" até o horário `iso`. */
+export function countdown(iso) {
+    if (!iso) return el('span', { text: '—' });
+    return el('time', { text: formatCountdown(iso), attrs: { datetime: iso, title: formatDateTime(iso, 'medium'), 'data-countdown': true } });
+}
+
 /**
- * Atualiza os "há N s" de `root`: as linhas que não mudaram são reaproveitadas
- * (syncChildren), então o texto delas precisa ser refeito a cada atualização.
+ * Refaz os textos de tempo dentro de `root`: "há N s", "em N s" e os relógios
+ * (<time data-clock>). As linhas que não mudaram são reaproveitadas
+ * (syncChildren), então o texto delas precisa ser refeito aqui.
  */
-export function refreshRelativeTimes(root) {
+export function refreshTimes(root) {
     const now = Date.now();
     for (const time of root.querySelectorAll('time[data-relative]')) setText(time, formatRelative(time.dateTime, now));
+    for (const time of root.querySelectorAll('time[data-countdown]')) setText(time, formatCountdown(time.dateTime, now));
+    for (const time of root.querySelectorAll('time[data-clock]')) setText(time, new Date(now).toLocaleTimeString('pt-BR'));
 }
 
 // ---- Tabelas ------------------------------------------------------------------
@@ -290,7 +333,7 @@ export function tableShell(headers, { className = '', caption } = {}) {
     // transbordava 1 px e fazia aparecer uma barra de rolagem vertical).
     const table = el('table', { className: `table table-hover align-middle data-table ${className}`, attrs: { 'aria-label': caption } }, [
         el('thead', {}, [
-            el('tr', {}, columns.map((c) => el('th', { className: c.className, text: c.label, attrs: { scope: 'col' } }))),
+            el('tr', {}, columns.map((c) => el('th', { className: `label-caps ${c.className ?? ''}`, text: c.label, attrs: { scope: 'col' } }))),
         ]),
         tbody,
     ]);

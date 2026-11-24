@@ -24,74 +24,89 @@
                 <h1 class="page-title"><i class="bi bi-speedometer2 me-2 text-custom" aria-hidden="true"></i>Visão Geral</h1>
                 <p class="page-subtitle mb-0">Monitoramento em tempo real dos dispositivos da rede local</p>
             </div>
-            <span class="results-count" id="updateStatus" aria-live="polite"></span>
         </div>
 
         <!-- Esqueleto e erro da primeira carga -->
         <div id="dashboardState"></div>
 
-        <!-- Preenchido pelo js/dashboard.js com GET /api/dashboard/summary e GET /api/events -->
+        <!-- Preenchido pelo js/dashboard.js com GET /api/dashboard/summary, /api/events, /api/devices e /api/monitor/status -->
         <div id="dashboardContent" hidden>
+            <section class="card status-band" aria-labelledby="networkStateTitle">
+                <div class="status-band-state">
+                    <span class="label-caps" id="networkStateTitle">Estado da rede</span>
+                    <span id="networkState" aria-live="polite"></span>
+                </div>
+                <dl class="status-band-meta">
+                    <div><dt class="label-caps">Hora</dt><dd><time data-clock>—</time></dd></div>
+                    <div><dt class="label-caps">Painel</dt><dd id="updateStatus"></dd></div>
+                    <div><dt class="label-caps">Próxima verificação</dt><dd id="nextCheck">—</dd></div>
+                </dl>
+            </section>
+
             <div class="stat-grid">
                 <div class="card stat-card">
                     <div class="icon-box tone-primary" aria-hidden="true"><i class="bi bi-hdd-network"></i></div>
                     <div class="stat-card-body">
-                        <div class="stat-label">Total de dispositivos</div>
+                        <div class="label-caps">Dispositivos</div>
                         <div class="metric" id="statTotal">—</div>
-                        <div class="stat-detail" id="statTotalSub"></div>
+                        <div class="caption" id="statTotalSub"></div>
                     </div>
                 </div>
                 <div class="card stat-card">
                     <div class="icon-box tone-success" aria-hidden="true"><i class="bi bi-check-circle"></i></div>
                     <div class="stat-card-body">
-                        <div class="stat-label">Online</div>
+                        <div class="label-caps">Online</div>
                         <div class="metric" id="statOnline">—</div>
-                        <div class="stat-detail" id="statOnlineSub"></div>
+                        <div class="caption" id="statOnlineSub"></div>
                     </div>
                 </div>
                 <div class="card stat-card">
                     <div class="icon-box tone-danger" aria-hidden="true"><i class="bi bi-x-circle"></i></div>
                     <div class="stat-card-body">
-                        <div class="stat-label">Offline</div>
+                        <div class="label-caps">Offline</div>
                         <div class="metric" id="statOffline">—</div>
-                        <div class="stat-detail" id="statOfflineSub"></div>
+                        <div class="caption" id="statOfflineSub"></div>
                     </div>
                 </div>
                 <div class="card stat-card">
                     <div class="icon-box tone-warning" aria-hidden="true"><i class="bi bi-exclamation-triangle"></i></div>
                     <div class="stat-card-body">
-                        <div class="stat-label">Alertas ativos</div>
+                        <div class="label-caps">Alertas ativos</div>
                         <div class="metric" id="statAlerts">—</div>
-                        <div class="stat-detail"><a href="alertas.html" class="details-link">ver alertas</a></div>
+                        <div class="caption"><a href="alertas.html" class="details-link">ver alertas</a></div>
                     </div>
                 </div>
                 <div class="card stat-card">
                     <div class="icon-box tone-primary" aria-hidden="true"><i class="bi bi-speedometer"></i></div>
                     <div class="stat-card-body">
-                        <div class="stat-label">Latência média (24h)</div>
+                        <div class="label-caps">Latência média (24h)</div>
                         <div class="metric" id="statLatency">—</div>
+                        <div id="statLatencyMeter"></div>
+                        <div class="caption" id="statLatencySub"></div>
                     </div>
                 </div>
                 <div class="card stat-card">
                     <div class="icon-box tone-warning" aria-hidden="true"><i class="bi bi-reception-1"></i></div>
                     <div class="stat-card-body">
-                        <div class="stat-label">Perda média (24h)</div>
+                        <div class="label-caps">Perda média (24h)</div>
                         <div class="metric" id="statLoss">—</div>
+                        <div id="statLossMeter"></div>
+                        <div class="caption" id="statLossSub"></div>
                     </div>
                 </div>
                 <div class="card stat-card">
                     <div class="icon-box tone-danger" aria-hidden="true"><i class="bi bi-activity"></i></div>
                     <div class="stat-card-body">
-                        <div class="stat-label">Com perda de pacotes agora</div>
+                        <div class="label-caps">Com perda agora</div>
                         <div class="metric" id="statLossDevices">—</div>
                     </div>
                 </div>
                 <div class="card stat-card">
-                    <div class="icon-box tone-primary" aria-hidden="true"><i class="bi bi-router"></i></div>
+                    <div id="gatewayGauge"></div>
                     <div class="stat-card-body">
-                        <div class="stat-label">Gateway: disponibilidade (24h)</div>
+                        <div class="label-caps">Gateway (24h)</div>
                         <div class="metric" id="statGateway">—</div>
-                        <div class="stat-detail" id="statGatewaySub"></div>
+                        <div class="caption" id="statGatewaySub"></div>
                     </div>
                 </div>
             </div>

@@ -30,20 +30,31 @@ export function lossText(device) {
     return hasCurrentMeasurement(device) ? formatLoss(device.lastLossPct) : '—';
 }
 
-/** Cor do valor em relação ao limite: verde, amarelo (perto) ou vermelho (acima). */
-function levelClass(value, limit) {
-    if (value === null || value === undefined) return 'text-custom';
-    if (value > limit) return 'text-danger';
-    if (value > limit * 0.7) return 'text-warning';
-    return 'text-success';
+/** Tom do valor em relação ao limite: success, warning (acima de 70% do limite) ou danger (acima do limite). */
+export function levelTone(value, limit) {
+    if (value === null || value === undefined || !limit) return 'neutral';
+    if (value > limit) return 'danger';
+    if (value > limit * 0.7) return 'warning';
+    return 'success';
+}
+
+const toneTextClass = (tone) => (tone === 'neutral' ? 'text-custom' : `text-${tone}`);
+
+export function latencyTone(device) {
+    return hasCurrentMeasurement(device) ? levelTone(device.latencyMs, device.latencyThresholdMs) : 'neutral';
 }
 
 export function latencyClass(device) {
-    return hasCurrentMeasurement(device) ? levelClass(device.latencyMs, device.latencyThresholdMs) : 'text-custom';
+    return toneTextClass(latencyTone(device));
 }
 
 export function lossClass(device) {
-    return hasCurrentMeasurement(device) ? levelClass(device.lastLossPct, device.lossThresholdPct) : 'text-custom';
+    return toneTextClass(hasCurrentMeasurement(device) ? levelTone(device.lastLossPct, device.lossThresholdPct) : 'neutral');
+}
+
+/** Latência como % do limite do dispositivo (barra cheia = no limite). */
+export function latencyPercentOfLimit(device) {
+    return hasCurrentMeasurement(device) && device.latencyMs !== null ? (device.latencyMs / device.latencyThresholdMs) * 100 : 0;
 }
 
 /** Ícones oferecidos no formulário (classes do Bootstrap Icons). */

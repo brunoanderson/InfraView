@@ -52,8 +52,9 @@ export function renderAlert(alert, { onAcknowledge } = {}) {
         ackButton.addEventListener('click', () => onAcknowledge(alert, ackButton));
     }
 
-    return el('div', { className: 'alert-item' }, [
-        el('div', { className: `icon-box icon-box-sm ${iconTone(alert)}`, attrs: { 'aria-hidden': 'true' } }, [el('i', { className: `bi ${kind.icon}` })]),
+    const tone = iconTone(alert);
+    return el('div', { className: `alert-item stripe ${tone}` }, [
+        el('div', { className: `icon-box icon-box-sm ${tone}`, attrs: { 'aria-hidden': 'true' } }, [el('i', { className: `bi ${kind.icon}` })]),
         el('div', { className: 'alert-item-body' }, [
             el('div', { className: 'alert-item-head' }, [
                 el('div', { className: 'alert-item-title', text: alert.title }),

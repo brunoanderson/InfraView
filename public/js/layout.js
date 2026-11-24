@@ -9,7 +9,7 @@
 import { api } from './api.js';
 import { isAdmin, logout, requireAuth } from './auth.js';
 import { createPoller } from './poller.js';
-import { el, formatTime, setText, showErrorState, showLoading } from './ui.js';
+import { el, formatTime, refreshTimes, relativeTime, setText, showErrorState, showLoading } from './ui.js';
 
 const PAGES = [
     { key: 'dashboard', href: 'dashboard.html', icon: 'bi-speedometer2', label: 'Dashboard' },
@@ -37,6 +37,7 @@ export async function initPage(pageKey) {
     renderLayout(user, pageKey);
     applyRoleVisibility(user);
     document.body.classList.add('is-ready');
+    setInterval(() => refreshTimes(document.body), 1000); // "há N s", "em N s" e relógios
     return user;
 }
 
@@ -69,7 +70,7 @@ async function refreshNavAlerts() {
  * @param {object}   options
  * @param {Function} options.load     async: busca os dados e desenha a tela
  * @param {Element}  options.area     onde aparecem o "carregando" e o erro da 1ª carga
- * @param {Element}  [options.statusEl] onde aparece "Atualizado às 14:05:32"
+ * @param {Element}  [options.statusEl] onde aparece "Atualizado há 3 s"
  * @returns o poller (use poller.refresh() depois de salvar algo)
  */
 export function startAutoRefresh({ load, area, statusEl }) {
@@ -81,7 +82,7 @@ export function startAutoRefresh({ load, area, statusEl }) {
             loaded = true;
             if (statusEl) {
                 statusEl.classList.remove('text-warning');
-                setText(statusEl, `Atualizado às ${formatTime(new Date().toISOString())}`);
+                statusEl.replaceChildren('Atualizado ', relativeTime(new Date().toISOString()));
             }
         } catch (err) {
             if (!loaded) {
@@ -108,11 +109,14 @@ function applyRoleVisibility(user, root = document) {
     }
 }
 
+function roleTag(user) {
+    return el('span', { className: `tag ${user.role === 'admin' ? 'tag-accent' : ''}`, text: ROLE_LABELS[user.role] ?? user.role });
+}
+
+const brand = (tag, className, attrs) =>
+    el(tag, { className: `brand ${className}`, attrs }, [el('i', { className: 'bi bi-hdd-network me-2', attrs: { 'aria-hidden': 'true' } }), 'InfraView']);
+
 function renderLayout(user, pageKey) {
-    const role = el('span', {
-        className: `tag ms-2 ${user.role === 'admin' ? 'tag-primary' : ''}`,
-        text: ROLE_LABELS[user.role] ?? user.role,
-    });
 
     // Ícone e texto dentro de um <span>, como nos links do menu (o menu separa os filhos nas pontas).
     const logoutButton = (className, iconClass) => {
@@ -130,10 +134,7 @@ function renderLayout(user, pageKey) {
                     className: 'btn btn-ghost btn-icon',
                     attrs: { type: 'button', 'data-bs-toggle': 'offcanvas', 'data-bs-target': '#sidebarMenu', 'aria-controls': 'sidebarMenu', 'aria-label': 'Abrir menu' },
                 }, [el('i', { className: 'bi bi-list fs-5', attrs: { 'aria-hidden': 'true' } })]),
-                el('a', { className: 'navbar-brand mb-0 fs-5 text-decoration-none', attrs: { href: 'dashboard.html' } }, [
-                    el('i', { className: 'bi bi-hdd-network me-2', attrs: { 'aria-hidden': 'true' } }),
-                    'InfraView',
-                ]),
+                brand('a', 'navbar-brand mb-0 fs-5', { href: 'dashboard.html' }),
             ]),
             el('div', { className: 'd-flex align-items-center gap-3' }, [
                 el('a', { className: 'nav-icon-link', attrs: { href: 'alertas.html', 'aria-label': 'Alertas' } }, [
@@ -141,10 +142,10 @@ function renderLayout(user, pageKey) {
                     // bolinha de "há alertas ativos": refreshNavAlerts() mostra ou esconde
                     el('span', { className: 'notif-dot', attrs: { id: 'navAlertDot', hidden: true } }),
                 ]),
-                el('span', { className: 'navbar-user d-none d-sm-inline' }, [
-                    el('i', { className: 'bi bi-person-circle me-1', attrs: { 'aria-hidden': 'true' } }),
+                el('span', { className: 'navbar-user d-none d-sm-inline-flex align-items-center gap-2' }, [
+                    el('i', { className: 'bi bi-person-circle', attrs: { 'aria-hidden': 'true' } }),
                     user.name,
-                    role,
+                    roleTag(user),
                 ]),
                 logoutButton('btn btn-ghost is-danger btn-sm', 'me-1'),
             ]),
@@ -168,10 +169,7 @@ function renderLayout(user, pageKey) {
         attrs: { tabindex: '-1', id: 'sidebarMenu', 'aria-labelledby': 'sidebarMenuLabel' },
     }, [
         el('div', { className: 'offcanvas-header' }, [
-            el('span', { className: 'offcanvas-title fw-bold', attrs: { id: 'sidebarMenuLabel' } }, [
-                el('i', { className: 'bi bi-hdd-network me-2' }),
-                'InfraView',
-            ]),
+            brand('span', 'offcanvas-title fs-5', { id: 'sidebarMenuLabel' }),
             el('button', { className: 'btn-close btn-close-white', attrs: { type: 'button', 'data-bs-dismiss': 'offcanvas', 'aria-label': 'Fechar' } }),
         ]),
         el('div', { className: 'offcanvas-body d-flex flex-column' }, [
@@ -181,8 +179,11 @@ function renderLayout(user, pageKey) {
                 logoutButton('nav-link is-danger w-100 border-0 bg-transparent text-start', 'nav-icon'),
             ]),
             el('div', { className: 'sidebar-footer' }, [
-                'Conectado como ',
-                el('span', { className: 'text-light', text: user.email }),
+                el('span', { className: 'icon-box icon-box-sm tone-primary', attrs: { 'aria-hidden': 'true' } }, [el('i', { className: 'bi bi-person' })]),
+                el('div', { className: 'min-w-0' }, [
+                    el('div', { className: 'd-flex align-items-center gap-2 flex-wrap' }, [el('span', { className: 'sidebar-user', text: user.name }), roleTag(user)]),
+                    el('div', { className: 'caption', text: user.email }),
+                ]),
             ]),
         ]),
     ]);
