@@ -1,8 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* =============================================================================
+   InfraView — estilos do painel (tema escuro sobre o Bootstrap 5)
 
+   Seções:
+     1. Base (fonte, cores)          6. Dashboard (categorias, latência)
+     2. Componentes gerais           7. Alertas
+     3. Layout das páginas internas  8. Filtros e busca
+     4. Menu lateral e navbar        9. Login e cadastro
+     5. Tabela de dispositivos      10. Animações
+   ============================================================================= */
+
+/* A fonte Inter vem do CDN jsDelivr (o mesmo do Bootstrap): a política de
+   segurança do servidor (CSP) só libera o próprio site e esse CDN. */
+@import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/latin-400.css');
+@import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/latin-500.css');
+@import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/latin-600.css');
+@import url('https://cdn.jsdelivr.net/npm/@fontsource/inter@5.2.5/latin-700.css');
+
+/* ======================================================
+   1. Base
+   ====================================================== */
 body {
     background-color: #26292d;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 .card {
@@ -20,51 +39,7 @@ body {
     color: #a0a6ab;
 }
 
-.activity-wave {
-    display: flex;
-    align-items: flex-end;
-    height: 14px;
-    gap: 2px;
-}
-
-.activity-wave .bar {
-    width: 3px;
-    border-radius: 1px;
-}
-
-.activity-wave .bar:nth-child(1) {
-    height: 8px;
-}
-
-.activity-wave .bar:nth-child(2) {
-    height: 14px;
-}
-
-.activity-wave .bar:nth-child(3) {
-    height: 6px;
-}
-
-.activity-wave .bar:nth-child(4) {
-    height: 12px;
-}
-
-.activity-wave .bar:nth-child(5) {
-    height: 10px;
-}
-
-.activity-wave.offline .bar {
-    height: 3px;
-    background-color: #dc3545;
-}
-
-.status-indicator {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 6px;
-}
-
+/* Cores de status um pouco mais vivas que as do Bootstrap */
 .bg-success {
     background-color: #10b981 !important;
 }
@@ -73,59 +48,19 @@ body {
     background-color: #ef4444 !important;
 }
 
-.border-start {
-    border-radius: 6px;
+/* Turquesa (card de latência média do dashboard) */
+.bg-teal-subtle {
+    background-color: rgba(20, 184, 166, 0.18) !important;
 }
 
-/* ===== Cards clicáveis do Dashboard ===== */
-.card-clickable {
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    border: 1px solid transparent;
+.text-teal {
+    color: #14b8a6 !important;
 }
 
-.card-clickable:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.35) !important;
-    border-color: #3f444a;
-}
-
-.card-clickable .stretched-link:hover {
-    text-decoration: none;
-}
-
-.details-link {
-    color: #a0a6ab;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.card-clickable:hover .details-link {
-    color: #6ea8fe;
-}
-
-/* ===== Breadcrumb ===== */
-.breadcrumb {
-    --bs-breadcrumb-divider-color: #565c63;
-    margin-bottom: 0;
-}
-
-.breadcrumb-item a {
-    color: #a0a6ab;
-    text-decoration: none;
-}
-
-.breadcrumb-item a:hover {
-    color: #6ea8fe;
-    text-decoration: underline;
-}
-
-.breadcrumb-item.active {
-    color: #e9ecef;
-}
-
-/* ===== Cards de estatística (telas de detalhe) ===== */
+/* ======================================================
+   2. Componentes gerais
+   ====================================================== */
+/* Ícone quadrado dos cards de indicador */
 .stat-icon {
     width: 46px;
     height: 46px;
@@ -137,57 +72,75 @@ body {
     font-size: 1.25rem;
 }
 
-/* ===== Informações do túnel ===== */
-.tunnel-info-item {
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #3f444a;
-}
-
-.tunnel-info-item:last-child {
-    border-bottom: none;
-}
-
-.tunnel-info-label {
+/* Link "ver todos" no rodapé dos cards */
+.details-link {
     color: #a0a6ab;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 2px;
-}
-
-/* ===== Tabela de dispositivos ===== */
-.device-type-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
+    text-decoration: none;
     display: inline-flex;
     align-items: center;
+    gap: 4px;
+}
+
+.details-link:hover {
+    color: #6ea8fe;
+}
+
+/* Estado vazio (nada para mostrar, filtro sem resultado, em construção) */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: #a0a6ab;
+}
+
+.empty-state i {
+    font-size: 2.2rem;
+    display: block;
+    margin-bottom: 0.75rem;
+    color: #565c63;
+}
+
+/* Estado "carregando" dentro de uma área da página (ui.showLoading) */
+.loading-state {
+    display: flex;
+    align-items: center;
     justify-content: center;
-    background-color: rgba(160, 166, 171, 0.12);
+    padding: 2.5rem 1rem;
     color: #a0a6ab;
-    font-size: 1rem;
 }
 
-.table-devices thead th {
+/* Selo de dispositivo com monitoramento pausado (ui.statusBadge) */
+.badge-paused {
+    background-color: transparent;
+    border: 1px solid #6c757d;
     color: #a0a6ab;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    font-weight: 600;
-    border-bottom-width: 1px;
 }
 
-.table-devices td {
-    vertical-align: middle;
-}
-
-.font-monospace-ip {
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 0.85rem;
-    color: #d0d4d8;
-}
 /* ======================================================
-   InfraView — Sidebar / Offcanvas Menu
+   3. Layout das páginas internas (js/layout.js)
+   ====================================================== */
+/* Enquanto a sessão não é confirmada, o conteúdo fica escondido e aparece
+   só o "Carregando...". O layout.js adiciona .is-ready no <body> ao terminar. */
+.app-page:not(.is-ready) main {
+    display: none;
+}
+
+.app-page.is-ready .page-loader {
+    display: none;
+}
+
+.page-loader {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    color: #a0a6ab;
+    text-align: center;
+}
+
+/* ======================================================
+   4. Menu lateral (offcanvas) e navbar
    ====================================================== */
 .offcanvas-dark {
     background-color: #2c3034;
@@ -248,7 +201,7 @@ body {
     color: #fff;
 }
 
-/* Indicador de notificação (bolinha) */
+/* Bolinha de "há alertas ativos" no sino */
 .notif-dot {
     width: 8px;
     height: 8px;
@@ -263,7 +216,46 @@ body {
 }
 
 /* ======================================================
-   Dashboard — Categorias / Progresso
+   5. Tabela de dispositivos (Rede)
+   ====================================================== */
+.device-type-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(160, 166, 171, 0.12);
+    color: #a0a6ab;
+    font-size: 1rem;
+}
+
+.table-devices thead th {
+    color: #a0a6ab;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    border-bottom-width: 1px;
+}
+
+.table-devices td {
+    vertical-align: middle;
+}
+
+/* Linha de dispositivo offline: fundo avermelhado discreto */
+.table-devices tr.table-danger-row > td {
+    background-color: rgba(239, 68, 68, 0.08);
+}
+
+.font-monospace-ip {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.85rem;
+    color: #d0d4d8;
+}
+
+/* ======================================================
+   6. Dashboard: categorias e latência
    ====================================================== */
 .category-row {
     padding: 0.85rem 0;
@@ -286,8 +278,42 @@ body {
     border-radius: 3px;
 }
 
+.latency-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #3f444a;
+}
+
+.latency-row:last-child {
+    border-bottom: none;
+}
+
+.latency-track {
+    flex: 1;
+    height: 8px;
+    background-color: #3f444a;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.latency-fill {
+    height: 100%;
+    border-radius: 4px;
+    background-color: #10b981;
+}
+
+.latency-fill.warn {
+    background-color: #f59e0b;
+}
+
+.latency-fill.crit {
+    background-color: #ef4444;
+}
+
 /* ======================================================
-   Alertas
+   7. Alertas
    ====================================================== */
 .alert-item {
     padding: 0.85rem 1rem;
@@ -333,44 +359,7 @@ body {
 }
 
 /* ======================================================
-   Latência — barra horizontal
-   ====================================================== */
-.latency-row {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid #3f444a;
-}
-
-.latency-row:last-child {
-    border-bottom: none;
-}
-
-.latency-track {
-    flex: 1;
-    height: 8px;
-    background-color: #3f444a;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.latency-fill {
-    height: 100%;
-    border-radius: 4px;
-    background-color: #10b981;
-}
-
-.latency-fill.warn {
-    background-color: #f59e0b;
-}
-
-.latency-fill.crit {
-    background-color: #ef4444;
-}
-
-/* ======================================================
-   Filtros (Relatórios)
+   8. Filtros e busca (Rede, Alertas, Relatórios)
    ====================================================== */
 .filter-pill {
     background-color: #212528;
@@ -390,9 +379,54 @@ body {
     border-color: rgba(110, 168, 254, 0.4);
 }
 
+/* Rótulo pequeno em maiúsculas acima dos campos de filtro */
+.filter-label {
+    color: #a0a6ab;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+}
+
+/* Contador "exibindo X de Y" */
+.results-count {
+    color: #a0a6ab;
+    font-size: 0.85rem;
+}
+
+.search-box {
+    position: relative;
+    max-width: 320px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0a6ab;
+}
+
+.search-box input {
+    padding-left: 36px;
+}
+
 /* ======================================================
-   Página de Login (InfraView)
+   9. Login e cadastro
    ====================================================== */
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 1.5rem 1rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
 .login-brand-icon {
     width: 64px;
     height: 64px;
@@ -407,7 +441,7 @@ body {
 }
 
 /* ======================================================
-   Animações simples de entrada / feedback
+   10. Animações (desligadas para quem pede menos movimento)
    ====================================================== */
 @media (prefers-reduced-motion: no-preference) {
 
@@ -452,30 +486,16 @@ body {
     .stagger-row > *:nth-child(5) { animation-delay: 0.26s; }
     .stagger-row > *:nth-child(6) { animation-delay: 0.32s; }
 
-    .alert-item,
-    .device-row-anim {
+    .alert-item {
         animation: fadeIn 0.4s ease both;
     }
-
-    .alert-item:nth-child(1) { animation-delay: 0.02s; }
-    .alert-item:nth-child(2) { animation-delay: 0.06s; }
-    .alert-item:nth-child(3) { animation-delay: 0.10s; }
-    .alert-item:nth-child(4) { animation-delay: 0.14s; }
-    .alert-item:nth-child(5) { animation-delay: 0.18s; }
-    .alert-item:nth-child(6) { animation-delay: 0.22s; }
-    .alert-item:nth-child(7) { animation-delay: 0.26s; }
-    .alert-item:nth-child(8) { animation-delay: 0.30s; }
-    .alert-item:nth-child(9) { animation-delay: 0.34s; }
-    .alert-item:nth-child(10) { animation-delay: 0.38s; }
-    .alert-item:nth-child(11) { animation-delay: 0.42s; }
-    .alert-item:nth-child(12) { animation-delay: 0.46s; }
 
     .category-progress .fill,
     .latency-fill {
         animation: growBar 1s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
-    .notif-dot.has-alert {
+    .notif-dot {
         animation: pulseDot 2s infinite;
     }
 
@@ -494,98 +514,4 @@ body {
     table.table-devices tbody tr {
         transition: background-color 0.15s ease, opacity 0.2s ease;
     }
-}
-
-/* ===== Estado vazio (filtros / busca sem resultado) ===== */
-.empty-state {
-    text-align: center;
-    padding: 3rem 1.5rem;
-    color: #a0a6ab;
-}
-
-.empty-state i {
-    font-size: 2.2rem;
-    display: block;
-    margin-bottom: 0.75rem;
-    color: #565c63;
-}
-
-/* ===== Contador "exibindo X de Y" ===== */
-.results-count {
-    color: #a0a6ab;
-    font-size: 0.85rem;
-}
-
-/* ===== Campo de busca (Rede) ===== */
-.search-box {
-    position: relative;
-    max-width: 320px;
-}
-
-.search-box i {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #a0a6ab;
-}
-
-.search-box input {
-    padding-left: 36px;
-}
-
-/* ======================================================
-   Layout das páginas internas (js/layout.js)
-   ====================================================== */
-/* Enquanto a sessão não é confirmada, o conteúdo fica escondido e aparece
-   só o "Carregando...". O layout.js adiciona .is-ready no <body> ao terminar. */
-.app-page:not(.is-ready) main {
-    display: none;
-}
-
-.app-page.is-ready .page-loader {
-    display: none;
-}
-
-.page-loader {
-    min-height: 60vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    color: #a0a6ab;
-    text-align: center;
-}
-
-/* Estado "carregando" dentro de uma área da página (ui.showLoading) */
-.loading-state {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2.5rem 1rem;
-    color: #a0a6ab;
-}
-
-/* Selo de dispositivo com monitoramento pausado (ui.statusBadge) */
-.badge-paused {
-    background-color: transparent;
-    border: 1px solid #6c757d;
-    color: #a0a6ab;
-}
-
-/* ======================================================
-   Login e cadastro
-   ====================================================== */
-.auth-page {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    padding: 1.5rem 1rem;
-}
-
-.auth-card {
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
 }
