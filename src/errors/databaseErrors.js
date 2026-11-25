@@ -9,6 +9,7 @@
 //   SQLITE_CONSTRAINT_CHECK/NOTNULL -> 400 (valor fora do permitido)
 //   banco travado por outra conexão (SQLITE_BUSY) -> 503, "tente de novo"
 //   banco ausente, sem tabelas ou corrompido       -> 503, "rode npm run db:reset"
+//   banco sem colunas novas (migration pendente)   -> 503, "rode npm run db:migrate"
 // =============================================================================
 import { AppError } from './AppError.js';
 
@@ -72,6 +73,9 @@ export function fromDatabaseError(err) {
         );
     }
 
+    // "no such column": o banco existe, mas está numa versão anterior à do código.
+    if (/no such column/i.test(err.message)) return databaseOutdated();
+
     // "no such table": o banco existe mas as migrations não foram aplicadas.
     if (UNAVAILABLE_CODES.has(code.split('_').slice(0, 2).join('_')) || /no such table/i.test(err.message)) {
         return databaseUnavailable();
@@ -85,5 +89,13 @@ export function databaseUnavailable() {
     return AppError.serviceUnavailable(
         'Banco de dados indisponível. Verifique se ele foi criado (npm run db:reset).',
         'DATABASE_UNAVAILABLE',
+    );
+}
+
+/** 503 para banco com migrations pendentes: a solução é aplicá-las, sem perder dados. */
+export function databaseOutdated() {
+    return AppError.serviceUnavailable(
+        'Banco de dados desatualizado. Rode "npm run db:migrate" e tente de novo.',
+        'DATABASE_OUTDATED',
     );
 }

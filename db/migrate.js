@@ -23,6 +23,14 @@ import { isMain } from '../src/lib/isMain.js';
 
 const MIGRATIONS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'migrations');
 
+/** Nomes dos arquivos .sql de db/migrations, em ordem (a ordem de execução). */
+export function listMigrationFiles() {
+    return fs
+        .readdirSync(MIGRATIONS_DIR)
+        .filter((file) => /^\d{3}_[\w-]+\.sql$/.test(file))
+        .sort();
+}
+
 /**
  * Aplica no banco `db` as migrations ainda não registradas.
  * Exportada para ser reaproveitada pelo seed, pelo reset e pelos testes.
@@ -39,12 +47,7 @@ export function migrate(db, { log = console.log } = {}) {
     // .pluck() devolve só o valor da primeira coluna: ['001_init.sql', ...]
     const applied = new Set(db.prepare('SELECT name FROM schema_migrations').pluck().all());
 
-    const files = fs
-        .readdirSync(MIGRATIONS_DIR)
-        .filter((file) => /^\d{3}_[\w-]+\.sql$/.test(file))
-        .sort();
-
-    const pending = files.filter((file) => !applied.has(file));
+    const pending = listMigrationFiles().filter((file) => !applied.has(file));
 
     if (pending.length === 0) {
         log('[migrate] Banco atualizado: nenhuma migration pendente.');

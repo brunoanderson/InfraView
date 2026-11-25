@@ -119,6 +119,10 @@ npm start        # sem reinício automático
 
 Abra **http://localhost:3000** (ou a porta definida em `PORT`).
 
+Depois de atualizar o código de um projeto que já tinha banco, rode `npm run db:migrate` com o servidor
+parado: ele aplica só as migrations que faltam, sem apagar dados. Se esquecer, a API avisa: o
+`/api/health` e as demais rotas respondem `503 DATABASE_OUTDATED`, com essa mesma dica.
+
 Para rodar em produção, coloque `NODE_ENV=production` no `.env`, ajuste o `CORS_ORIGIN` para o
 endereço real do site e use `npm start`.
 
@@ -266,7 +270,7 @@ Authorization: Bearer <token>
 
 | Método e rota | Quem pode | O que faz |
 |---|---|---|
-| `GET /api/health` | público | Confere se a API e o banco estão no ar |
+| `GET /api/health` | público | Confere se a API e o banco estão no ar e se não falta nenhuma migration → `200`. Sem o banco ou sem as tabelas: `503 DATABASE_UNAVAILABLE`. Com migration pendente: `503 DATABASE_OUTDATED` |
 | `POST /api/auth/register` | público | Cria uma conta viewer: `{ name, email, password }` → `201 { user, token }` |
 | `POST /api/auth/login` | público | Login: `{ email, password }` → `200 { user, token }` |
 | `GET /api/auth/me` | logado | Dados do usuário dono do token |
@@ -315,7 +319,7 @@ O campo `details` só aparece nos erros de validação e em alguns conflitos.
 | 413 | `PAYLOAD_TOO_LARGE` (o corpo passou de 10 KB) |
 | 429 | `TOO_MANY_REQUESTS` |
 | 500 | `INTERNAL_ERROR` |
-| 503 | `DATABASE_UNAVAILABLE` |
+| 503 | `DATABASE_UNAVAILABLE` (banco ausente ou sem tabelas: `npm run db:reset`), `DATABASE_OUTDATED` (migration pendente: `npm run db:migrate`) |
 
 Detalhes internos, como o stack trace ou as mensagens do SQLite, nunca vão na resposta. Eles ficam só
 no log do servidor.
