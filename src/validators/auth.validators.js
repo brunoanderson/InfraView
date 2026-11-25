@@ -5,14 +5,21 @@
 // =============================================================================
 import { z } from 'zod';
 
-const email = z
+/** Nome e e-mail do cadastro (também usados quando o admin cria ou edita uma conta). */
+export const nameSchema = z
+    .string({ error: 'Informe o nome.' })
+    .trim()
+    .min(2, 'O nome precisa ter pelo menos 2 caracteres.')
+    .max(100, 'O nome pode ter no máximo 100 caracteres.');
+
+export const emailSchema = z
     .string({ error: 'Informe o e-mail.' })
     .trim()
     .toLowerCase()
     .max(254, 'E-mail longo demais.')
     .pipe(z.email('Informe um e-mail válido.'));
 
-/** Regra de senha do cadastro (também usada quando o admin redefine uma senha). */
+/** Regra de senha do cadastro (também usada quando o admin cria uma conta ou redefine uma senha). */
 export const passwordSchema = z
     .string({ error: 'Informe a senha.' })
     .min(8, 'A senha precisa ter pelo menos 8 caracteres.')
@@ -22,16 +29,12 @@ export const passwordSchema = z
     .regex(/\d/, 'A senha precisa ter pelo menos um número.');
 
 export const registerSchema = z.object({
-    name: z
-        .string({ error: 'Informe o nome.' })
-        .trim()
-        .min(2, 'O nome precisa ter pelo menos 2 caracteres.')
-        .max(100, 'O nome pode ter no máximo 100 caracteres.'),
-    email,
+    name: nameSchema,
+    email: emailSchema,
     password: passwordSchema,
 });
 
 export const loginSchema = z.object({
-    email,
+    email: emailSchema,
     password: z.string({ error: 'Informe a senha.' }).min(1, 'Informe a senha.').max(72),
 });

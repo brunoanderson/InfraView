@@ -22,9 +22,14 @@
         <div class="page-header">
             <div>
                 <h1 class="page-title"><i class="bi bi-people me-2 text-custom" aria-hidden="true"></i>Usuários</h1>
-                <p class="page-subtitle mb-0">Perfis de acesso, redefinição de senha e exclusão de contas</p>
+                <p class="page-subtitle mb-0">Criação e edição de contas, perfis de acesso, redefinição de senha e exclusão</p>
             </div>
-            <div id="roleBadges" class="d-flex flex-wrap gap-2"></div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div id="roleBadges" class="d-flex flex-wrap gap-2"></div>
+                <button type="button" id="newUserButton" class="btn btn-primary btn-sm">
+                    <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Novo usuário
+                </button>
+            </div>
         </div>
         <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
             <div class="results-count">O sistema sempre mantém pelo menos um administrador.</div>
@@ -41,6 +46,57 @@
             <div class="card-body p-0" id="userList"></div>
         </section>
     </main>
+
+    <!-- Modal de criação e edição de conta (na edição, os campos de senha ficam escondidos) -->
+    <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalTitle" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <form class="modal-content" id="userForm" novalidate>
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="userModalTitle">Novo usuário</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="userFormMessage" class="alert d-none" role="alert"></div>
+                    <div class="mb-3">
+                        <label for="uName" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="uName" name="name" maxlength="100" autocomplete="off" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="uEmail" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="uEmail" name="email" maxlength="254" autocomplete="off" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div id="uPasswordFields">
+                        <div class="mb-3">
+                            <label for="uPassword" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="uPassword" name="password" maxlength="72" autocomplete="new-password" required aria-describedby="uPasswordHelp">
+                            <div id="uPasswordHelp" class="form-text">De 8 a 72 caracteres, com pelo menos uma letra e um número.</div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="uConfirmPassword" class="form-label">Repita a senha</label>
+                            <input type="password" class="form-control" id="uConfirmPassword" name="confirmPassword" maxlength="72" autocomplete="new-password" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="uRole" class="form-label">Perfil</label>
+                        <select class="form-select" id="uRole" name="role" aria-describedby="uRoleHelp">
+                            <option value="viewer">Visualizador: só visualiza o painel</option>
+                            <option value="admin">Admin: gerencia dispositivos, alertas e usuários</option>
+                        </select>
+                        <div id="uRoleHelp" class="form-text"></div>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="userSaveButton">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Modal de redefinição de senha -->
     <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalTitle" aria-modal="true" role="dialog">

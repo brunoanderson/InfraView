@@ -21,6 +21,13 @@ export function updateRole(id, role) {
     getDb().prepare('UPDATE users SET role = ? WHERE id = ?').run(role, id);
 }
 
+/** Troca o nome e/ou o e-mail (o que vier undefined fica como está). E-mail de outra conta -> UNIQUE -> 409. */
+export function updateProfile(id, { name, email }) {
+    getDb()
+        .prepare('UPDATE users SET name = COALESCE(?, name), email = COALESCE(?, email) WHERE id = ?')
+        .run(name ?? null, email ?? null, id);
+}
+
 export function updatePasswordHash(id, passwordHash) {
     getDb().prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, id);
 }

@@ -6,7 +6,12 @@ export function list(req, res) {
     res.json({ users: userService.list() });
 }
 
-/** PATCH /api/users/:id { role?, password? } */
+/** POST /api/users { name, email, password, role? } -> 201 */
+export async function create(req, res) {
+    res.status(201).json({ user: await userService.create(req.validated.body) });
+}
+
+/** PATCH /api/users/:id { name?, email?, role?, password? } */
 export async function update(req, res) {
     res.json({ user: await userService.update(req.validated.params.id, req.validated.body, req.user.id) });
 }

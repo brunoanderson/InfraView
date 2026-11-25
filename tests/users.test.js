@@ -1,5 +1,5 @@
 // =============================================================================
-// Testes da gestão de usuários (GET/PATCH/DELETE /api/users, só admin).
+// Testes da gestão de usuários (GET/POST/PATCH/DELETE /api/users, só admin).
 // Banco :memory: próprio deste arquivo, com o admin do seed e usuários criados
 // pelo cadastro público.
 // Rodar: npm test
@@ -137,5 +137,104 @@ describe('alterar perfil, redefinir senha e excluir', () => {
         const alert = alerts.find((a) => a.id === Number(alertId));
         assert.ok(alert.acknowledgedAt, 'o reconhecimento continua registrado');
         assert.equal(alert.acknowledgedBy, null);
+    });
+});
+
+describe('criar usuários e editar nome e e-mail', () => {
+    const create = (body, token = admin.token) => request(app).post('/api/users').set(auth(token)).send(body);
+    const patch = (id, body) => request(app).patch(`/api/users/${id}`).set(auth(admin.token)).send(body);
+
+    test('cria viewer (padrão) e admin -> 201 sem o hash, e a conta entra com a senha definida', async () => {
+        const asViewer = await create({ name: 'Nova Viewer', email: '  Nova.Viewer@Teste.Local ', password: 'Inicial123' });
+        assert.equal(asViewer.status, 201);
+        assert.deepEqual(Object.keys(asViewer.body.user).sort(), ['createdAt', 'email', 'id', 'name', 'role']);
+        assert.equal(asViewer.body.user.role, 'viewer');
+        assert.equal(asViewer.body.user.email, 'nova.viewer@teste.local'); // normalizado como no cadastro
+
+        const asAdmin = await create({ name: 'Novo Admin', email: 'novo.admin@teste.local', password: 'Inicial123', role: 'admin' });
+        assert.equal(asAdmin.status, 201);
+        assert.equal(asAdmin.body.user.role, 'admin');
+
+        const entry = await login('novo.admin@teste.local', 'Inicial123');
+        assert.equal(entry.status, 200);
+        assert.equal(entry.body.user.role, 'admin');
+        assert.equal((await login('nova.viewer@teste.local', 'Inicial123')).status, 200);
+    });
+
+    test('e-mail repetido -> 409 igual ao do cadastro; dados inválidos -> 400 com o campo', async () => {
+        const repeated = await create({ name: 'Outra', email: 'ADMIN@teste.local', password: 'Inicial123' });
+        const viaRegister = await request(app).post('/api/auth/register').send({ name: 'Outra', email: 'admin@teste.local', password: 'Inicial123' });
+        assert.equal(repeated.status, 409);
+        assert.deepEqual(repeated.body, viaRegister.body);
+        assert.deepEqual(repeated.body.error.details, { fields: ['email'] });
+
+        const cases = [
+            [{ name: 'Fulano', email: 'fulano@teste.local', password: 'semnumero' }, 'password'],
+            [{ name: 'Fulano', email: 'fulano@teste.local', password: 'curta1' }, 'password'],
+            [{ name: 'Fulano', email: 'não-é-email', password: 'Inicial123' }, 'email'],
+            [{ name: 'F', email: 'fulano@teste.local', password: 'Inicial123' }, 'name'],
+            [{ name: 'Fulano', email: 'fulano@teste.local', password: 'Inicial123', role: 'root' }, 'role'],
+        ];
+        for (const [body, field] of cases) {
+            const res = await create(body);
+            assert.equal(res.status, 400, JSON.stringify(body));
+            assert.ok(res.body.error.details.some((d) => d.field === field), `esperava erro em ${field}`);
+        }
+    });
+
+    test('criar sem token -> 401; como viewer -> 403', async () => {
+        const body = { name: 'Fulano', email: 'fulano@teste.local', password: 'Inicial123' };
+        assert.equal((await request(app).post('/api/users').send(body)).status, 401);
+        const someViewer = await register('Mais Um Viewer', 'mais.um@teste.local');
+        assert.equal((await create(body, someViewer.body.token)).status, 403);
+    });
+
+    test('edita nome e e-mail: o login passa a valer com o e-mail novo e não com o antigo', async () => {
+        const { user } = (await create({ name: 'Antes', email: 'antes@teste.local', password: 'Inicial123' })).body;
+        const res = await patch(user.id, { name: 'Depois', email: 'depois@teste.local' });
+        assert.equal(res.status, 200);
+        assert.equal(res.body.user.name, 'Depois');
+        assert.equal(res.body.user.email, 'depois@teste.local');
+        assert.equal((await login('depois@teste.local', 'Inicial123')).status, 200);
+        assert.equal((await login('antes@teste.local', 'Inicial123')).status, 401);
+    });
+
+    test('e-mail de outra conta -> 409; o próprio e-mail -> 200', async () => {
+        const { user } = (await create({ name: 'Conflito', email: 'conflito@teste.local', password: 'Inicial123' })).body;
+        const taken = await patch(user.id, { email: 'admin@teste.local' });
+        assert.equal(taken.status, 409);
+        assert.deepEqual(taken.body.error.details, { fields: ['email'] });
+        assert.doesNotMatch(JSON.stringify(taken.body), /UNIQUE|SQLITE|constraint/i);
+        assert.equal((await patch(user.id, { email: 'CONFLITO@teste.local' })).status, 200);
+    });
+
+    test('e-mail recusado não deixa mudar o nome nem o perfil enviados junto', async () => {
+        const { user } = (await create({ name: 'Atomico', email: 'atomico@teste.local', password: 'Inicial123' })).body;
+        const taken = await patch(user.id, { name: 'Mudou', role: 'admin', email: 'admin@teste.local' });
+        assert.equal(taken.status, 409);
+        const { users } = (await request(app).get('/api/users').set(auth(admin.token))).body;
+        const current = users.find((u) => u.id === user.id);
+        assert.equal(current.name, 'Atomico');
+        assert.equal(current.role, 'viewer');
+    });
+
+    test('admin edita o próprio nome e e-mail -> 200, mas rebaixar a si mesmo continua 409', async () => {
+        const res = await patch(admin.id, { name: 'Admin Renomeado', email: 'admin.novo@teste.local' });
+        assert.equal(res.status, 200);
+        assert.equal(res.body.user.role, 'admin');
+        assert.equal((await request(app).get('/api/users').set(auth(admin.token))).status, 200); // mesmo token
+        assert.equal((await login('admin.novo@teste.local', 'Senha123')).status, 200);
+
+        const demote = await patch(admin.id, { name: 'Outro Nome', role: 'viewer' });
+        assert.equal(demote.status, 409);
+        assert.match(demote.body.error.message, /própria conta/);
+        const { users } = (await request(app).get('/api/users').set(auth(admin.token))).body;
+        assert.equal(users.find((u) => u.id === admin.id).name, 'Admin Renomeado'); // o nome não mudou junto
+    });
+
+    test('corpo vazio -> 400 com a mensagem nova', async () => {
+        const res = await patch(admin.id, {});
+        assert.equal(res.status, 400);
+        assert.ok(res.body.error.details.some((d) => d.field === 'body' && d.message === 'Informe ao menos um campo para alterar.'));
     });
 });

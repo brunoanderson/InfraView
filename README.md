@@ -216,8 +216,9 @@ Para elas, use a `tcp`.
   em "Cadastre-se" na tela de login) e crie a conta. Todo cadastro feito por essa tela nasce como viewer:
   mesmo que alguém envie `"role": "admin"` para a API, o campo é ignorado.
 
-Na tela **Usuários**, o admin promove um viewer a admin (ou o contrário), redefine a senha de qualquer
-conta e exclui contas. Duas regras valem sempre, e a API responde `409` se forem quebradas:
+Na tela **Usuários**, o admin cria contas (já com o perfil escolhido), edita o nome e o e-mail de
+qualquer conta, inclusive a própria, promove um viewer a admin (ou o contrário), redefine a senha de
+qualquer conta e exclui contas. Duas regras valem sempre, e a API responde `409` se forem quebradas:
 
 - o sistema nunca fica sem administrador: o único admin não pode ser rebaixado nem excluído;
 - um admin não rebaixa nem exclui a própria conta (para isso, outro admin precisa fazer).
@@ -258,7 +259,8 @@ Authorization: Bearer <token>
 | `GET /api/events` | logado | Quedas, picos de latência e perdas. Filtros: `?type=todos\|downtime\|latencia\|perda&period=0\|7\|30\|all&device=<id>` |
 | `GET /api/monitor/status` | logado | Situação do monitor (última e próxima rodada) |
 | `GET /api/users` | admin | Lista os usuários (`id`, `name`, `email`, `role`, `createdAt`; nunca a senha) |
-| `PATCH /api/users/:id` | admin | Troca o perfil e/ou a senha: `{ role?, password? }` (pelo menos um). `409` se tirar o último admin ou se for a própria conta |
+| `POST /api/users` | admin | Cria uma conta: `{ name, email, password, role? }` (`role` padrão `viewer`; mesmas regras do cadastro) → `201 { user }`. `409` se o e-mail já existir |
+| `PATCH /api/users/:id` | admin | Altera `{ name?, email?, role?, password? }` (pelo menos um, tudo numa transação). `409` se o e-mail for de outra conta, ou se a troca de perfil tirar o último admin ou rebaixar a própria conta |
 | `DELETE /api/users/:id` | admin | Exclui a conta → `204`. `409` se for o último admin ou a própria conta |
 
 O corpo de `POST` e `PUT /api/devices` tem os campos `name`, `model`, `host`, `checkType` (`ping`,

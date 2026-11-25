@@ -1,11 +1,12 @@
 // =============================================================================
-// Usuários (só admin): perfil, redefinição de senha e exclusão.
-//   GET /api/users   PATCH /api/users/:id   DELETE /api/users/:id
-// O usuário logado aparece como "Você" e não tem as ações de perfil e exclusão
-// (o back-end recusa com 409 de qualquer forma).
+// Usuários (só admin): criação, edição de nome, e-mail e perfil, redefinição de
+// senha e exclusão.
+//   GET /api/users   POST /api/users   PATCH /api/users/:id   DELETE /api/users/:id
+// O usuário logado aparece como "Você": edita o próprio nome e e-mail, mas não
+// tem as ações de perfil e exclusão (o back-end recusa com 409 de qualquer forma).
 // =============================================================================
 import { api } from './api.js';
-import { validatePassword } from './auth.js';
+import { validateEmail, validateName, validatePassword } from './auth.js';
 import { initPage, startAutoRefresh } from './layout.js';
 import {
     clearFieldErrors, closeModal, confirmDialog, el, formatDateTime, hideFormMessage, iconButton, setBusy, setFieldError,
@@ -33,6 +34,7 @@ function userRow(user) {
             promote ? `Tornar ${user.name} administrador` : `Tornar ${user.name} visualizador`, (b) => changeRole(user, b)));
         actions.push(iconButton('bi-trash', `Excluir ${user.name}`, (b) => removeUser(user, b), { danger: true }));
     }
+    actions.unshift(iconButton('bi-pencil', `Editar ${user.name}`, () => openUserForm(user)));
     return row([
         el('td', { className: 'cell-title' }, [
             el('div', { className: 'd-flex align-items-center gap-3' }, [
@@ -106,6 +108,103 @@ async function removeUser(user, button) {
         button.disabled = false;
     }
 }
+
+// ---- Modal de criação e edição de conta ---------------------------------------------
+
+const userModalElement = document.getElementById('userModal');
+const userForm = document.getElementById('userForm');
+const userFormMessage = document.getElementById('userFormMessage');
+const userSaveButton = document.getElementById('userSaveButton');
+const userModal = new window.bootstrap.Modal(userModalElement);
+const userField = (name) => userForm.elements.namedItem(name);
+const passwordFields = document.getElementById('uPasswordFields');
+let editing = null; // usuário em edição; null quando é uma conta nova
+
+/** Abre o modal vazio (conta nova) ou preenchido com o usuário a editar. */
+function openUserForm(user = null) {
+    editing = user;
+    userForm.reset();
+    clearFieldErrors(userForm);
+    hideFormMessage(userFormMessage);
+    const isMe = user?.id === me.id;
+    setText(document.getElementById('userModalTitle'), user ? `Editar ${user.name}` : 'Novo usuário');
+    passwordFields.hidden = Boolean(user);
+    for (const name of ['password', 'confirmPassword']) userField(name).disabled = Boolean(user);
+    userField('name').value = user?.name ?? '';
+    userField('email').value = user?.email ?? '';
+    userField('role').value = user?.role ?? 'viewer';
+    userField('role').disabled = isMe;
+    setText(document.getElementById('uRoleHelp'), isMe ? 'Você não pode alterar o perfil da própria conta.' : '');
+    userModal.show();
+}
+
+document.getElementById('newUserButton').addEventListener('click', () => openUserForm());
+userModalElement.addEventListener('shown.bs.modal', () => userField('name').focus());
+
+/** Só os campos que mudaram em relação ao usuário em edição. */
+function changedFields(values) {
+    const changes = {};
+    if (values.name !== editing.name) changes.name = values.name;
+    if (values.email !== editing.email) changes.email = values.email;
+    if (!userField('role').disabled && values.role !== editing.role) changes.role = values.role;
+    return changes;
+}
+
+userForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    clearFieldErrors(userForm);
+    hideFormMessage(userFormMessage);
+
+    const values = {
+        name: userField('name').value.trim(),
+        email: userField('email').value.trim().toLowerCase(),
+        role: userField('role').value,
+    };
+    const password = userField('password').value;
+    const errors = {
+        name: validateName(values.name),
+        email: validateEmail(values.email),
+        ...(editing ? {} : {
+            password: validatePassword(password),
+            confirmPassword: password !== userField('confirmPassword').value ? 'As senhas não são iguais.' : null,
+        }),
+    };
+    for (const [name, message] of Object.entries(errors)) if (message) setFieldError(userField(name), message);
+    const firstInvalid = userForm.querySelector('.is-invalid');
+    if (firstInvalid) {
+        firstInvalid.focus();
+        return;
+    }
+
+    const body = editing ? changedFields(values) : { ...values, password };
+    if (!Object.keys(body).length) {
+        showFormMessage(userFormMessage, 'Nenhum campo foi alterado.', 'warning');
+        return;
+    }
+
+    setBusy(userSaveButton, true, 'Salvando...');
+    try {
+        const { user } = editing
+            ? await api('PATCH', `/users/${editing.id}`, body)
+            : await api('POST', '/users', body);
+        closeModal(userModalElement);
+        toast(editing ? `Conta de ${user.name} atualizada.` : `Conta de ${user.name} criada.`);
+        poller.refresh();
+    } catch (err) {
+        if (err.status === 400 && showFieldErrors(userForm, err.details)) {
+            userForm.querySelector('.is-invalid')?.focus();
+        } else if (err.status === 409 && err.details?.fields?.includes('email')) {
+            setFieldError(userField('email'), err.message); // "Já existe uma conta com este e-mail."
+            userField('email').focus();
+        } else if (err.status === 403) {
+            showError(err);
+        } else {
+            showFormMessage(userFormMessage, err.message); // ex.: 409 se tirar o último admin
+        }
+    } finally {
+        setBusy(userSaveButton, false);
+    }
+});
 
 // ---- Modal de redefinição de senha ------------------------------------------------
 
