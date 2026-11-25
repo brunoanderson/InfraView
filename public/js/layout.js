@@ -193,6 +193,7 @@ function renderLayout(user, pageKey) {
                     el('div', { className: 'caption', text: user.email }),
                 ]),
             ]),
+            el('div', { className: 'caption mt-3', text: 'InfraView · monitoramento da rede local' }),
         ]),
     ]);
 

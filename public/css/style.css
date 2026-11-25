@@ -77,12 +77,13 @@
     --font-size-md: 1rem;          /* 16 px */
     --font-size-title: 1.5rem;     /* 24 px */
     --font-size-metric: 1.75rem;   /* 28 px */
-    --letter-spacing-label: 0.08em;
+    --letter-spacing-label: 0.05em;
 
     --stripe-width: 3px;
     --dot-size: 8px;
     --meter-height: 6px;
     --touch-target: 40px;
+    --stat-visual-size: 52px;
     --transition: 150ms ease;
 }
 
@@ -163,8 +164,9 @@ body {
 }
 
 .metric {
+    font-family: var(--font-mono);
     font-size: var(--font-size-metric);
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.15;
     color: var(--color-text);
     font-variant-numeric: tabular-nums;
@@ -305,8 +307,16 @@ tr.stripe > td:first-child {
     box-shadow: var(--shadow-md);
 }
 
-.card:hover {
+/* Cartão que é um link: hover com borda e brilho leves */
+.card-interactive {
+    color: inherit;
+    text-decoration: none;
+}
+
+.card-interactive:hover {
+    color: inherit;
     border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-md), var(--glow-primary);
 }
 
 .card-header,
@@ -520,9 +530,8 @@ tr.stripe > td:first-child {
 
 /* Medidor circular (SVG): disponibilidade do gateway */
 .gauge {
-    width: 72px;
-    height: 72px;
-    flex-shrink: 0;
+    width: 100%;
+    height: 100%;
     transform: rotate(-90deg);
 }
 
@@ -1067,28 +1076,63 @@ tr.stripe > td:first-child {
 }
 
 /* Cartões de número: a grade decide quantas colunas cabem */
+/* Cartões de número: 2 colunas até 1199 px e 4 a partir de 1200 (8 cartões, sem buraco).
+   grid-auto-rows: 1fr deixa todos com a mesma altura. */
 .stat-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
     gap: var(--space-4);
     margin-bottom: var(--space-5);
 }
 
+@media (min-width: 1200px) {
+    .stat-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Rótulo, valor e subtexto ficam no topo, na mesma altura em todos os cartões;
+   a barra (quando existe) vai para o pé. */
 .stat-card {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-4);
     padding: var(--space-4);
-    height: 100%;
+}
+
+.stat-visual {
+    width: var(--stat-visual-size);
+    height: var(--stat-visual-size);
+    flex-shrink: 0;
 }
 
 .stat-card-body {
     flex: 1;
+    align-self: stretch;
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
     overflow-wrap: break-word;
+}
+
+.stat-meter {
+    margin-top: auto;
+    padding-top: var(--space-2);
+}
+
+/* Celular: o ícone vai para cima e o rótulo reserva duas linhas, para os
+   valores dos dois cartões lado a lado ficarem na mesma altura. */
+@media (max-width: 575.98px) {
+    .stat-card {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .stat-label {
+        min-height: 2lh;
+    }
 }
 
 .list-row {

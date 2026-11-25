@@ -44,71 +44,72 @@
             </section>
 
             <div class="stat-grid">
-                <div class="card stat-card">
-                    <div class="icon-box tone-primary" aria-hidden="true"><i class="bi bi-hdd-network"></i></div>
+                <a class="card stat-card card-interactive" href="rede.html">
+                    <div class="icon-box stat-visual tone-primary" aria-hidden="true"><i class="bi bi-hdd-network"></i></div>
                     <div class="stat-card-body">
-                        <div class="label-caps">Dispositivos</div>
+                        <div class="label-caps stat-label">Dispositivos</div>
                         <div class="metric" id="statTotal">—</div>
                         <div class="caption" id="statTotalSub"></div>
                     </div>
-                </div>
-                <div class="card stat-card">
-                    <div class="icon-box tone-success" aria-hidden="true"><i class="bi bi-check-circle"></i></div>
+                </a>
+                <a class="card stat-card card-interactive" href="rede.html">
+                    <div class="icon-box stat-visual tone-success" aria-hidden="true"><i class="bi bi-check-circle"></i></div>
                     <div class="stat-card-body">
-                        <div class="label-caps">Online</div>
+                        <div class="label-caps stat-label">Online</div>
                         <div class="metric" id="statOnline">—</div>
                         <div class="caption" id="statOnlineSub"></div>
                     </div>
-                </div>
-                <div class="card stat-card">
-                    <div class="icon-box tone-danger" aria-hidden="true"><i class="bi bi-x-circle"></i></div>
+                </a>
+                <a class="card stat-card card-interactive" href="rede.html">
+                    <div class="icon-box stat-visual tone-danger" aria-hidden="true"><i class="bi bi-x-circle"></i></div>
                     <div class="stat-card-body">
-                        <div class="label-caps">Offline</div>
+                        <div class="label-caps stat-label">Offline</div>
                         <div class="metric" id="statOffline">—</div>
                         <div class="caption" id="statOfflineSub"></div>
                     </div>
-                </div>
-                <div class="card stat-card">
-                    <div class="icon-box tone-warning" aria-hidden="true"><i class="bi bi-exclamation-triangle"></i></div>
+                </a>
+                <a class="card stat-card card-interactive" href="alertas.html">
+                    <div class="icon-box stat-visual tone-warning" aria-hidden="true"><i class="bi bi-exclamation-triangle"></i></div>
                     <div class="stat-card-body">
-                        <div class="label-caps">Alertas ativos</div>
+                        <div class="label-caps stat-label">Alertas ativos</div>
                         <div class="metric" id="statAlerts">—</div>
-                        <div class="caption"><a href="alertas.html" class="details-link">ver alertas</a></div>
+                        <div class="caption"></div>
                     </div>
-                </div>
-                <div class="card stat-card">
-                    <div class="icon-box tone-primary" aria-hidden="true"><i class="bi bi-speedometer"></i></div>
+                </a>
+                <a class="card stat-card card-interactive" href="relatorios.html">
+                    <div class="icon-box stat-visual tone-primary" aria-hidden="true"><i class="bi bi-speedometer"></i></div>
                     <div class="stat-card-body">
-                        <div class="label-caps">Latência média (24h)</div>
+                        <div class="label-caps stat-label">Latência média (24h)</div>
                         <div class="metric" id="statLatency">—</div>
-                        <div id="statLatencyMeter"></div>
                         <div class="caption" id="statLatencySub"></div>
+                        <div class="stat-meter" id="statLatencyMeter"></div>
                     </div>
-                </div>
-                <div class="card stat-card">
-                    <div class="icon-box tone-warning" aria-hidden="true"><i class="bi bi-reception-1"></i></div>
+                </a>
+                <a class="card stat-card card-interactive" href="relatorios.html">
+                    <div class="icon-box stat-visual tone-warning" aria-hidden="true"><i class="bi bi-reception-1"></i></div>
                     <div class="stat-card-body">
-                        <div class="label-caps">Perda média (24h)</div>
+                        <div class="label-caps stat-label">Perda média (24h)</div>
                         <div class="metric" id="statLoss">—</div>
-                        <div id="statLossMeter"></div>
                         <div class="caption" id="statLossSub"></div>
+                        <div class="stat-meter" id="statLossMeter"></div>
                     </div>
-                </div>
-                <div class="card stat-card">
-                    <div class="icon-box tone-danger" aria-hidden="true"><i class="bi bi-activity"></i></div>
+                </a>
+                <a class="card stat-card card-interactive" href="alertas.html">
+                    <div class="icon-box stat-visual tone-danger" aria-hidden="true"><i class="bi bi-activity"></i></div>
                     <div class="stat-card-body">
-                        <div class="label-caps">Com perda agora</div>
+                        <div class="label-caps stat-label">Com perda agora</div>
                         <div class="metric" id="statLossDevices">—</div>
+                        <div class="caption"></div>
                     </div>
-                </div>
-                <div class="card stat-card">
-                    <div id="gatewayGauge"></div>
+                </a>
+                <a class="card stat-card card-interactive" href="rede.html">
+                    <div class="stat-visual" id="gatewayGauge"></div>
                     <div class="stat-card-body">
-                        <div class="label-caps">Gateway (24h)</div>
+                        <div class="label-caps stat-label">Gateway (24h)</div>
                         <div class="metric" id="statGateway">—</div>
                         <div class="caption" id="statGatewaySub"></div>
                     </div>
-                </div>
+                </a>
             </div>
 
             <div class="row g-4 mb-4">
