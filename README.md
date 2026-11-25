@@ -51,7 +51,9 @@ cp .env.example .env                  # Linux, macOS ou Git Bash
 Copy-Item .env.example .env           # PowerShell (Windows)
 ```
 
-Depois, troque o `JWT_SECRET` por um valor aleatório. Este comando gera um:
+O `JWT_SECRET` do modelo serve para desenvolvimento e demonstração. Só é preciso trocá-lo ao publicar a
+aplicação: aí ele deve ser um segredo forte e privado, que não aparece em nenhum outro lugar. Este
+comando gera um:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
@@ -62,7 +64,7 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 | `NODE_ENV` | Ambiente: `development`, `production` ou `test` | `development` |
 | `PORT` | Porta do servidor | `3000` |
 | `DATABASE_URL` | Caminho do arquivo do banco SQLite, relativo à raiz do projeto (**obrigatória**) | `./db/infraview.db` |
-| `JWT_SECRET` | Segredo que assina os tokens de login, com no mínimo 32 caracteres (**obrigatória**) | troque o valor do modelo |
+| `JWT_SECRET` | Segredo que assina os tokens de login, com no mínimo 32 caracteres (**obrigatória**) | valor de exemplo; troque ao publicar |
 | `JWT_EXPIRES_IN` | Validade do login: número + unidade (`30m`, `8h`, `7d`) | `8h` |
 | `CORS_ORIGIN` | Endereços que podem chamar a API de outro site, separados por vírgula (**obrigatória**) | `http://localhost:3000` |
 | `SEED_ADMIN_NAME` | Nome do administrador criado pelo seed | `Administrador` |
@@ -288,6 +290,82 @@ O campo `details` só aparece nos erros de validação e em alguns conflitos.
 
 Detalhes internos, como o stack trace ou as mensagens do SQLite, nunca vão na resposta. Eles ficam só
 no log do servidor.
+
+### Exemplos de resposta
+
+Respostas reais da API rodando com o banco de demonstração (`npm run db:reset:demo` e
+`npm run demo:alvo`).
+
+`POST /api/auth/login` com `{ "email": "admin@infraview.local", "password": "Admin@123" }` → `200`
+(o token foi encurtado aqui):
+
+```json
+{
+  "user": {
+    "id": 1,
+    "name": "Administrador",
+    "email": "admin@infraview.local",
+    "role": "admin",
+    "createdAt": "2026-11-25T09:33:42.178Z"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+`GET /api/devices` → `200` (a lista tem os 6 dispositivos; aqui aparece só um):
+
+```json
+{
+  "devices": [
+    {
+      "id": 3,
+      "name": "CAM-DEMO",
+      "model": "Alvo de demonstração (npm run demo:alvo)",
+      "host": "127.0.0.1",
+      "checkType": "tcp",
+      "port": 7010,
+      "status": "online",
+      "statusNote": null,
+      "latencyMs": 4,
+      "latencyThresholdMs": 100,
+      "lastLossPct": 0,
+      "lossThresholdPct": 20,
+      "isGateway": false,
+      "icon": "bi-camera-video",
+      "monitoringEnabled": true,
+      "consecutiveFailures": 0,
+      "upSince": "2026-11-25T09:33:44.533Z",
+      "lastSeenAt": "2026-11-25T09:33:55.645Z",
+      "lastCheckAt": "2026-11-25T09:33:55.645Z",
+      "createdAt": "2026-11-25T09:33:42.178Z",
+      "updatedAt": "2026-11-25T09:33:42.178Z",
+      "category": { "id": 2, "name": "Segurança · CFTV / Alarme", "slug": "seguranca", "icon": "bi-camera-video" }
+    }
+  ]
+}
+```
+
+`POST /api/devices` com `{ "name": "A", "host": "1.2.3.4 & del", "checkType": "tcp", "categoryId": 1 }` →
+`400`:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Dados inválidos. Verifique os campos destacados.",
+    "details": [
+      { "field": "name", "message": "O nome precisa ter pelo menos 2 caracteres." },
+      { "field": "host", "message": "O host não pode ter espaços." }
+    ]
+  }
+}
+```
+
+Qualquer rota protegida sem o cabeçalho `Authorization` → `401`:
+
+```json
+{ "error": { "code": "UNAUTHORIZED", "message": "Faça login para continuar." } }
+```
 
 ## Estrutura de pastas
 
