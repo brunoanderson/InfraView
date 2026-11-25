@@ -3,9 +3,11 @@
 //
 // O token é assinado com JWT_SECRET (HMAC-SHA256). Quem não conhece o segredo
 // não consegue criar nem alterar um token válido: se mudar um único caractere
-// do payload (por exemplo, trocar role para "admin"), a assinatura deixa de bater.
+// do payload (por exemplo, o id do usuário), a assinatura deixa de bater.
 // O payload NÃO é criptografado (qualquer um decodifica em base64), por isso
-// guardamos só o id do usuário e o papel, nunca senha ou dados sensíveis.
+// guardamos só o id do usuário. O perfil (superadmin, admin ou viewer) NÃO vai
+// no token: o authenticate lê o usuário no banco a cada requisição, então uma
+// promoção, um rebaixamento ou uma exclusão valem na hora.
 // =============================================================================
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
@@ -14,7 +16,7 @@ const ALGORITHM = 'HS256';
 
 /** Gera o token de um usuário. "sub" (subject) é o id do usuário. */
 export function signToken(user) {
-    return jwt.sign({ role: user.role }, env.JWT_SECRET, {
+    return jwt.sign({}, env.JWT_SECRET, {
         subject: String(user.id),
         expiresIn: env.JWT_EXPIRES_IN,
         algorithm: ALGORITHM,
