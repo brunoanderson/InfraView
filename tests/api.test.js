@@ -50,6 +50,19 @@ describe('autenticação e acesso', () => {
         assert.equal(res.body.user.role, 'viewer');
     });
 
+    test('cadastro público ignora role "superadmin" e isRoot: cria viewer, nunca raiz', async () => {
+        const res = await request(app).post('/api/auth/register')
+            .send({ name: 'Espertinho', email: 'espertinho@teste.local', password: 'Senha123', role: 'superadmin', isRoot: true, is_root: 1 });
+        assert.equal(res.status, 201);
+        assert.equal(res.body.user.role, 'viewer');
+        assert.equal(res.body.user.isRoot, false);
+
+        const token = res.body.token;
+        assert.equal((await request(app).get('/api/auth/me').set(auth(token))).body.user.role, 'viewer');
+        assert.equal((await request(app).get('/api/users').set(auth(token))).status, 403);
+        assert.equal((await request(app).post('/api/devices').set(auth(token)).send(newDevice())).status, 403);
+    });
+
     test('rota protegida sem token -> 401', async () => {
         const res = await request(app).get('/api/devices');
         assert.equal(res.status, 401);
