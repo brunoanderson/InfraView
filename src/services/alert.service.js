@@ -1,6 +1,12 @@
-// Regras do botão "Reconhecer": só alerta ativo, e só uma vez.
+// Alertas: a lista da tela (com os totais por status) e as regras do botão
+// "Reconhecer": só alerta ativo, e só uma vez.
 import { AppError } from '../errors/AppError.js';
 import * as alertModel from '../models/alert.model.js';
+
+/** Alertas filtrados + totais por status (os badges da tela não dependem dos filtros). */
+export function list(filters) {
+    return { alerts: alertModel.list(filters), counts: alertModel.countByStatus() };
+}
 
 export function acknowledge(alertId, user) {
     const alert = alertModel.findById(alertId);
