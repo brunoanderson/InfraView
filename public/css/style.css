@@ -279,6 +279,7 @@ time {
 .tone-neutral,
 .tone-paused { --tone-rgb: var(--rgb-neutral); }
 .tone-primary { --tone-rgb: var(--rgb-cyan); }
+.tone-accent { --tone-rgb: var(--rgb-violet); }
 
 /* Faixa lateral na cor do tom (linhas da Rede, alertas, problemas) */
 .stripe {
@@ -484,6 +485,18 @@ tr.stripe > td:first-child {
     border-color: rgba(var(--rgb-violet), 0.4);
     background-color: var(--color-accent-soft);
     color: var(--color-accent);
+}
+
+.tag-primary {
+    border-color: rgba(var(--rgb-cyan), 0.4);
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary);
+}
+
+.tag-warning {
+    border-color: rgba(var(--rgb-warning), 0.4);
+    background-color: rgba(var(--rgb-warning), 0.12);
+    color: rgb(var(--rgb-warning));
 }
 
 .count-badge {

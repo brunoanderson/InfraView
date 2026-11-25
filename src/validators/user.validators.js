@@ -3,7 +3,8 @@
 import { z } from 'zod';
 import { emailSchema, nameSchema, passwordSchema } from './auth.validators.js';
 
-const roleSchema = z.enum(['admin', 'viewer'], { error: 'O perfil deve ser admin ou viewer.' });
+// is_root não aparece aqui: a conta raiz nunca é criada nem promovida pela API.
+const roleSchema = z.enum(['superadmin', 'admin', 'viewer'], { error: 'O perfil deve ser superadmin, admin ou viewer.' });
 
 export const userCreateSchema = z.object({
     name: nameSchema,

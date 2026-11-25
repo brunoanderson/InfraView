@@ -173,7 +173,7 @@ function render() {
         showEmpty(list, {
             icon: 'bi-hdd-network',
             title: 'Nenhum dispositivo cadastrado',
-            text: admin ? 'Cadastre o primeiro para começar a monitorar.' : 'Peça a um administrador para cadastrar os dispositivos.',
+            text: admin ? 'Cadastre o primeiro para começar a monitorar.' : 'Peça a um admin para cadastrar os dispositivos.',
             action: admin ? { label: 'Cadastrar dispositivo', onClick: () => openForm() } : undefined,
         });
         return;

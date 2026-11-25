@@ -1,4 +1,4 @@
-// Controllers de usuários (só admin): leem req.validated e montam a resposta.
+// Controllers de usuários (só super admin): leem req.validated e montam a resposta.
 import * as userService from '../services/user.service.js';
 
 /** GET /api/users */

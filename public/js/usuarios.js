@@ -1,40 +1,40 @@
 // =============================================================================
-// Usuários (só admin): criação, edição de nome, e-mail e perfil, redefinição de
-// senha e exclusão.
+// Usuários (só super admin): criação, edição de nome, e-mail e perfil,
+// redefinição de senha e exclusão.
 //   GET /api/users   POST /api/users   PATCH /api/users/:id   DELETE /api/users/:id
 // O usuário logado aparece como "Você": edita o próprio nome e e-mail, mas não
-// tem as ações de perfil e exclusão (o back-end recusa com 409 de qualquer forma).
+// troca o próprio perfil nem exclui a própria conta. A conta raiz só tem
+// "Redefinir senha", e só para ela mesma. O back-end recusa o resto de qualquer forma.
 // =============================================================================
 import { api } from './api.js';
 import { validateEmail, validateName, validatePassword } from './auth.js';
-import { initPage, startAutoRefresh } from './layout.js';
+import { initPage, roleLabel, roleTags, startAutoRefresh } from './layout.js';
 import {
     clearFieldErrors, closeModal, confirmDialog, el, formatDateTime, hideFormMessage, iconButton, setBusy, setFieldError,
     setText, showError, showFieldErrors, showFormMessage, syncBadges, syncChildren, tableShell, toast,
 } from './ui.js';
 
-const me = await initPage('usuarios', { adminOnly: true });
-
-const ROLES = {
-    admin: { label: 'Admin', tagClass: 'tag tag-accent' },
-    viewer: { label: 'Visualizador', tagClass: 'tag' },
-};
+const me = await initPage('usuarios', { superAdminOnly: true });
 
 const { wrapper, tbody, row } = tableShell(['Nome', 'E-mail', 'Perfil', 'Cadastro', { label: 'Ações', className: 'text-end' }], { caption: 'Usuários do sistema' });
 document.getElementById('userList').append(wrapper);
 
 // ---- Desenho -----------------------------------------------------------------
 
+/** Botões da linha: a raiz só troca a própria senha; a própria conta não troca o perfil nem se exclui. */
+function rowActions(user, isMe) {
+    const resetPassword = iconButton('bi-key', `Redefinir a senha de ${user.name}`, () => openPasswordForm(user));
+    if (user.isRoot) return isMe ? [resetPassword] : [];
+    return [
+        iconButton('bi-pencil', `Editar ${user.name}`, () => openUserForm(user)),
+        isMe ? null : iconButton('bi-person-gear', `Trocar o perfil de ${user.name}`, () => openUserForm(user, { roleOnly: true })),
+        resetPassword,
+        isMe ? null : iconButton('bi-trash', `Excluir ${user.name}`, (b) => removeUser(user, b), { danger: true }),
+    ].filter(Boolean);
+}
+
 function userRow(user) {
     const isMe = user.id === me.id;
-    const actions = [iconButton('bi-key', `Redefinir a senha de ${user.name}`, () => openPasswordForm(user))];
-    if (!isMe) {
-        const promote = user.role === 'viewer';
-        actions.unshift(iconButton(promote ? 'bi-arrow-up-circle' : 'bi-arrow-down-circle',
-            promote ? `Tornar ${user.name} administrador` : `Tornar ${user.name} visualizador`, (b) => changeRole(user, b)));
-        actions.push(iconButton('bi-trash', `Excluir ${user.name}`, (b) => removeUser(user, b), { danger: true }));
-    }
-    actions.unshift(iconButton('bi-pencil', `Editar ${user.name}`, () => openUserForm(user)));
     return row([
         el('td', { className: 'cell-title' }, [
             el('div', { className: 'd-flex align-items-center gap-3' }, [
@@ -43,17 +43,18 @@ function userRow(user) {
             ]),
         ]),
         el('td', { className: 'mono', text: user.email }),
-        el('td', {}, [el('span', { className: ROLES[user.role].tagClass, text: ROLES[user.role].label })]),
+        el('td', {}, [el('div', { className: 'd-flex flex-wrap gap-1' }, roleTags(user))]),
         el('td', { className: 'mono', text: formatDateTime(user.createdAt) }),
-        el('td', { className: 'cell-actions text-end' }, [el('div', { className: 'row-actions', attrs: { role: 'group', 'aria-label': `Ações de ${user.name}` } }, actions)]),
+        el('td', { className: 'cell-actions text-end' }, [el('div', { className: 'row-actions', attrs: { role: 'group', 'aria-label': `Ações de ${user.name}` } }, rowActions(user, isMe))]),
     ]);
 }
 
 function render(users) {
-    const admins = users.filter((u) => u.role === 'admin').length;
+    const count = (role) => users.filter((u) => u.role === role).length;
     syncBadges(document.getElementById('roleBadges'), [
-        { key: 'admin', tone: 'primary', text: `${admins} admin(s)` },
-        { key: 'viewer', tone: 'neutral', text: `${users.length - admins} visualizador(es)` },
+        { key: 'superadmin', tone: 'accent', text: `${count('superadmin')} super admin(s)` },
+        { key: 'admin', tone: 'primary', text: `${count('admin')} admin(s)` },
+        { key: 'viewer', tone: 'neutral', text: `${count('viewer')} usuário(s)` },
     ]);
     setText(document.getElementById('userCount'), `${users.length} conta(s)`);
     syncChildren(tbody, users, (u) => u.id, userRow);
@@ -68,27 +69,6 @@ async function load() {
 const poller = startAutoRefresh({ load, area: document.getElementById('userState'), statusEl: document.getElementById('updateStatus') });
 
 // ---- Ações ----------------------------------------------------------------------
-
-async function changeRole(user, button) {
-    const promote = user.role === 'viewer';
-    const confirmed = await confirmDialog({
-        title: promote ? 'Tornar administrador' : 'Tornar visualizador',
-        message: promote
-            ? `${user.name} poderá cadastrar, editar e excluir dispositivos, reconhecer alertas e gerenciar usuários.`
-            : `${user.name} passará a só visualizar o painel, sem alterar nada.`,
-        confirmText: promote ? 'Tornar administrador' : 'Tornar visualizador',
-    });
-    if (!confirmed) return;
-    button.disabled = true;
-    try {
-        await api('PATCH', `/users/${user.id}`, { role: promote ? 'admin' : 'viewer' });
-        toast(`${user.name} agora é ${promote ? 'administrador' : 'visualizador'}.`);
-        poller.refresh();
-    } catch (err) {
-        showError(err); // ex.: 409 se for o último admin
-        button.disabled = false;
-    }
-}
 
 async function removeUser(user, button) {
     const confirmed = await confirmDialog({
@@ -119,15 +99,21 @@ const userModal = new window.bootstrap.Modal(userModalElement);
 const userField = (name) => userForm.elements.namedItem(name);
 const passwordFields = document.getElementById('uPasswordFields');
 let editing = null; // usuário em edição; null quando é uma conta nova
+let firstField = 'name'; // campo que recebe o foco ao abrir
 
-/** Abre o modal vazio (conta nova) ou preenchido com o usuário a editar. */
-function openUserForm(user = null) {
+/**
+ * Abre o modal vazio (conta nova) ou preenchido com o usuário a editar.
+ * Com roleOnly (botão "Trocar perfil"), o foco já vai para o seletor de perfil.
+ */
+function openUserForm(user = null, { roleOnly = false } = {}) {
     editing = user;
+    firstField = roleOnly ? 'role' : 'name';
     userForm.reset();
     clearFieldErrors(userForm);
     hideFormMessage(userFormMessage);
     const isMe = user?.id === me.id;
-    setText(document.getElementById('userModalTitle'), user ? `Editar ${user.name}` : 'Novo usuário');
+    const title = !user ? 'Novo usuário' : roleOnly ? `Trocar o perfil de ${user.name}` : `Editar ${user.name}`;
+    setText(document.getElementById('userModalTitle'), title);
     passwordFields.hidden = Boolean(user);
     for (const name of ['password', 'confirmPassword']) userField(name).disabled = Boolean(user);
     userField('name').value = user?.name ?? '';
@@ -139,7 +125,7 @@ function openUserForm(user = null) {
 }
 
 document.getElementById('newUserButton').addEventListener('click', () => openUserForm());
-userModalElement.addEventListener('shown.bs.modal', () => userField('name').focus());
+userModalElement.addEventListener('shown.bs.modal', () => userField(firstField).focus());
 
 /** Só os campos que mudaram em relação ao usuário em edição. */
 function changedFields(values) {
@@ -188,7 +174,9 @@ userForm.addEventListener('submit', async (event) => {
             ? await api('PATCH', `/users/${editing.id}`, body)
             : await api('POST', '/users', body);
         closeModal(userModalElement);
-        toast(editing ? `Conta de ${user.name} atualizada.` : `Conta de ${user.name} criada.`);
+        if (!editing) toast(`Conta de ${user.name} criada.`);
+        else if (Object.keys(body).join() === 'role') toast(`${user.name} agora é ${roleLabel(user.role)}.`);
+        else toast(`Conta de ${user.name} atualizada.`);
         poller.refresh();
     } catch (err) {
         if (err.status === 400 && showFieldErrors(userForm, err.details)) {
@@ -199,7 +187,7 @@ userForm.addEventListener('submit', async (event) => {
         } else if (err.status === 403) {
             showError(err);
         } else {
-            showFormMessage(userFormMessage, err.message); // ex.: 409 se tirar o último admin
+            showFormMessage(userFormMessage, err.message); // ex.: 409 ao rebaixar a própria conta
         }
     } finally {
         setBusy(userSaveButton, false);

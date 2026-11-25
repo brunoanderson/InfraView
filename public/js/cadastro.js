@@ -1,5 +1,5 @@
 // Página de cadastro: valida no navegador (mesmas regras do back-end), chama
-// POST /api/auth/register e entra no painel já logado, como visualizador.
+// POST /api/auth/register e entra no painel já logado, com o perfil Usuário.
 import { getToken, register, validateEmail, validateName, validatePassword } from './auth.js';
 import { clearFieldErrors, hideFormMessage, setBusy, setFieldError, showFieldErrors, showFormMessage } from './ui.js';
 

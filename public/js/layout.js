@@ -7,7 +7,7 @@
 // que confere a sessão, monta o layout com o usuário de verdade e libera a página.
 // =============================================================================
 import { api } from './api.js';
-import { isAdmin, logout, requireAuth } from './auth.js';
+import { isAdmin, isSuperAdmin, logout, requireAuth } from './auth.js';
 import { createPoller } from './poller.js';
 import { el, formatTime, refreshTimes, relativeTime, setText, showErrorState, showLoading } from './ui.js';
 
@@ -16,21 +16,26 @@ const PAGES = [
     { key: 'alertas', href: 'alertas.html', icon: 'bi-bell', label: 'Alertas' },
     { key: 'rede', href: 'rede.html', icon: 'bi-diagram-3', label: 'Rede' },
     { key: 'relatorios', href: 'relatorios.html', icon: 'bi-file-earmark-bar-graph', label: 'Relatórios e Logs' },
-    { key: 'usuarios', href: 'usuarios.html', icon: 'bi-people', label: 'Usuários', adminOnly: true },
+    { key: 'usuarios', href: 'usuarios.html', icon: 'bi-people', label: 'Usuários', superAdminOnly: true },
 ];
 
-const ROLE_LABELS = { admin: 'Admin', viewer: 'Visualizador' };
+/** Rótulo e estilo da tag de cada perfil. */
+const ROLES = {
+    superadmin: { label: 'Super admin', className: 'tag tag-accent' },
+    admin: { label: 'Admin', className: 'tag tag-primary' },
+    viewer: { label: 'Usuário', className: 'tag' },
+};
 
 /**
  * Prepara uma página protegida: exige login, monta o layout e mostra o conteúdo.
  * Se o servidor estiver fora do ar, mostra o erro com um botão para tentar de novo.
  * @param {string} pageKey  dashboard | alertas | rede | relatorios | usuarios
  * @param {object} [options]
- * @param {boolean} [options.adminOnly] viewer vai para o dashboard sem ver a página
- *        (a interface só esconde; quem recusa de verdade é o back-end, com 403)
+ * @param {boolean} [options.superAdminOnly] quem não é super admin vai para o dashboard
+ *        sem ver a página (a interface só esconde; quem recusa de verdade é o back-end, com 403)
  * @returns o usuário logado
  */
-export async function initPage(pageKey, { adminOnly = false } = {}) {
+export async function initPage(pageKey, { superAdminOnly = false } = {}) {
     let user;
     try {
         user = await requireAuth();
@@ -38,7 +43,7 @@ export async function initPage(pageKey, { adminOnly = false } = {}) {
         showBootError(err);
         throw err; // interrompe o script da página
     }
-    if (adminOnly && !isAdmin(user)) {
+    if (superAdminOnly && !isSuperAdmin(user)) {
         window.location.replace('/dashboard.html');
         return new Promise(() => {}); // a página para aqui enquanto sai
     }
@@ -110,15 +115,23 @@ export function startAutoRefresh({ load, area, statusEl }) {
     return poller;
 }
 
-/** Elementos com data-admin-only somem para quem não é admin. */
+/** Elementos com data-admin-only somem para quem não é admin nem super admin. */
 function applyRoleVisibility(user, root = document) {
     for (const element of root.querySelectorAll('[data-admin-only]')) {
         element.hidden = !isAdmin(user);
     }
 }
 
-function roleTag(user) {
-    return el('span', { className: `tag ${user.role === 'admin' ? 'tag-accent' : ''}`, text: ROLE_LABELS[user.role] ?? user.role });
+/** "Super admin", "Admin" ou "Usuário". */
+export const roleLabel = (role) => ROLES[role]?.label ?? role;
+
+/** Tag do perfil e, na conta raiz, também a tag "Raiz". */
+export function roleTags(user) {
+    const role = ROLES[user.role] ?? { label: user.role, className: 'tag' };
+    return [
+        el('span', { className: role.className, text: role.label }),
+        user.isRoot ? el('span', { className: 'tag tag-warning', text: 'Raiz' }) : null,
+    ];
 }
 
 const brand = (tag, className, attrs) =>
@@ -153,14 +166,14 @@ function renderLayout(user, pageKey) {
                 el('span', { className: 'navbar-user d-none d-sm-inline-flex align-items-center gap-2' }, [
                     el('i', { className: 'bi bi-person-circle', attrs: { 'aria-hidden': 'true' } }),
                     user.name,
-                    roleTag(user),
+                    ...roleTags(user),
                 ]),
                 logoutButton('btn btn-ghost is-danger btn-sm', 'me-1'),
             ]),
         ]),
     ]);
 
-    const links = PAGES.filter((page) => !page.adminOnly || isAdmin(user)).map((page) =>
+    const links = PAGES.filter((page) => !page.superAdminOnly || isSuperAdmin(user)).map((page) =>
         el('a', {
             className: `nav-link${page.key === pageKey ? ' active' : ''}`,
             attrs: { href: page.href, 'aria-current': page.key === pageKey ? 'page' : null },
@@ -189,7 +202,7 @@ function renderLayout(user, pageKey) {
             el('div', { className: 'sidebar-footer' }, [
                 el('span', { className: 'icon-box icon-box-sm tone-primary', attrs: { 'aria-hidden': 'true' } }, [el('i', { className: 'bi bi-person' })]),
                 el('div', { className: 'min-w-0' }, [
-                    el('div', { className: 'd-flex align-items-center gap-2 flex-wrap' }, [el('span', { className: 'sidebar-user', text: user.name }), roleTag(user)]),
+                    el('div', { className: 'd-flex align-items-center gap-2 flex-wrap' }, [el('span', { className: 'sidebar-user', text: user.name }), ...roleTags(user)]),
                     el('div', { className: 'caption', text: user.email }),
                 ]),
             ]),

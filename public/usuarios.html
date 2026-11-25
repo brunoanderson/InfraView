@@ -12,7 +12,7 @@
 <body class="app-page">
 
     <!-- O cabeçalho e o menu lateral são montados pelo js/layout.js, com o usuário logado.
-         Até a sessão ser confirmada, aparece só este "Carregando...". Só admin chega a ver esta página. -->
+         Até a sessão ser confirmada, aparece só este "Carregando...". Só super admin chega a ver esta página. -->
     <div class="page-loader" role="status">
         <div class="spinner-border text-primary mb-2" aria-hidden="true"></div>
         <div>Carregando...</div>
@@ -32,7 +32,7 @@
             </div>
         </div>
         <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
-            <div class="results-count">O sistema sempre mantém pelo menos um administrador.</div>
+            <div class="results-count">A conta raiz não pode ser editada nem excluída; só ela troca a própria senha.</div>
             <div class="results-count" id="updateStatus" aria-live="polite"></div>
         </div>
 
@@ -83,8 +83,9 @@
                     <div>
                         <label for="uRole" class="form-label">Perfil</label>
                         <select class="form-select" id="uRole" name="role" aria-describedby="uRoleHelp">
-                            <option value="viewer">Visualizador: só visualiza o painel</option>
-                            <option value="admin">Admin: gerencia dispositivos, alertas e usuários</option>
+                            <option value="viewer">Usuário: só consulta e busca</option>
+                            <option value="admin">Admin: gerencia dispositivos e alertas</option>
+                            <option value="superadmin">Super admin: gerencia usuários, dispositivos e alertas</option>
                         </select>
                         <div id="uRoleHelp" class="form-text"></div>
                         <div class="invalid-feedback"></div>

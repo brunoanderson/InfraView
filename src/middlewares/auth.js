@@ -9,7 +9,11 @@
 //   Se der certo, coloca o usuário em req.user. O usuário é relido do banco a
 //   cada requisição, então uma mudança de papel ou exclusão vale na hora.
 //
-// requireRole('admin'): usado DEPOIS de authenticate; papel errado -> 403.
+// requireRole(perfil mínimo): usado DEPOIS de authenticate. Os perfis formam uma
+// hierarquia, viewer < admin < superadmin:
+//   requireRole('admin')      -> admin e superadmin (dispositivos e alertas)
+//   requireRole('superadmin') -> só superadmin (usuários)
+// Perfil abaixo do mínimo -> 403.
 // =============================================================================
 import jwt from 'jsonwebtoken';
 import { AppError } from '../errors/AppError.js';
@@ -43,11 +47,18 @@ export function authenticate(req, res, next) {
     next();
 }
 
-export function requireRole(...roles) {
+const ROLE_LEVELS = { viewer: 1, admin: 2, superadmin: 3 };
+
+const FORBIDDEN_MESSAGES = {
+    admin: 'Apenas admins e super admins podem realizar esta ação.',
+    superadmin: 'Apenas super admins podem gerenciar usuários.',
+};
+
+export function requireRole(minimumRole) {
     return (req, res, next) => {
         if (!req.user) return next(AppError.unauthorized());
-        if (!roles.includes(req.user.role)) {
-            return next(AppError.forbidden('Apenas administradores podem realizar esta ação.'));
+        if ((ROLE_LEVELS[req.user.role] ?? 0) < ROLE_LEVELS[minimumRole]) {
+            return next(AppError.forbidden(FORBIDDEN_MESSAGES[minimumRole]));
         }
         next();
     };

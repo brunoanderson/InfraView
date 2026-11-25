@@ -7,7 +7,7 @@ export function list(req, res) {
     res.json({ alerts: alertModel.list(req.validated.query), counts: alertModel.countByStatus() });
 }
 
-/** PATCH /api/alerts/:id/ack (admin) */
+/** PATCH /api/alerts/:id/ack (admin e super admin) */
 export function acknowledge(req, res) {
     res.json({ alert: alertService.acknowledge(req.validated.params.id, req.user) });
 }

@@ -1,5 +1,5 @@
 // =============================================================================
-// Alertas: lista filtrada por tipo e situação; o admin pode reconhecer os ativos.
+// Alertas: lista filtrada por tipo e situação; admin e super admin reconhecem os ativos.
 //   GET /api/alerts?status=&kind=    PATCH /api/alerts/:id/ack
 // =============================================================================
 import { api } from './api.js';

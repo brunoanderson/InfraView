@@ -26,7 +26,7 @@
             </div>
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <div id="statusBadges" class="d-flex flex-wrap gap-2"></div>
-                <!-- Só para admin: o js/layout.js esconde para quem é viewer (o back-end também recusa com 403) -->
+                <!-- Só para admin e super admin: o js/layout.js esconde para o perfil Usuário (o back-end também recusa com 403) -->
                 <button type="button" id="newDeviceButton" class="btn btn-primary btn-sm" data-admin-only>
                     <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Novo dispositivo
                 </button>
@@ -50,7 +50,7 @@
         <div id="deviceList"></div>
     </main>
 
-    <!-- Modal de cadastro/edição (só admin chega a abrir) -->
+    <!-- Modal de cadastro/edição (só admin e super admin chegam a abrir) -->
     <div class="modal fade" id="deviceModal" tabindex="-1" aria-labelledby="deviceModalTitle" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <form class="modal-content" id="deviceForm" novalidate>

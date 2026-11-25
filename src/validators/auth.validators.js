@@ -5,7 +5,7 @@
 // =============================================================================
 import { z } from 'zod';
 
-/** Nome e e-mail do cadastro (também usados quando o admin cria ou edita uma conta). */
+/** Nome e e-mail do cadastro (também usados quando o super admin cria ou edita uma conta). */
 export const nameSchema = z
     .string({ error: 'Informe o nome.' })
     .trim()
@@ -19,7 +19,7 @@ export const emailSchema = z
     .max(254, 'E-mail longo demais.')
     .pipe(z.email('Informe um e-mail válido.'));
 
-/** Regra de senha do cadastro (também usada quando o admin cria uma conta ou redefine uma senha). */
+/** Regra de senha do cadastro (também usada quando o super admin cria uma conta ou redefine uma senha). */
 export const passwordSchema = z
     .string({ error: 'Informe a senha.' })
     .min(8, 'A senha precisa ter pelo menos 8 caracteres.')

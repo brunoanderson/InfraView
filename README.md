@@ -67,9 +67,9 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 | `JWT_SECRET` | Segredo que assina os tokens de login, com no mínimo 32 caracteres (**obrigatória**) | valor de exemplo; troque ao publicar |
 | `JWT_EXPIRES_IN` | Validade do login: número + unidade (`30m`, `8h`, `7d`) | `8h` |
 | `CORS_ORIGIN` | Endereços que podem chamar a API de outro site, separados por vírgula (**obrigatória**) | `http://localhost:3000` |
-| `SEED_ADMIN_NAME` | Nome do administrador criado pelo seed | `Administrador` |
-| `SEED_ADMIN_EMAIL` | E-mail de login do administrador | `admin@infraview.local` |
-| `SEED_ADMIN_PASSWORD` | Senha do administrador, com no mínimo 8 caracteres | `Admin@123` |
+| `SEED_ADMIN_NAME` | Nome do super admin raiz criado pelo seed | `Administrador` |
+| `SEED_ADMIN_EMAIL` | E-mail de login do super admin raiz | `admin@infraview.local` |
+| `SEED_ADMIN_PASSWORD` | Senha do super admin raiz, com no mínimo 8 caracteres | `Admin@123` |
 | `MONITOR_ENABLED` | Liga ou desliga o monitoramento automático (`true` ou `false`) | `true` |
 | `MONITOR_INTERVAL_SECONDS` | Intervalo entre as rodadas de verificação, de 5 a 3600 s | `30` |
 | `MONITOR_TIMEOUT_MS` | Tempo máximo de espera de cada tentativa, de 200 a 10000 ms | `2000` |
@@ -83,7 +83,7 @@ e o problema, mas nunca o valor. As variáveis `SEED_ADMIN_*` só são lidas pel
 
 ## Banco de dados
 
-O banco é um arquivo SQLite. Para criá-lo do zero (com as tabelas, o administrador e as categorias):
+O banco é um arquivo SQLite. Para criá-lo do zero (com as tabelas, o super admin raiz e as categorias):
 
 ```bash
 npm run db:reset          # uso real: sem nenhum dispositivo
@@ -98,8 +98,14 @@ Outros comandos do banco:
 | Comando | O que faz |
 |---|---|
 | `npm run db:migrate` | Aplica só as migrations que faltam (`db/migrations/*.sql`), sem apagar dados |
-| `npm run db:seed` | Apaga os dados e insere o administrador e as categorias de novo |
+| `npm run db:seed` | Apaga os dados e insere o super admin raiz e as categorias de novo |
 | `npm run db:seed:demo` | O mesmo, mais os 6 dispositivos de demonstração |
+
+As migrations ficam em `db/migrations` e são aplicadas em ordem. A `004_super_admin.sql` cria os três
+perfis e a conta raiz: recria a tabela `users` preservando os dados (o perfil passa a aceitar
+`superadmin` e entra a coluna `is_root`, com um índice único que permite no máximo uma raiz) e, num
+banco que já existia, transforma o admin mais antigo no super admin raiz. Para atualizar um banco
+criado antes dela sem perder nada, pare o servidor e rode `npm run db:migrate`.
 
 Se o servidor subir sem o banco, ele continua no ar, mas a API responde `503` com a dica de rodar
 `npm run db:reset`. Depois de criar o banco, não precisa reiniciar o servidor.
@@ -187,7 +193,7 @@ novo faz os dispositivos voltarem.
 ## Monitorar a rede de verdade
 
 1. Crie o banco sem os dispositivos de demonstração: `npm run db:reset`.
-2. Rode `npm start` (ou `npm run dev`) e entre com o administrador.
+2. Rode `npm start` (ou `npm run dev`) e entre com o super admin raiz.
 3. Na tela **Rede**, clique em **Novo dispositivo** e preencha:
    - **host**: o IP (ex.: `192.168.0.1`) ou o nome do aparelho na rede (ex.: `roteador.lan`);
    - **tipo de verificação**:
@@ -208,23 +214,43 @@ Para elas, use a `tcp`.
 
 ## Usuários e perfis
 
-- **admin**: vê tudo, cadastra, edita, pausa e exclui dispositivos, pede "verificar agora", reconhece
-  alertas e gerencia os usuários na tela **Usuários** (menu lateral). O administrador é criado pelo
-  `db:reset` (ou `db:seed`) com o `SEED_ADMIN_EMAIL` e a `SEED_ADMIN_PASSWORD` do `.env`. No modelo:
-  `admin@infraview.local` / `Admin@123`.
-- **viewer**: só visualiza. Para criar um, abra **http://localhost:3000/cadastro.html** (ou clique
-  em "Cadastre-se" na tela de login) e crie a conta. Todo cadastro feito por essa tela nasce como viewer:
-  mesmo que alguém envie `"role": "admin"` para a API, o campo é ignorado.
+| Perfil (na API) | Na tela | O que pode fazer |
+|---|---|---|
+| `superadmin` | Super admin | Tudo o que o admin faz, mais gerenciar os usuários na tela **Usuários** |
+| `admin` | Admin | Cadastrar, editar, pausar e excluir dispositivos, pedir "verificar agora" e reconhecer alertas |
+| `viewer` | Usuário | Só consultar e buscar: dashboard, rede, alertas e relatórios |
 
-Na tela **Usuários**, o admin cria contas (já com o perfil escolhido), edita o nome e o e-mail de
-qualquer conta, inclusive a própria, promove um viewer a admin (ou o contrário), redefine a senha de
-qualquer conta e exclui contas. Duas regras valem sempre, e a API responde `409` se forem quebradas:
+Todos os perfis veem as mesmas telas de consulta. O que muda é o que cada um pode alterar.
 
-- o sistema nunca fica sem administrador: o único admin não pode ser rebaixado nem excluído;
-- um admin não rebaixa nem exclui a própria conta (para isso, outro admin precisa fazer).
+**Conta raiz.** O `db:reset` (ou `db:seed`) cria um super admin especial, a conta raiz, com o
+`SEED_ADMIN_EMAIL` e a `SEED_ADMIN_PASSWORD` do `.env` (no modelo: `admin@infraview.local` /
+`Admin@123`). Ela é imune: ninguém a edita, rebaixa ou exclui, nem ela mesma. A única alteração
+permitida é a senha, e só a própria raiz troca a senha dela. Existe sempre exatamente uma raiz, e a
+API nunca cria nem promove outra: o campo `is_root` não é aceito em nenhuma requisição.
+
+**Super admins criados.** Qualquer super admin (a raiz ou um criado por ela) cria contas com qualquer
+um dos três perfis e gerencia as demais contas, inclusive outros super admins criados: edita nome,
+e-mail e perfil, redefine a senha e exclui. A única conta fora do alcance é a raiz.
+
+**Própria conta.** Ninguém rebaixa nem exclui a própria conta. Nome, e-mail e senha da própria conta
+podem ser alterados normalmente.
+
+**Cadastro público.** Para criar uma conta com o perfil Usuário, abra
+**http://localhost:3000/cadastro.html** (ou clique em "Cadastre-se" na tela de login). Toda conta criada
+por essa tela nasce como `viewer`: mesmo que alguém envie `"role": "admin"` para a API, o campo é ignorado.
+
+Quando uma regra é quebrada, a API responde:
+
+| Situação | Resposta |
+|---|---|
+| Alterar nome, e-mail ou perfil da raiz | `409` "A conta do super admin raiz só permite trocar a senha." |
+| Excluir a raiz | `409` "A conta do super admin raiz não pode ser excluída." |
+| Outro super admin trocar a senha da raiz | `403` "Só o próprio super admin raiz pode trocar a senha dessa conta." |
+| Rebaixar ou excluir a própria conta | `409` "Você não pode rebaixar/excluir a sua própria conta." |
+| Admin ou Usuário em qualquer rota de usuários | `403` |
 
 As mudanças valem na hora: a cada requisição a API relê o usuário no banco, então quem foi excluído
-recebe `401` e quem foi rebaixado passa a receber `403` nas ações de admin, mesmo com o token antigo.
+recebe `401` e quem foi rebaixado passa a receber `403` nas ações que perdeu, mesmo com o token antigo.
 Os alertas reconhecidos por um usuário excluído continuam registrados, como "usuário removido".
 
 A senha precisa ter de 8 a 72 caracteres, com pelo menos uma letra e um número. O login e o cadastro
@@ -248,20 +274,20 @@ Authorization: Bearer <token>
 | `GET /api/devices/measurements` | logado | Últimas verificações de todos os dispositivos numa requisição só: `{ measurements: { "<id>": [...] } }`, cada lista da mais antiga para a mais nova. `?limit=` de 1 a 120, padrão 30 |
 | `GET /api/devices/:id` | logado | Um dispositivo |
 | `GET /api/devices/:id/measurements` | logado | Últimas verificações (`checkedAt`, `success`, `latencyMs`, `packetsLost`), da mais antiga para a mais nova. `?limit=` de 1 a 120, padrão 30 |
-| `POST /api/devices` | admin | Cadastra e já verifica → `201` |
-| `PUT /api/devices/:id` | admin | Edita |
-| `DELETE /api/devices/:id` | admin | Exclui → `204` |
-| `POST /api/devices/:id/check` | admin | Verifica agora |
+| `POST /api/devices` | admin, superadmin | Cadastra e já verifica → `201` |
+| `PUT /api/devices/:id` | admin, superadmin | Edita |
+| `DELETE /api/devices/:id` | admin, superadmin | Exclui → `204` |
+| `POST /api/devices/:id/check` | admin, superadmin | Verifica agora |
 | `GET /api/categories` | logado | Categorias, com a quantidade de dispositivos |
 | `GET /api/dashboard/summary` | logado | Números do dashboard |
 | `GET /api/alerts` | logado | Alertas. Filtros: `?status=ativo\|resolvido\|info&severity=critical\|warning\|info&kind=offline\|latency\|loss` |
-| `PATCH /api/alerts/:id/ack` | admin | Reconhece um alerta ativo |
+| `PATCH /api/alerts/:id/ack` | admin, superadmin | Reconhece um alerta ativo |
 | `GET /api/events` | logado | Quedas, picos de latência e perdas. Filtros: `?type=todos\|downtime\|latencia\|perda&period=0\|7\|30\|all&device=<id>` |
 | `GET /api/monitor/status` | logado | Situação do monitor (última e próxima rodada) |
-| `GET /api/users` | admin | Lista os usuários (`id`, `name`, `email`, `role`, `createdAt`; nunca a senha) |
-| `POST /api/users` | admin | Cria uma conta: `{ name, email, password, role? }` (`role` padrão `viewer`; mesmas regras do cadastro) → `201 { user }`. `409` se o e-mail já existir |
-| `PATCH /api/users/:id` | admin | Altera `{ name?, email?, role?, password? }` (pelo menos um, tudo numa transação). `409` se o e-mail for de outra conta, ou se a troca de perfil tirar o último admin ou rebaixar a própria conta |
-| `DELETE /api/users/:id` | admin | Exclui a conta → `204`. `409` se for o último admin ou a própria conta |
+| `GET /api/users` | superadmin | Lista os usuários (`id`, `name`, `email`, `role`, `isRoot`, `createdAt`; nunca a senha), com a raiz primeiro |
+| `POST /api/users` | superadmin | Cria uma conta: `{ name, email, password, role? }` (`role`: `superadmin`, `admin` ou `viewer`, padrão `viewer`; mesmas regras do cadastro) → `201 { user }`. `409` se o e-mail já existir |
+| `PATCH /api/users/:id` | superadmin | Altera `{ name?, email?, role?, password? }` (pelo menos um, tudo numa transação). Na raiz, só a senha, e só pela própria raiz (`409`/`403`). `409` se o e-mail for de outra conta ou se rebaixar a própria conta |
+| `DELETE /api/users/:id` | superadmin | Exclui a conta → `204`. `409` se for a raiz ou a própria conta |
 
 O corpo de `POST` e `PUT /api/devices` tem os campos `name`, `model`, `host`, `checkType` (`ping`,
 `tcp` ou `http`), `port`, `latencyThresholdMs`, `lossThresholdPct`, `categoryId`, `isGateway`, `icon`
@@ -283,9 +309,9 @@ O campo `details` só aparece nos erros de validação e em alguns conflitos.
 |---|---|
 | 400 | `VALIDATION_ERROR`, `INVALID_JSON`, `BAD_REQUEST` |
 | 401 | `UNAUTHORIZED`, `INVALID_CREDENTIALS`, `TOKEN_EXPIRED`, `INVALID_TOKEN` |
-| 403 | `FORBIDDEN` (um viewer tentou uma ação de admin) |
+| 403 | `FORBIDDEN` (o perfil não permite a ação, ex.: Usuário cadastrando dispositivo ou Admin gerenciando usuários) |
 | 404 | `NOT_FOUND` |
-| 409 | `CONFLICT` (e-mail ou nome repetido, alerta já reconhecido, último admin...) |
+| 409 | `CONFLICT` (e-mail ou nome repetido, alerta já reconhecido, alteração da conta raiz...) |
 | 413 | `PAYLOAD_TOO_LARGE` (o corpo passou de 10 KB) |
 | 429 | `TOO_MANY_REQUESTS` |
 | 500 | `INTERNAL_ERROR` |
@@ -308,7 +334,8 @@ Respostas reais da API rodando com o banco de demonstração (`npm run db:reset:
     "id": 1,
     "name": "Administrador",
     "email": "admin@infraview.local",
-    "role": "admin",
+    "role": "superadmin",
+    "isRoot": true,
     "createdAt": "2026-11-25T09:33:42.178Z"
   },
   "token": "eyJhbGciOiJIUzI1NiIs..."

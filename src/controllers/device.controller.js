@@ -21,24 +21,24 @@ export function measurements(req, res) {
     res.json({ measurements: deviceService.measurements(req.validated.params.id, req.validated.query.limit) });
 }
 
-/** POST /api/devices (admin) -> 201 com o status já medido */
+/** POST /api/devices (admin e super admin) -> 201 com o status já medido */
 export async function create(req, res) {
     const device = await deviceService.create(req.validated.body);
     res.status(201).location(`/api/devices/${device.id}`).json({ device });
 }
 
-/** PUT /api/devices/:id (admin) */
+/** PUT /api/devices/:id (admin e super admin) */
 export async function update(req, res) {
     res.json({ device: await deviceService.update(req.validated.params.id, req.validated.body) });
 }
 
-/** DELETE /api/devices/:id (admin) -> 204 sem corpo */
+/** DELETE /api/devices/:id (admin e super admin) -> 204 sem corpo */
 export function remove(req, res) {
     deviceService.remove(req.validated.params.id);
     res.status(204).end();
 }
 
-/** POST /api/devices/:id/check (admin): "verificar agora" */
+/** POST /api/devices/:id/check (admin e super admin): "verificar agora" */
 export async function checkNow(req, res) {
     res.json(await deviceService.checkNow(req.validated.params.id));
 }

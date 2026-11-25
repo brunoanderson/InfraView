@@ -18,7 +18,7 @@ const user = await initPage('dashboard');
 // Recém-cadastrado (o cadastro manda ?bemvindo=1): avisa como a conta foi criada
 // e limpa o parâmetro da barra de endereço.
 if (new URLSearchParams(window.location.search).has('bemvindo')) {
-    toast(`Conta criada. Bem-vindo(a), ${user.name}! Você entrou como visualizador.`, 'success');
+    toast(`Conta criada. Bem-vindo(a), ${user.name}! Você entrou com o perfil Usuário.`, 'success');
     window.history.replaceState(null, '', 'dashboard.html');
 }
 

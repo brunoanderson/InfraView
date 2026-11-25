@@ -98,7 +98,8 @@ export async function seed(db, admin, { demo = false, apiPort = 3000 } = {}) {
             db.prepare(`DELETE FROM ${table}`).run();
         }
 
-        db.prepare(`INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')`)
+        // A conta raiz: super admin que ninguém edita, rebaixa ou exclui.
+        db.prepare(`INSERT INTO users (name, email, password_hash, role, is_root) VALUES (?, ?, ?, 'superadmin', 1)`)
             .run(admin.name, admin.email, adminHash);
 
         const categoryIds = {};
@@ -127,7 +128,7 @@ function countRows(db) {
 export function printSummary(db, admin, demo) {
     console.log(`[seed] Concluído (${demo ? 'modo demonstração' : 'uso real'}):`);
     console.table(countRows(db));
-    console.log(`[seed] Admin: ${admin.email} (senha definida em SEED_ADMIN_PASSWORD no .env)`);
+    console.log(`[seed] Super admin raiz: ${admin.email} (senha definida em SEED_ADMIN_PASSWORD no .env)`);
     if (demo) console.log('[seed] Rode "npm run demo:alvo" em outro terminal para o CAM-DEMO, o INVERSOR-DEMO e o REDE-INSTAVEL-DEMO responderem.');
 }
 

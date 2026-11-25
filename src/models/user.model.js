@@ -6,15 +6,14 @@
 import { getDb } from '../lib/db.js';
 
 /** Campos que podem sair na API (nunca o password_hash). */
-const PUBLIC_COLUMNS = 'id, name, email, role, created_at AS createdAt';
+const PUBLIC_COLUMNS = 'id, name, email, role, is_root AS isRoot, created_at AS createdAt';
 
-/** Todos os usuários, por nome. */
+/** O SQLite guarda is_root como 0/1; a API devolve boolean. */
+const toUser = (row) => row && { ...row, isRoot: row.isRoot === 1 };
+
+/** Todos os usuários: a conta raiz primeiro, depois por nome. */
 export function list() {
-    return getDb().prepare(`SELECT ${PUBLIC_COLUMNS} FROM users ORDER BY name COLLATE NOCASE, id`).all();
-}
-
-export function countAdmins() {
-    return getDb().prepare(`SELECT COUNT(*) FROM users WHERE role = 'admin'`).pluck().get();
+    return getDb().prepare(`SELECT ${PUBLIC_COLUMNS} FROM users ORDER BY is_root DESC, name COLLATE NOCASE, id`).all().map(toUser);
 }
 
 export function updateRole(id, role) {
@@ -39,7 +38,7 @@ export function remove(id) {
 
 /** Usuário público pelo id, ou undefined. */
 export function findById(id) {
-    return getDb().prepare(`SELECT ${PUBLIC_COLUMNS} FROM users WHERE id = ?`).get(id);
+    return toUser(getDb().prepare(`SELECT ${PUBLIC_COLUMNS} FROM users WHERE id = ?`).get(id));
 }
 
 /**
@@ -47,21 +46,22 @@ export function findById(id) {
  * A coluna email é COLLATE NOCASE: "Admin@X" e "admin@x" são o mesmo e-mail.
  */
 export function findByEmailWithHash(email) {
-    return getDb()
+    return toUser(getDb()
         .prepare(`SELECT ${PUBLIC_COLUMNS}, password_hash AS passwordHash FROM users WHERE email = ?`)
-        .get(email);
+        .get(email));
 }
 
 /**
  * Cria o usuário e devolve os campos públicos (RETURNING evita um SELECT extra).
+ * Nunca cria a conta raiz: is_root fica no padrão 0.
  * E-mail repetido dispara SQLITE_CONSTRAINT_UNIQUE, que o errorHandler converte em 409.
  */
 export function create({ name, email, passwordHash, role = 'viewer' }) {
-    return getDb()
+    return toUser(getDb()
         .prepare(
             `INSERT INTO users (name, email, password_hash, role)
              VALUES (?, ?, ?, ?)
              RETURNING ${PUBLIC_COLUMNS}`,
         )
-        .get(name, email, passwordHash, role);
+        .get(name, email, passwordHash, role));
 }

@@ -1,8 +1,9 @@
 // =============================================================================
 // Todas as rotas da API, sob /api.
 //   Públicas: /health, /auth/register, /auth/login
-//   Daqui para baixo, TUDO exige token (authenticate). Leitura: admin e viewer.
-//   Escrita (dispositivos, "verificar agora", reconhecer alerta) e usuários: só admin.
+//   Daqui para baixo, TUDO exige token (authenticate). Leitura: qualquer perfil.
+//   Escrita (dispositivos, "verificar agora", reconhecer alerta): admin e super admin.
+//   Usuários: só super admin.
 // =============================================================================
 import { Router } from 'express';
 import { health } from '../controllers/health.controller.js';

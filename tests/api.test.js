@@ -18,7 +18,7 @@ const app = createApp();
 const UP = { success: true, latencyMs: 5, error: null };
 const DOWN = { success: false, latencyMs: null, error: 'Sem resposta ao ping' };
 let nextResult = UP; // o que a verificação falsa responde
-let adminToken;
+let superAdminToken;
 let viewerToken;
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -27,10 +27,11 @@ const newDevice = (overrides = {}) => ({ name: 'ROTEADOR-TESTE', host: '192.168.
 before(async () => {
     const db = openDb({ create: true });
     migrate(db, { log: () => {} });
+    // o seed cria a conta raiz (super admin), que também gerencia dispositivos e alertas
     await seed(db, { name: 'Admin', email: 'admin@teste.local', password: 'Senha123' }, { demo: true });
     monitor.setCheckFunction(async () => nextResult);
 
-    adminToken = (await request(app).post('/api/auth/login').send({ email: 'admin@teste.local', password: 'Senha123' })).body.token;
+    superAdminToken = (await request(app).post('/api/auth/login').send({ email: 'admin@teste.local', password: 'Senha123' })).body.token;
     const viewer = await request(app).post('/api/auth/register').send({ name: 'Viewer', email: 'viewer@teste.local', password: 'Senha123' });
     viewerToken = viewer.body.token;
 });
@@ -67,7 +68,7 @@ describe('CRUD de dispositivos', () => {
 
     test('POST cria e já devolve o status medido (201)', async () => {
         nextResult = UP;
-        const res = await request(app).post('/api/devices').set(auth(adminToken))
+        const res = await request(app).post('/api/devices').set(auth(superAdminToken))
             .send(newDevice({ status: 'offline', latencyMs: 999 })); // status/latência do cliente são ignorados
         assert.equal(res.status, 201);
         assert.equal(res.body.device.status, 'online');
@@ -89,18 +90,18 @@ describe('CRUD de dispositivos', () => {
             [newDevice({ lossThresholdPct: 101 }), 'lossThresholdPct'],
         ];
         for (const [body, field] of cases) {
-            const res = await request(app).post('/api/devices').set(auth(adminToken)).send({ ...body, name: 'OUTRO' });
+            const res = await request(app).post('/api/devices').set(auth(superAdminToken)).send({ ...body, name: 'OUTRO' });
             assert.equal(res.status, 400, `esperava 400 para ${JSON.stringify(body)}`);
             assert.ok(res.body.error.details.some((d) => d.field === field), `esperava erro em ${field}`);
         }
     });
 
     test('duplicidade -> 409 (nome e host+tipo+porta)', async () => {
-        const sameName = await request(app).post('/api/devices').set(auth(adminToken)).send(newDevice({ host: '192.168.50.2' }));
+        const sameName = await request(app).post('/api/devices').set(auth(superAdminToken)).send(newDevice({ host: '192.168.50.2' }));
         assert.equal(sameName.status, 409);
         assert.match(sameName.body.error.message, /nome/);
 
-        const sameTarget = await request(app).post('/api/devices').set(auth(adminToken)).send(newDevice({ name: 'OUTRO' }));
+        const sameTarget = await request(app).post('/api/devices').set(auth(superAdminToken)).send(newDevice({ name: 'OUTRO' }));
         assert.equal(sameTarget.status, 409);
         assert.match(sameTarget.body.error.message, /host/);
     });
@@ -117,30 +118,30 @@ describe('CRUD de dispositivos', () => {
 
     test('PUT trocando o alvo zera o estado e verifica de novo', async () => {
         nextResult = DOWN;
-        const res = await request(app).put(`/api/devices/${id}`).set(auth(adminToken)).send(newDevice({ host: '192.168.50.9' }));
+        const res = await request(app).put(`/api/devices/${id}`).set(auth(superAdminToken)).send(newDevice({ host: '192.168.50.9' }));
         assert.equal(res.status, 200);
         assert.equal(res.body.device.host, '192.168.50.9');
         assert.equal(res.body.device.status, 'pendente'); // 1 falha: ainda não confirmou queda
         assert.equal(res.body.device.consecutiveFailures, 1);
     });
 
-    test('verificar agora (admin) e pausado -> 409', async () => {
+    test('verificar agora (super admin) e pausado -> 409', async () => {
         nextResult = UP;
-        const ok = await request(app).post(`/api/devices/${id}/check`).set(auth(adminToken));
+        const ok = await request(app).post(`/api/devices/${id}/check`).set(auth(superAdminToken));
         assert.equal(ok.status, 200);
         assert.equal(ok.body.checked, true);
         assert.equal(ok.body.device.status, 'online');
 
-        await request(app).put(`/api/devices/${id}`).set(auth(adminToken)).send(newDevice({ host: '192.168.50.9', monitoringEnabled: false }));
-        const paused = await request(app).post(`/api/devices/${id}/check`).set(auth(adminToken));
+        await request(app).put(`/api/devices/${id}`).set(auth(superAdminToken)).send(newDevice({ host: '192.168.50.9', monitoringEnabled: false }));
+        const paused = await request(app).post(`/api/devices/${id}/check`).set(auth(superAdminToken));
         assert.equal(paused.status, 409);
     });
 
     test('GET /:id/measurements: últimas verificações, da mais antiga para a mais nova', async () => {
         nextResult = DOWN;
-        await request(app).put(`/api/devices/${id}`).set(auth(adminToken)).send(newDevice({ host: '192.168.50.9' })); // religa e verifica
+        await request(app).put(`/api/devices/${id}`).set(auth(superAdminToken)).send(newDevice({ host: '192.168.50.9' })); // religa e verifica
         nextResult = UP;
-        await request(app).post(`/api/devices/${id}/check`).set(auth(adminToken));
+        await request(app).post(`/api/devices/${id}/check`).set(auth(superAdminToken));
 
         const all = await request(app).get(`/api/devices/${id}/measurements`).set(auth(viewerToken)); // leitura: viewer pode
         assert.equal(all.status, 200);
@@ -168,7 +169,7 @@ describe('CRUD de dispositivos', () => {
     test('GET /measurements (em lote): últimas de cada dispositivo, iguais às da rota por dispositivo', async () => {
         const { devices } = (await request(app).get('/api/devices').set(auth(viewerToken))).body;
         const other = devices.find((d) => d.id !== id && d.monitoringEnabled && !d.isGateway);
-        await request(app).post(`/api/devices/${other.id}/check`).set(auth(adminToken)); // um 2º dispositivo com verificação
+        await request(app).post(`/api/devices/${other.id}/check`).set(auth(superAdminToken)); // um 2º dispositivo com verificação
 
         const res = await request(app).get('/api/devices/measurements?limit=2').set(auth(viewerToken));
         assert.equal(res.status, 200);
@@ -193,22 +194,22 @@ describe('CRUD de dispositivos', () => {
     });
 
     test('DELETE -> 204, depois 404', async () => {
-        assert.equal((await request(app).delete(`/api/devices/${id}`).set(auth(adminToken))).status, 204);
-        assert.equal((await request(app).delete(`/api/devices/${id}`).set(auth(adminToken))).status, 404);
+        assert.equal((await request(app).delete(`/api/devices/${id}`).set(auth(superAdminToken))).status, 204);
+        assert.equal((await request(app).delete(`/api/devices/${id}`).set(auth(superAdminToken))).status, 404);
     });
 });
 
 describe('alertas, eventos e dashboard', () => {
     let gatewayId;
 
-    test('queda gera alerta; viewer não reconhece (403); admin reconhece uma vez só', async () => {
-        const devices = (await request(app).get('/api/devices?search=GW-LOCAL').set(auth(adminToken))).body.devices;
+    test('queda gera alerta; viewer não reconhece (403); super admin reconhece uma vez só', async () => {
+        const devices = (await request(app).get('/api/devices?search=GW-LOCAL').set(auth(superAdminToken))).body.devices;
         gatewayId = devices[0].id;
 
         nextResult = UP;
-        await request(app).post(`/api/devices/${gatewayId}/check`).set(auth(adminToken));
+        await request(app).post(`/api/devices/${gatewayId}/check`).set(auth(superAdminToken));
         nextResult = DOWN;
-        for (let i = 0; i < 3; i++) await request(app).post(`/api/devices/${gatewayId}/check`).set(auth(adminToken));
+        for (let i = 0; i < 3; i++) await request(app).post(`/api/devices/${gatewayId}/check`).set(auth(superAdminToken));
 
         const alerts = (await request(app).get('/api/alerts?status=ativo').set(auth(viewerToken))).body.alerts;
         const alert = alerts.find((a) => a.device.id === gatewayId && a.kind === 'offline');
@@ -216,13 +217,13 @@ describe('alertas, eventos e dashboard', () => {
 
         assert.equal((await request(app).patch(`/api/alerts/${alert.id}/ack`).set(auth(viewerToken))).status, 403);
 
-        const ack = await request(app).patch(`/api/alerts/${alert.id}/ack`).set(auth(adminToken));
+        const ack = await request(app).patch(`/api/alerts/${alert.id}/ack`).set(auth(superAdminToken));
         assert.equal(ack.status, 200);
         assert.equal(ack.body.alert.acknowledgedBy.name, 'Admin');
         assert.ok(ack.body.alert.acknowledgedAt);
 
-        assert.equal((await request(app).patch(`/api/alerts/${alert.id}/ack`).set(auth(adminToken))).status, 409);
-        assert.equal((await request(app).patch('/api/alerts/9999/ack').set(auth(adminToken))).status, 404);
+        assert.equal((await request(app).patch(`/api/alerts/${alert.id}/ack`).set(auth(superAdminToken))).status, 409);
+        assert.equal((await request(app).patch('/api/alerts/9999/ack').set(auth(superAdminToken))).status, 404);
     });
 
     test('eventos: filtros de tipo, período e dispositivo', async () => {
@@ -238,9 +239,9 @@ describe('alertas, eventos e dashboard', () => {
     });
 
     test('perda de pacotes: alerta (kind=loss), evento (type=perda) e números do dashboard', async () => {
-        const cam = (await request(app).get('/api/devices?search=CAM-DEMO').set(auth(adminToken))).body.devices[0];
+        const cam = (await request(app).get('/api/devices?search=CAM-DEMO').set(auth(superAdminToken))).body.devices[0];
         nextResult = { success: true, latencyMs: 5, error: 'Conexão encerrada pelo dispositivo', packetsSent: 4, packetsLost: 2 };
-        const res = await request(app).post(`/api/devices/${cam.id}/check`).set(auth(adminToken));
+        const res = await request(app).post(`/api/devices/${cam.id}/check`).set(auth(superAdminToken));
         assert.equal(res.body.device.status, 'atencao');
         assert.equal(res.body.device.lastLossPct, 50);
 
@@ -279,12 +280,72 @@ describe('alertas, eventos e dashboard', () => {
     });
 
     test('dashboard sem gateway: gateway = null', async () => {
-        const gw = (await request(app).get(`/api/devices/${gatewayId}`).set(auth(adminToken))).body.device;
-        await request(app).put(`/api/devices/${gatewayId}`).set(auth(adminToken)).send({
+        const gw = (await request(app).get(`/api/devices/${gatewayId}`).set(auth(superAdminToken))).body.device;
+        await request(app).put(`/api/devices/${gatewayId}`).set(auth(superAdminToken)).send({
             name: gw.name, host: gw.host, checkType: gw.checkType, port: gw.port, categoryId: gw.category.id,
             latencyThresholdMs: gw.latencyThresholdMs, icon: gw.icon, monitoringEnabled: true, isGateway: false,
         });
         const res = await request(app).get('/api/dashboard/summary').set(auth(viewerToken));
         assert.equal(res.body.gateway, null);
+    });
+});
+
+describe('perfis nas ações de dispositivos e alertas', () => {
+    let adminToken;
+
+    before(async () => {
+        const created = await request(app).post('/api/users').set(auth(superAdminToken))
+            .send({ name: 'Admin Comum', email: 'admin.comum@teste.local', password: 'Senha123', role: 'admin' });
+        assert.equal(created.status, 201);
+        adminToken = (await request(app).post('/api/auth/login').send({ email: 'admin.comum@teste.local', password: 'Senha123' })).body.token;
+    });
+
+    /** Derruba o dispositivo (3 falhas seguidas) e devolve o alerta de offline ativo. */
+    async function offlineAlert(deviceId) {
+        nextResult = DOWN;
+        for (let i = 0; i < 3; i++) await request(app).post(`/api/devices/${deviceId}/check`).set(auth(superAdminToken));
+        nextResult = UP;
+        const { alerts } = (await request(app).get('/api/alerts?status=ativo').set(auth(viewerToken))).body;
+        return alerts.find((a) => a.device.id === deviceId && a.kind === 'offline');
+    }
+
+    for (const [label, token] of [['admin comum', () => adminToken], ['super admin', () => superAdminToken]]) {
+        test(`${label}: cadastra, edita, verifica e exclui dispositivo e reconhece alerta`, async () => {
+            nextResult = UP;
+            const name = `PERFIL-${label.replace(' ', '-').toUpperCase()}`;
+            const created = await request(app).post('/api/devices').set(auth(token())).send(newDevice({ name, host: '10.9.9.1' }));
+            assert.equal(created.status, 201);
+            const { id } = created.body.device;
+
+            const updated = await request(app).put(`/api/devices/${id}`).set(auth(token())).send(newDevice({ name: `${name}-2`, host: '10.9.9.1' }));
+            assert.equal(updated.status, 200);
+            assert.equal((await request(app).post(`/api/devices/${id}/check`).set(auth(token()))).status, 200);
+
+            const alert = await offlineAlert(id);
+            assert.ok(alert, 'esperava um alerta de offline ativo');
+            const ack = await request(app).patch(`/api/alerts/${alert.id}/ack`).set(auth(token()));
+            assert.equal(ack.status, 200);
+
+            assert.equal((await request(app).delete(`/api/devices/${id}`).set(auth(token()))).status, 204);
+        });
+    }
+
+    test('viewer: 403 em cadastrar, editar, verificar, excluir e reconhecer', async () => {
+        nextResult = UP;
+        const { id } = (await request(app).post('/api/devices').set(auth(superAdminToken)).send(newDevice({ name: 'PERFIL-VIEWER', host: '10.9.9.2' }))).body.device;
+        const alert = await offlineAlert(id);
+        const calls = [
+            request(app).post('/api/devices').send(newDevice({ name: 'NAO-PODE', host: '10.9.9.3' })),
+            request(app).put(`/api/devices/${id}`).send(newDevice({ name: 'NAO-PODE', host: '10.9.9.2' })),
+            request(app).post(`/api/devices/${id}/check`),
+            request(app).delete(`/api/devices/${id}`),
+            request(app).patch(`/api/alerts/${alert.id}/ack`),
+        ];
+        for (const call of calls) {
+            const res = await call.set(auth(viewerToken));
+            assert.equal(res.status, 403);
+            assert.equal(res.body.error.code, 'FORBIDDEN');
+        }
+        assert.equal((await request(app).delete(`/api/devices/${id}`).set(auth(superAdminToken))).status, 204);
     });
 });

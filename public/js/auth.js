@@ -2,8 +2,8 @@
 // auth.js — sessão do usuário no navegador.
 //
 // O token (JWT) e os dados do usuário ficam no localStorage. A interface usa o
-// papel (admin ou viewer) só para ESCONDER botões; quem decide de verdade é o
-// back-end, que recusa com 403 qualquer escrita de um viewer.
+// perfil (superadmin, admin ou viewer) só para ESCONDER botões; quem decide de
+// verdade é o back-end, que recusa com 403 o que o perfil não pode fazer.
 // =============================================================================
 import { api } from './api.js';
 
@@ -34,7 +34,11 @@ export function clearSession() {
     localStorage.removeItem(USER_KEY);
 }
 
-export const isAdmin = (user = getUser()) => user?.role === 'admin';
+/** Admin e super admin: gerenciam dispositivos e alertas. */
+export const isAdmin = (user = getUser()) => user?.role === 'admin' || user?.role === 'superadmin';
+
+/** Só o super admin gerencia usuários. */
+export const isSuperAdmin = (user = getUser()) => user?.role === 'superadmin';
 
 // ---- Ações --------------------------------------------------------------
 
@@ -45,7 +49,7 @@ export async function login(email, password) {
     return data.user;
 }
 
-/** POST /api/auth/register. A conta nasce como viewer (o back-end garante). */
+/** POST /api/auth/register. A conta nasce com o perfil viewer, "Usuário" na tela (o back-end garante). */
 export async function register(name, email, password) {
     const data = await api('POST', '/auth/register', { name, email, password });
     saveSession(data);

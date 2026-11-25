@@ -1,11 +1,15 @@
 // =============================================================================
-// Gestão de usuários pelo admin: listar, criar, editar nome, e-mail, perfil e
-// senha, e excluir.
+// Gestão de usuários pelo super admin: listar, criar, editar nome, e-mail,
+// perfil e senha, e excluir.
 //
-// Regras (409): o sistema nunca fica sem administrador, e um admin não exclui
-// nem rebaixa a si mesmo (nome e e-mail da própria conta podem mudar). A
-// conferência e a mudança rodam na mesma transação, então dois pedidos ao mesmo
-// tempo não conseguem tirar o último admin. E-mail já usado por outra conta
+// Regras, conferidas nesta ordem (depois do 404):
+//   1. Conta raiz: nunca é excluída nem tem nome, e-mail ou perfil alterados
+//      (409). A senha dela só o próprio raiz troca (403 para os demais).
+//   2. Própria conta: ninguém rebaixa nem exclui a si mesmo (409). Nome, e-mail
+//      e senha da própria conta podem mudar.
+// Como a raiz sempre existe e é sempre super admin, o sistema nunca fica sem
+// quem gerencie os usuários. As alterações de uma requisição rodam numa
+// transação: ou entram todas, ou nenhuma. E-mail já usado por outra conta
 // esbarra no UNIQUE do banco, que o errorHandler converte no mesmo 409 do cadastro.
 // =============================================================================
 import { AppError } from '../errors/AppError.js';
@@ -21,20 +25,7 @@ function findOrFail(id) {
     return user;
 }
 
-/**
- * Confere se o admin pode deixar de ser admin (rebaixado ou excluído).
- * O último admin é conferido primeiro: só ele pode ser o próprio usuário logado.
- */
-function assertCanLoseAdmin(target, actingUserId, action) {
-    if (target.role === 'admin' && userModel.countAdmins() === 1) {
-        throw AppError.conflict(`Não é possível ${action} o único administrador. Promova outro usuário antes.`);
-    }
-    if (target.id === actingUserId) {
-        throw AppError.conflict(`Você não pode ${action} a sua própria conta.`);
-    }
-}
-
-/** Cria a conta com o perfil escolhido pelo admin. Devolve o usuário (sem o hash). */
+/** Cria a conta com o perfil escolhido. Devolve o usuário (sem o hash). */
 export async function create({ name, email, password, role }) {
     const passwordHash = await hashPassword(password);
     return userModel.create({ name, email, passwordHash, role });
@@ -46,7 +37,17 @@ export async function update(id, { name, email, role, password }, actingUserId) 
     const passwordHash = password === undefined ? undefined : await hashPassword(password);
     getDb().transaction(() => {
         const target = findOrFail(id);
-        if (role === 'viewer') assertCanLoseAdmin(target, actingUserId, 'rebaixar');
+        if (target.isRoot) {
+            if (name !== undefined || email !== undefined || role !== undefined) {
+                throw AppError.conflict('A conta do super admin raiz só permite trocar a senha.');
+            }
+            if (target.id !== actingUserId) {
+                throw AppError.forbidden('Só o próprio super admin raiz pode trocar a senha dessa conta.');
+            }
+        }
+        if (target.id === actingUserId && role !== undefined && role !== target.role) {
+            throw AppError.conflict('Você não pode rebaixar a sua própria conta.');
+        }
         if (name !== undefined || email !== undefined) userModel.updateProfile(id, { name, email });
         if (role !== undefined) userModel.updateRole(id, role);
         if (passwordHash !== undefined) userModel.updatePasswordHash(id, passwordHash);
@@ -57,7 +58,8 @@ export async function update(id, { name, email, role, password }, actingUserId) 
 export function remove(id, actingUserId) {
     getDb().transaction(() => {
         const target = findOrFail(id);
-        assertCanLoseAdmin(target, actingUserId, 'excluir');
+        if (target.isRoot) throw AppError.conflict('A conta do super admin raiz não pode ser excluída.');
+        if (target.id === actingUserId) throw AppError.conflict('Você não pode excluir a sua própria conta.');
         userModel.remove(id);
     })();
 }
