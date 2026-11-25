@@ -101,6 +101,28 @@ export function recentChecks(deviceId, limit) {
         .map((row) => ({ ...row, success: row.success === 1 }));
 }
 
+/**
+ * Últimas `limit` verificações de CADA dispositivo, numa consulta só:
+ * { "<deviceId>": [ ... da mais antiga para a mais nova ] }. Dispositivo sem
+ * verificações não aparece.
+ */
+export function recentChecksByDevice(limit) {
+    const rows = db()
+        .prepare(
+            `SELECT device_id AS deviceId, checked_at AS checkedAt, success, latency_ms AS latencyMs, packets_lost AS packetsLost
+             FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY checked_at DESC, id DESC) AS position
+                   FROM checks)
+             WHERE position <= ?
+             ORDER BY device_id, checked_at, id`,
+        )
+        .all(limit);
+    const byDevice = {};
+    for (const { deviceId, success, ...check } of rows) {
+        (byDevice[deviceId] ??= []).push({ ...check, success: success === 1 });
+    }
+    return byDevice;
+}
+
 /** Últimas `limit` latências de verificações com sucesso (mais recente primeiro). */
 export function recentLatencies(deviceId, limit) {
     return db()

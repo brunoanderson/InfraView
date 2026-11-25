@@ -11,6 +11,11 @@ export function show(req, res) {
     res.json({ device: deviceService.findById(req.validated.params.id) });
 }
 
+/** GET /api/devices/measurements?limit= (últimas verificações de cada dispositivo, num objeto por id) */
+export function measurementsOfAll(req, res) {
+    res.json({ measurements: deviceService.measurementsOfAll(req.validated.query.limit) });
+}
+
 /** GET /api/devices/:id/measurements?limit= (últimas verificações, da mais antiga para a mais nova) */
 export function measurements(req, res) {
     res.json({ measurements: deviceService.measurements(req.validated.params.id, req.validated.query.limit) });

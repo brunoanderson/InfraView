@@ -28,6 +28,9 @@ function assertCategoryExists(categoryId) {
 export const list = (filters) => deviceModel.list(filters);
 export const findById = (id) => findOrFail(id);
 
+/** Últimas verificações de todos os dispositivos, agrupadas pelo id. */
+export const measurementsOfAll = (limit) => monitorModel.recentChecksByDevice(limit);
+
 /** Últimas verificações do dispositivo (404 se ele não existir). */
 export function measurements(id, limit) {
     findOrFail(id);

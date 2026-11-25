@@ -165,6 +165,33 @@ describe('CRUD de dispositivos', () => {
         assert.equal((await request(app).get(`/api/devices/${id}/measurements`)).status, 401);
     });
 
+    test('GET /measurements (em lote): últimas de cada dispositivo, iguais às da rota por dispositivo', async () => {
+        const { devices } = (await request(app).get('/api/devices').set(auth(viewerToken))).body;
+        const other = devices.find((d) => d.id !== id && d.monitoringEnabled && !d.isGateway);
+        await request(app).post(`/api/devices/${other.id}/check`).set(auth(adminToken)); // um 2º dispositivo com verificação
+
+        const res = await request(app).get('/api/devices/measurements?limit=2').set(auth(viewerToken));
+        assert.equal(res.status, 200);
+        const { measurements } = res.body;
+        assert.ok(measurements[id] && measurements[other.id], 'esperava os dois dispositivos no resultado');
+        for (const list of Object.values(measurements)) {
+            assert.ok(list.length >= 1 && list.length <= 2);
+            assert.deepEqual(list.map((m) => m.checkedAt), list.map((m) => m.checkedAt).toSorted());
+            assert.deepEqual(Object.keys(list[0]).sort(), ['checkedAt', 'latencyMs', 'packetsLost', 'success']);
+        }
+        const single = await request(app).get(`/api/devices/${id}/measurements?limit=2`).set(auth(viewerToken));
+        assert.deepEqual(measurements[id], single.body.measurements);
+    });
+
+    test('GET /measurements (em lote): limite inválido 400, sem token 401', async () => {
+        for (const limit of ['0', '121', 'abc']) {
+            const res = await request(app).get(`/api/devices/measurements?limit=${limit}`).set(auth(viewerToken));
+            assert.equal(res.status, 400, `limit=${limit}`);
+            assert.equal(res.body.error.details[0].field, 'limit');
+        }
+        assert.equal((await request(app).get('/api/devices/measurements')).status, 401);
+    });
+
     test('DELETE -> 204, depois 404', async () => {
         assert.equal((await request(app).delete(`/api/devices/${id}`).set(auth(adminToken))).status, 204);
         assert.equal((await request(app).delete(`/api/devices/${id}`).set(auth(adminToken))).status, 404);

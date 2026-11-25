@@ -11,6 +11,8 @@ const router = Router();
 const adminOnly = requireRole('admin');
 
 router.get('/', validate({ query: deviceQuerySchema }), deviceController.list);
+// Antes de /:id, senão o Express trataria "measurements" como um id.
+router.get('/measurements', validate({ query: measurementQuerySchema }), deviceController.measurementsOfAll);
 router.get('/:id', validate({ params: idParamSchema }), deviceController.show);
 router.get('/:id/measurements', validate({ params: idParamSchema, query: measurementQuerySchema }), deviceController.measurements);
 

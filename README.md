@@ -244,6 +244,7 @@ Authorization: Bearer <token>
 | `POST /api/auth/login` | público | Login: `{ email, password }` → `200 { user, token }` |
 | `GET /api/auth/me` | logado | Dados do usuário dono do token |
 | `GET /api/devices` | logado | Lista os dispositivos. Filtros: `?status=online\|offline\|atencao\|pendente&search=&categoryId=` |
+| `GET /api/devices/measurements` | logado | Últimas verificações de todos os dispositivos numa requisição só: `{ measurements: { "<id>": [...] } }`, cada lista da mais antiga para a mais nova. `?limit=` de 1 a 120, padrão 30 |
 | `GET /api/devices/:id` | logado | Um dispositivo |
 | `GET /api/devices/:id/measurements` | logado | Últimas verificações (`checkedAt`, `success`, `latencyMs`, `packetsLost`), da mais antiga para a mais nova. `?limit=` de 1 a 120, padrão 30 |
 | `POST /api/devices` | admin | Cadastra e já verifica → `201` |

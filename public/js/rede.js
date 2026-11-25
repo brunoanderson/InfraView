@@ -2,7 +2,7 @@
 // Rede: dispositivos por categoria, com busca, filtro por status, gráfico de
 // latência e, para o admin, cadastro/edição (modal), pausar/retomar, excluir e
 // "verificar agora".
-//   GET  /api/devices   GET /api/categories   GET /api/devices/:id/measurements
+//   GET  /api/devices   GET /api/categories   GET /api/devices/measurements
 //   POST /api/devices   PUT /api/devices/:id   DELETE /api/devices/:id
 //   POST /api/devices/:id/check
 // =============================================================================
@@ -30,7 +30,7 @@ const HISTORY_SIZE = 30; // verificações no gráfico de cada dispositivo
 
 let devices = [];
 let categories = [];
-let histories = new Map(); // id do dispositivo -> últimas verificações
+let histories = {}; // id do dispositivo -> últimas verificações
 let search = '';
 
 // ---- Filtros ---------------------------------------------------------------
@@ -190,7 +190,7 @@ function render() {
         if (rows.length === 0) continue;
         const entry = categoryCard(category);
         setText(entry.count, `${rows.length} dispositivo(s)`);
-        const withHistory = rows.map((d) => ({ ...d, history: histories.get(d.id) ?? [] }));
+        const withHistory = rows.map((d) => ({ ...d, history: histories[d.id] ?? [] }));
         syncChildren(entry.tbody, withHistory, (d) => d.id, (d) => deviceRow(d, entry.row));
         shown.push(entry.card);
     }
@@ -201,11 +201,12 @@ function render() {
 // ---- Carga e atualização automática -------------------------------------------
 
 async function load() {
-    const [devicesRes, categoriesRes] = await Promise.all([api('GET', '/devices'), api('GET', '/categories')]);
+    const [devicesRes, categoriesRes, measurementsRes] = await Promise.all([
+        api('GET', '/devices'), api('GET', '/categories'), api('GET', `/devices/measurements?limit=${HISTORY_SIZE}`),
+    ]);
     devices = devicesRes.devices;
     categories = categoriesRes.categories;
-    const measured = await Promise.all(devices.map((d) => api('GET', `/devices/${d.id}/measurements?limit=${HISTORY_SIZE}`)));
-    histories = new Map(devices.map((d, i) => [d.id, measured[i].measurements]));
+    histories = measurementsRes.measurements;
     render();
 }
 
