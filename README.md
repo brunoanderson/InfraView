@@ -25,7 +25,7 @@ HTML, CSS (Bootstrap) e JavaScript puro, servido pelo próprio Express a partir 
 
 ## Requisitos
 
-- **Node.js 20 ou mais novo**. O projeto foi testado com o Node 24.
+- **Node.js 22 ou mais novo**. O projeto foi testado com o Node 24.
 - npm, que já vem com o Node.
 - Para a verificação por ping: o comando `ping` do sistema, que existe no Windows, no Linux e no macOS.
 

@@ -6,7 +6,7 @@
   "main": "src/server.js",
   "private": true,
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "dev": "nodemon --watch src --ext js src/server.js",
