@@ -105,15 +105,17 @@ export function recentChecks(deviceId, limit) {
  * Últimas `limit` verificações de CADA dispositivo, numa consulta só:
  * { "<deviceId>": [ ... da mais antiga para a mais nova ] }. Dispositivo sem
  * verificações não aparece.
+ *
+ * Para cada dispositivo, a subconsulta pega só os últimos `limit` ids pelo índice
+ * idx_checks_device_checked (device_id, checked_at), sem varrer o histórico todo.
  */
 export function recentChecksByDevice(limit) {
     const rows = db()
         .prepare(
-            `SELECT device_id AS deviceId, checked_at AS checkedAt, success, latency_ms AS latencyMs, packets_lost AS packetsLost
-             FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY checked_at DESC, id DESC) AS position
-                   FROM checks)
-             WHERE position <= ?
-             ORDER BY device_id, checked_at, id`,
+            `SELECT c.device_id AS deviceId, c.checked_at AS checkedAt, c.success, c.latency_ms AS latencyMs, c.packets_lost AS packetsLost
+             FROM devices d
+             JOIN checks c ON c.id IN (SELECT id FROM checks WHERE device_id = d.id ORDER BY checked_at DESC, id DESC LIMIT ?)
+             ORDER BY c.device_id, c.checked_at, c.id`,
         )
         .all(limit);
     const byDevice = {};
