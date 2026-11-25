@@ -257,8 +257,10 @@ As mudanças valem na hora: a cada requisição a API relê o usuário no banco,
 recebe `401` e quem foi rebaixado passa a receber `403` nas ações que perdeu, mesmo com o token antigo.
 Os alertas reconhecidos por um usuário excluído continuam registrados, como "usuário removido".
 
-A senha precisa ter de 8 a 72 caracteres, com pelo menos uma letra e um número. O login e o cadastro
-aceitam no máximo 10 tentativas a cada 15 minutos por IP. A partir daí, a API responde `429`.
+A senha precisa ter de 8 a 72 caracteres, com pelo menos uma letra e um número. O limite é de 10
+tentativas a cada 15 minutos por IP, e a partir daí a API responde `429`. No login, só as tentativas
+que falham contam: quem acerta a senha não gasta o limite. No cadastro, toda requisição conta, para
+ninguém criar contas em massa. Os dois têm contadores separados.
 
 ## API
 
