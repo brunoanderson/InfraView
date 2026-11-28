@@ -1,5 +1,3 @@
-<p align="center"><img src="InfraView.png" alt="InfraView: monitoramento de infraestrutura de redes" width="420"></p>
-
 # InfraView
 
 O InfraView é um painel de monitoramento, no estilo de um NOC, para os dispositivos de uma rede local:
@@ -15,24 +13,16 @@ Ele **verifica os dispositivos de verdade**, sozinho, a cada intervalo configura
 
 Quando o problema acaba, o evento é fechado e o alerta é resolvido, também automaticamente.
 
-Projeto 1.2 (Back-end) do IFPB. Grupo: Vinícius Ribeiro Maia, Bruno Anderson e Arthur Rodrigues.
+Projeto 1.2 do IFPB. Grupo: Vinícius Ribeiro Maia, Bruno Anderson e Arthur Rodrigues.
 
-**Tecnologias:** Node.js, Express 5, SQLite com better-sqlite3 (SQL escrito à mão, sem ORM), zod
-(validação), bcryptjs (hash de senha), jsonwebtoken (JWT), helmet e express-rate-limit. O front-end é
+**Tecnologias:** Node.js, Express 5, SQLite com better-sqlite3, zod(validação)
+bcryptjs (hash de senha), jsonwebtoken (JWT), helmet e express-rate-limit. O front-end é
 HTML, CSS (Bootstrap) e JavaScript puro, servido pelo próprio Express a partir da pasta `public/`.
-
----
-
-## Requisitos
-
-- **Node.js 22 ou mais novo**. O projeto foi testado com o Node 24.
-- npm, que já vem com o Node.
-- Para a verificação por ping: o comando `ping` do sistema, que existe no Windows, no Linux e no macOS.
 
 ## Instalação
 
 ```bash
-git clone <endereço do repositório>
+git clone https://github.com/brunoanderson/InfraView
 cd InfraView
 npm install
 ```
@@ -59,26 +49,6 @@ comando gera um:
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-| Variável | Para que serve | Valor no modelo |
-|---|---|---|
-| `NODE_ENV` | Ambiente: `development`, `production` ou `test` | `development` |
-| `PORT` | Porta do servidor | `3000` |
-| `DATABASE_URL` | Caminho do arquivo do banco SQLite, relativo à raiz do projeto (**obrigatória**) | `./db/infraview.db` |
-| `JWT_SECRET` | Segredo que assina os tokens de login, com no mínimo 32 caracteres (**obrigatória**) | valor de exemplo; troque ao publicar |
-| `JWT_EXPIRES_IN` | Validade do login: número + unidade (`30m`, `8h`, `7d`) | `8h` |
-| `CORS_ORIGIN` | Endereços que podem chamar a API de outro site, separados por vírgula (**obrigatória**) | `http://localhost:3000` |
-| `SEED_ADMIN_NAME` | Nome do super admin raiz criado pelo seed | `Administrador` |
-| `SEED_ADMIN_EMAIL` | E-mail de login do super admin raiz | `admin@infraview.local` |
-| `SEED_ADMIN_PASSWORD` | Senha do super admin raiz, com no mínimo 8 caracteres | `Admin@123` |
-| `MONITOR_ENABLED` | Liga ou desliga o monitoramento automático (`true` ou `false`) | `true` |
-| `MONITOR_INTERVAL_SECONDS` | Intervalo entre as rodadas de verificação, de 5 a 3600 s | `30` |
-| `MONITOR_TIMEOUT_MS` | Tempo máximo de espera de cada tentativa, de 200 a 10000 ms | `2000` |
-| `MONITOR_FAILURE_THRESHOLD` | Verificações seguidas sem resposta até marcar como offline, de 1 a 10 | `3` |
-
-Se alguma variável faltar ou estiver errada, o servidor **não sobe**: ele mostra o nome da variável
-e o problema, mas nunca o valor. As variáveis `SEED_ADMIN_*` só são lidas pelos comandos de banco
-(`db:seed` e `db:reset`).
-
 > A senha `Admin@123` do modelo é só para demonstração. Troque-a se o sistema for usado de verdade.
 
 ## Banco de dados
@@ -87,7 +57,7 @@ O banco é um arquivo SQLite. Para criá-lo do zero (com as tabelas, o super adm
 
 ```bash
 npm run db:reset          # uso real: sem nenhum dispositivo
-npm run db:reset:demo     # demonstração: com 6 dispositivos de teste (veja abaixo)
+npm run db:reset:demo     # demonstração: com 6 dispositivos de teste
 ```
 
 O `db:reset` **apaga o banco atual** e o recria. Pare o servidor antes: no Windows, o arquivo fica
@@ -113,8 +83,8 @@ Se o servidor subir sem o banco, ele continua no ar, mas a API responde `503` co
 ## Como rodar
 
 ```bash
-npm run dev      # desenvolvimento: reinicia sozinho ao salvar um arquivo de src/
-npm start        # sem reinício automático
+npm run dev
+npm start
 ```
 
 Abra **http://localhost:3000** (ou a porta definida em `PORT`).
@@ -126,14 +96,11 @@ parado: ele aplica só as migrations que faltam, sem apagar dados. Se esquecer, 
 Para rodar em produção, coloque `NODE_ENV=production` no `.env`, ajuste o `CORS_ORIGIN` para o
 endereço real do site e use `npm start`.
 
-Para parar, use Ctrl+C. O servidor espera a rodada de verificação em andamento terminar e fecha o
-banco antes de sair.
-
 ## Testes
 
 ```bash
-npm test             # roda todos os testes (node --test), com a saída completa
-npm run verificar    # roda os mesmos testes e mostra só o resumo
+npm test
+npm run verificar
 ```
 
 O `npm run verificar` mostra o total de testes, quantos passaram e quantos falharam. Se algum falhar,
@@ -262,44 +229,6 @@ tentativas a cada 15 minutos por IP, e a partir daí a API responde `429`. No lo
 que falham contam: quem acerta a senha não gasta o limite. No cadastro, toda requisição conta, para
 ninguém criar contas em massa. Os dois têm contadores separados.
 
-## API
-
-Todas as rotas ficam sob `/api` e trocam JSON. Depois do login, envie o token em todas as requisições:
-
-```
-Authorization: Bearer <token>
-```
-
-| Método e rota | Quem pode | O que faz |
-|---|---|---|
-| `GET /api/health` | público | Confere se a API e o banco estão no ar e se não falta nenhuma migration → `200`. Sem o banco ou sem as tabelas: `503 DATABASE_UNAVAILABLE`. Com migration pendente: `503 DATABASE_OUTDATED` |
-| `POST /api/auth/register` | público | Cria uma conta viewer: `{ name, email, password }` → `201 { user, token }` |
-| `POST /api/auth/login` | público | Login: `{ email, password }` → `200 { user, token }` |
-| `GET /api/auth/me` | logado | Dados do usuário dono do token |
-| `GET /api/devices` | logado | Lista os dispositivos. Filtros: `?status=online\|offline\|atencao\|pendente&search=&categoryId=` |
-| `GET /api/devices/measurements` | logado | Últimas verificações de todos os dispositivos numa requisição só: `{ measurements: { "<id>": [...] } }`, cada lista da mais antiga para a mais nova. `?limit=` de 1 a 120, padrão 30 |
-| `GET /api/devices/:id` | logado | Um dispositivo |
-| `GET /api/devices/:id/measurements` | logado | Últimas verificações (`checkedAt`, `success`, `latencyMs`, `packetsLost`), da mais antiga para a mais nova. `?limit=` de 1 a 120, padrão 30 |
-| `POST /api/devices` | admin, superadmin | Cadastra e já verifica → `201` |
-| `PUT /api/devices/:id` | admin, superadmin | Edita |
-| `DELETE /api/devices/:id` | admin, superadmin | Exclui → `204` |
-| `POST /api/devices/:id/check` | admin, superadmin | Verifica agora |
-| `GET /api/categories` | logado | Categorias, com a quantidade de dispositivos |
-| `GET /api/dashboard/summary` | logado | Números do dashboard |
-| `GET /api/alerts` | logado | Alertas. Filtros: `?status=ativo\|resolvido\|info&severity=critical\|warning\|info&kind=offline\|latency\|loss` |
-| `PATCH /api/alerts/:id/ack` | admin, superadmin | Reconhece um alerta ativo |
-| `GET /api/events` | logado | Quedas, picos de latência e perdas. Filtros: `?type=todos\|downtime\|latencia\|perda&period=0\|7\|30\|all&device=<id>` |
-| `GET /api/monitor/status` | logado | Situação do monitor (última e próxima rodada) |
-| `GET /api/users` | superadmin | Lista os usuários (`id`, `name`, `email`, `role`, `isRoot`, `createdAt`; nunca a senha), com a raiz primeiro |
-| `POST /api/users` | superadmin | Cria uma conta: `{ name, email, password, role? }` (`role`: `superadmin`, `admin` ou `viewer`, padrão `viewer`; mesmas regras do cadastro) → `201 { user }`. `409` se o e-mail já existir |
-| `PATCH /api/users/:id` | superadmin | Altera `{ name?, email?, role?, password? }` (pelo menos um, tudo numa transação). Na raiz, só a senha, e só pela própria raiz (`409`/`403`). `409` se o e-mail for de outra conta ou se rebaixar a própria conta |
-| `DELETE /api/users/:id` | superadmin | Exclui a conta → `204`. `409` se for a raiz ou a própria conta |
-
-O corpo de `POST` e `PUT /api/devices` tem os campos `name`, `model`, `host`, `checkType` (`ping`,
-`tcp` ou `http`), `port`, `latencyThresholdMs`, `lossThresholdPct`, `categoryId`, `isGateway`, `icon`
-e `monitoringEnabled`. O status, a latência e a perda não são aceitos no corpo: quem os define é o
-monitor.
-
 ### Formato dos erros
 
 Todo erro tem o mesmo formato:
@@ -346,81 +275,4 @@ Respostas reais da API rodando com o banco de demonstração (`npm run db:reset:
   },
   "token": "eyJhbGciOiJIUzI1NiIs..."
 }
-```
-
-`GET /api/devices` → `200` (a lista tem os 6 dispositivos; aqui aparece só um):
-
-```json
-{
-  "devices": [
-    {
-      "id": 3,
-      "name": "CAM-DEMO",
-      "model": "Alvo de demonstração (npm run demo:alvo)",
-      "host": "127.0.0.1",
-      "checkType": "tcp",
-      "port": 7010,
-      "status": "online",
-      "statusNote": null,
-      "latencyMs": 4,
-      "latencyThresholdMs": 100,
-      "lastLossPct": 0,
-      "lossThresholdPct": 20,
-      "isGateway": false,
-      "icon": "bi-camera-video",
-      "monitoringEnabled": true,
-      "consecutiveFailures": 0,
-      "upSince": "2026-11-25T09:33:44.533Z",
-      "lastSeenAt": "2026-11-25T09:33:55.645Z",
-      "lastCheckAt": "2026-11-25T09:33:55.645Z",
-      "createdAt": "2026-11-25T09:33:42.178Z",
-      "updatedAt": "2026-11-25T09:33:42.178Z",
-      "category": { "id": 2, "name": "Segurança · CFTV / Alarme", "slug": "seguranca", "icon": "bi-camera-video" }
-    }
-  ]
-}
-```
-
-`POST /api/devices` com `{ "name": "A", "host": "1.2.3.4 & del", "checkType": "tcp", "categoryId": 1 }` →
-`400`:
-
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Dados inválidos. Verifique os campos destacados.",
-    "details": [
-      { "field": "name", "message": "O nome precisa ter pelo menos 2 caracteres." },
-      { "field": "host", "message": "O host não pode ter espaços." }
-    ]
-  }
-}
-```
-
-Qualquer rota protegida sem o cabeçalho `Authorization` → `401`:
-
-```json
-{ "error": { "code": "UNAUTHORIZED", "message": "Faça login para continuar." } }
-```
-
-## Estrutura de pastas
-
-```
-src/
-  server.js        sobe o servidor, abre o banco e liga o monitor
-  app.js           monta o Express (helmet, cors, JSON, arquivos do front, rotas, erros)
-  config/env.js    lê e valida o .env
-  routes/          rotas da API
-  controllers/     leem a requisição e montam a resposta
-  services/        regras de negócio
-  models/          SQL (better-sqlite3)
-  validators/      schemas zod de cada rota
-  middlewares/     autenticação, perfis, validação, limite de tentativas, 404 e erros
-  monitor/         monitor, verificações (ping, tcp, http) e máquina de estados
-  lib/ errors/     conexão com o banco, JWT, hash de senha e erros padronizados
-db/                migrations (.sql), migrate, seed e reset
-public/            front-end (HTML, CSS, JavaScript)
-demo/alvo.js       alvo de demonstração (portas 7010, 7011 e 7012)
-scripts/           npm run demo e npm run verificar
-tests/             testes automatizados (node --test)
 ```
